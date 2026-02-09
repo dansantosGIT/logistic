@@ -101,7 +101,7 @@
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 12h18M3 6h18M3 18h18" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
                 </button>
                 <div style="display:flex;flex-direction:column">
-                    <div style="font-weight:700">CDRRMD Inventory Dashboard</div>
+                    <div style="font-weight:700">CDRRMD Inventory Dashboard, Hello</div>
                     <div style="font-size:12px;color:var(--muted)">Overview of stocks and recent activity</div>
                 </div>
             </div>
