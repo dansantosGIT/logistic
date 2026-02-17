@@ -18,7 +18,9 @@
 
         /* Topbar */
         .topbar{position:fixed;left:0;right:0;top:0;height:72px;background:rgba(255,255,255,0.96);backdrop-filter:saturate(1.05) blur(4px);box-shadow:0 6px 24px rgba(2,6,23,0.06);z-index:60}
-        .topbar-inner{max-width:1200px;margin:0 auto;padding:12px 20px;display:flex;justify-content:space-between;align-items:center}
+          /* make the topbar full-width so the burger can sit flush left
+              and the welcome/admin stays right, maximizing header space */
+          .topbar-inner{max-width:none;width:100%;margin:0;padding:12px 12px 12px 0;display:flex;justify-content:space-between;align-items:center}
         .notif-bell{position:relative;display:inline-flex;align-items:center;gap:8px;margin-right:12px}
         .notif-bell button{background:transparent;border:none;cursor:pointer;padding:8px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center}
         .notif-count{position:absolute;top:-6px;right:-6px;z-index:70;background:#ef4444;color:#fff;font-size:12px;padding:3px 6px;border-radius:999px;min-width:20px;text-align:center;box-shadow:0 6px 18px rgba(2,6,23,0.12)}
@@ -170,15 +172,19 @@
     <div class="overlay" aria-hidden="true"></div>
     <div class="topbar" role="banner">
         <div class="topbar-inner">
-            <div style="display:flex;align-items:center;gap:12px">
-                <button id="burger-top" class="burger" aria-label="Toggle menu" title="Toggle menu" style="display:inline-flex;width:44px;height:44px;border-radius:8px;align-items:center;justify-content:center;background:transparent;border:1px solid transparent;cursor:pointer">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 12h18M3 6h18M3 18h18" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
-                </button>
-                <div style="display:flex;flex-direction:column">
-                    <div style="font-weight:700">Request Equipment</div>
-                    <div style="font-size:12px;color:var(--muted)">Inventory / Request</div>
+            
+                <div style="display:flex;align-items:center;gap:12px">
+                    <button id="burger-top" class="burger" aria-label="Toggle menu" title="Toggle menu" style="display:inline-flex;width:44px;height:44px;border-radius:8px;align-items:center;justify-content:center;background:transparent;border:1px solid transparent;cursor:pointer">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 12h18M3 6h18M3 18h18" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+                    </button>
+                    <div style="display:flex;flex-direction:column">
+                        <div style="display:flex;align-items:center;gap:6px;font-weight:700">
+                            <img src="/images/favi.png" alt="Logo" width="40" height="40" style="display:inline-block" />
+                            <span>Request Equipment</span>
+                        </div>
+                        <div style="font-size:12px;color:var(--muted)">Request / New</div>
+                    </div>
                 </div>
-            </div>
             <div style="text-align:right;display:flex;align-items:center;gap:12px;justify-content:flex-end">
                 <div class="notif-bell" id="notif-bell">
                     <button id="notif-toggle" aria-haspopup="true" aria-expanded="false" title="Notifications">

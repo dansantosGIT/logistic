@@ -17,7 +17,9 @@
 
         /* Topbar */
         .topbar{position:fixed;left:0;right:0;top:0;height:72px;background:rgba(255,255,255,0.96);backdrop-filter:saturate(1.05) blur(4px);box-shadow:0 6px 24px rgba(2,6,23,0.06);z-index:60}
-        .topbar-inner{max-width:1200px;margin:0 auto;padding:12px 20px;display:flex;justify-content:space-between;align-items:center}
+          /* make the topbar full-width so the burger can sit flush left
+              and the welcome/admin stays right, maximizing header space */
+          .topbar-inner{max-width:none;width:100%;margin:0;padding:12px 12px 12px 0;display:flex;justify-content:space-between;align-items:center}
 
         .app{display:flex;min-height:100vh}
 
@@ -160,7 +162,10 @@
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 12h18M3 6h18M3 18h18" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
                 </button>
                 <div style="display:flex;flex-direction:column">
-                    <div style="font-weight:700">Add Equipment</div>
+                    <div style="display:flex;align-items:center;gap:6px;font-weight:700">
+                        <img src="/images/favi.png" alt="Logo" width="40" height="40" style="display:inline-block" />
+                        <span>Add Equipment</span>
+                    </div>
                     <div style="font-size:12px;color:var(--muted)">Inventory / Add</div>
                 </div>
             </div>
