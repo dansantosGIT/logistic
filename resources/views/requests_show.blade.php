@@ -172,7 +172,7 @@
                 <div class="row"><div class="label">Requester</div><div class="value">{{ $r->requester }}</div></div>
                 <div class="row"><div class="label">Role</div><div class="value">{{ $r->role ?? '—' }}</div></div>
                 <div class="row"><div class="label">Quantity</div><div class="value">{{ $r->quantity }}</div></div>
-                <div class="row"><div class="label">Return Date</div><div class="value">{{ $r->return_date ? $r->return_date->format('F j, Y') : 'Consumable — N/A' }}</div></div>
+                <div class="row"><div class="label">Return Date</div><div class="value">{{ !empty($r->return_date) ? (($r->return_date instanceof \DateTimeInterface) ? $r->return_date->format('F j, Y') : \Carbon\Carbon::parse($r->return_date)->format('F j, Y')) : 'Consumable — N/A' }}</div></div>
                 <div class="row"><div class="label">Reason</div><div class="value">{{ $r->reason }}</div></div>
 
                 @if($isAdmin && $r->status === 'pending')
