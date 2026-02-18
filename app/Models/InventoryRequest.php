@@ -18,4 +18,9 @@ class InventoryRequest extends Model
     protected $casts = [
         'return_date' => 'date',
     ];
+
+    public function equipment()
+    {
+        return $this->belongsTo(Equipment::class, 'item_id');
+    }
 }

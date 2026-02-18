@@ -129,6 +129,42 @@
             .sidebar + .main{margin-left:0}
             .main{padding:16px}
         }
+
+        /* Approval Modal Styles */
+        .approval-backdrop{position:fixed;inset:0;background:rgba(0,0,0,0.5);display:none;z-index:999;animation:fadeIn 0.2s ease-out}
+        .approval-backdrop.show{display:block}
+        .approval-modal{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(0.95);background:white;border-radius:16px;box-shadow:0 25px 50px rgba(0,0,0,0.3);width:90%;max-width:540px;max-height:90vh;overflow-y:auto;display:none;z-index:1000;animation:slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1)}
+        .approval-modal.show{display:block;transform:translate(-50%,-50%) scale(1)}
+        @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+        @keyframes slideUp{from{transform:translate(-50%,-55%) scale(0.95);opacity:0}to{transform:translate(-50%,-50%) scale(1);opacity:1}}
+        .approval-header{display:flex;justify-content:space-between;align-items:center;padding:24px;border-bottom:1px solid #e5e7eb;position:sticky;top:0;background:linear-gradient(135deg,var(--accent),var(--accent-2));color:white}
+        .approval-header h2{margin:0;font-size:18px;font-weight:700}
+        .approval-close{background:rgba(255,255,255,0.2);border:none;cursor:pointer;font-size:28px;color:white;padding:0;width:40px;height:40px;border-radius:8px;display:flex;align-items:center;justify-content:center;transition:background 0.2s;font-weight:300}
+        .approval-close:hover{background:rgba(255,255,255,0.3)}
+        .approval-body{padding:24px}
+        .approval-item-header{background:linear-gradient(135deg,rgba(37,99,235,0.08),rgba(124,58,237,0.04));padding:20px;border-radius:12px;margin-bottom:24px;border:2px solid var(--accent);border-left:4px solid var(--accent)}
+        .approval-item-title{font-size:18px;font-weight:800;color:var(--accent);margin-bottom:12px;padding:8px;background:white;border-radius:8px;border-left:4px solid var(--accent)}
+        .approval-item-meta{display:grid;grid-template-columns:1fr 1fr;gap:16px;font-size:13px}
+        .approval-item-meta .meta-item{color:#0f172a;font-weight:600}
+        .approval-item-meta .meta-label{font-weight:700;color:var(--accent);margin-bottom:4px;font-size:11px;text-transform:uppercase}
+        .approval-item-category{font-size:14px;font-weight:700;color:#7c3aed;background:rgba(124,58,237,0.1);padding:4px 8px;border-radius:6px;display:inline-block;margin-top:4px}
+        .approval-stock-warning{background:#fef3c7;border:2px solid #f59e0b;border-radius:10px;padding:12px;margin-bottom:20px;color:#92400e}
+        .approval-stock-warning strong{color:#d97706}
+        .approval-stock-available{background:#d1fae5;border:1px solid #10b981;color:#065f46;padding:10px;border-radius:8px;margin-bottom:16px;font-weight:600;font-size:13px}
+        .approval-form-group{margin-bottom:20px}
+        .approval-form-group:last-child{margin-bottom:0}
+        .approval-label{display:block;font-weight:700;color:#0f172a;margin-bottom:8px;font-size:14px}
+        .approval-input,.approval-textarea{width:100%;padding:10px 12px;border:1px solid #e5e7eb;border-radius:8px;font-family:inherit;font-size:14px;background:#f9fafb}
+        .approval-input:focus,.approval-textarea:focus{outline:none;border-color:var(--accent);background:white;box-shadow:0 0 0 3px rgba(37,99,235,0.1)}
+        .approval-textarea{resize:vertical;min-height:100px}
+        .approval-actions{display:flex;gap:12px;margin-top:24px;padding-top:16px;border-top:1px solid #e5e7eb}
+        .approval-btn{padding:10px 16px;border-radius:8px;border:none;cursor:pointer;font-weight:600;transition:all 0.2s;font-size:14px}
+        .approval-btn-approve{background:#10b981;color:white;box-shadow:0 4px 12px rgba(16,185,129,0.2);flex:1}
+        .approval-btn-approve:hover{background:#059669;box-shadow:0 6px 16px rgba(16,185,129,0.3)}
+        .approval-btn-deny{background:#ef4444;color:white;box-shadow:0 4px 12px rgba(239,68,68,0.2);flex:1}
+        .approval-btn-deny:hover{background:#dc2626;box-shadow:0 6px 16px rgba(239,68,68,0.3)}
+        .approval-btn:disabled{opacity:0.6;cursor:not-allowed}
+        @media(max-width:768px){.approval-modal{width:95%;max-width:none}}
     </style>
 </head>
 <body>
@@ -226,13 +262,72 @@
 
                     @if($isAdmin && $r->status === 'pending')
                         <div class="request-actions">
-                            <button type="button" class="btn ok" id="btn-approve" onclick="doDetailAction('{{ $r->uuid }}','approve', this)" style="padding:10px 18px;border-radius:8px">Approve</button>
-                            <button type="button" class="btn rej" id="btn-reject" onclick="doDetailAction('{{ $r->uuid }}','reject', this)" style="padding:10px 18px;border-radius:8px">Deny</button>
+                            <button type="button" class="btn ok" id="btn-approve" style="padding:10px 18px;border-radius:8px">Approve</button>
+                            <button type="button" class="btn rej" id="btn-reject" style="padding:10px 18px;border-radius:8px">Deny</button>
                         </div>
                     @endif
                 </div>
             </div>
         </main>
+
+        <!-- Approval/Denial Modal -->
+        <div class="approval-backdrop" id="approvalBackdrop"></div>
+        <div class="approval-modal" id="approvalModal">
+            <div class="approval-header">
+                <h2 id="approvalTitle">Approve Request</h2>
+                <button class="approval-close" id="approvalCloseBtn">&times;</button>
+            </div>
+            <div class="approval-body">
+                <div class="approval-item-header">
+                    <div class="approval-item-title" id="approvalItemName">Equipment Name</div>
+                    <div class="approval-item-category" id="approvalItemCategoryHighlight">Category</div>
+                    <div class="approval-item-meta" style="margin-top:12px">
+                        <div>
+                            <div class="meta-label">Type</div>
+                            <div class="meta-item" id="approvalItemType">—</div>
+                        </div>
+                        <div>
+                            <div class="meta-label">Serial</div>
+                            <div class="meta-item" id="approvalItemSerial">—</div>
+                        </div>
+                        <div>
+                            <div class="meta-label">Location</div>
+                            <div class="meta-item" id="approvalItemLocation">—</div>
+                        </div>
+                        <div>
+                            <div class="meta-label">Current Stock</div>
+                            <div class="meta-item" id="approvalItemQuantity">0</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="approvalStockAvailable" class="approval-stock-available" style="display:none"></div>
+                <div id="approvalStockWarning" class="approval-stock-warning" style="display:none"></div>
+
+                <form id="approvalForm">
+                    <div class="approval-form-group">
+                        <label class="approval-label">Quantity to Issue</label>
+                        <input type="number" class="approval-input" id="approvalQuantity" placeholder="0" min="0" required>
+                        <div id="approvalQuantityNote" style="font-size:12px;color:var(--muted);margin-top:4px"></div>
+                    </div>
+
+                    <div class="approval-form-group">
+                        <label class="approval-label">Requested Quantity</label>
+                        <input type="text" class="approval-input" id="approvalRequestedQuantity" placeholder="0" disabled style="background:#f0fdf4;color:#065f46">
+                    </div>
+
+                    <div class="approval-form-group">
+                        <label class="approval-label">Admin Notes</label>
+                        <textarea class="approval-textarea" id="approvalNotes" placeholder="Add any notes or comments about this approval/denial (optional)"></textarea>
+                    </div>
+                </form>
+
+                <div class="approval-actions">
+                    <button type="button" class="approval-btn approval-btn-approve" id="approvalConfirmBtn">Approve</button>
+                    <button type="button" class="approval-btn approval-btn-deny" id="approvalDenyBtn">Deny</button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <form id="logout-form" method="POST" action="/logout" style="display:none">@csrf</form>
@@ -371,26 +466,199 @@
         })();
 
         function doDetailAction(id, action, btn) {
-            if (!confirm('Are you sure?')) return;
             btn.disabled = true;
+            const notes = document.getElementById('approvalNotes').value;
+            const quantity = action === 'approve' ? document.getElementById('approvalQuantity').value : null;
+            const equipmentId = btn.dataset.equipmentId;
+            
             fetch('/notifications/requests/'+encodeURIComponent(id)+'/action', {
                 method: 'POST',
                 headers: { 'Content-Type':'application/json','X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content },
                 credentials: 'same-origin',
-                body: JSON.stringify({ action: action })
+                body: JSON.stringify({ action: action, notes: notes, quantity: quantity, equipment_id: equipmentId })
             }).then(r=>{
                 if (r.ok) window.location = '/requests?tab=pending';
                 else { alert('Failed'); btn.disabled=false }
             }).catch(e=>{alert('Error');btn.disabled=false});
         }
 
+        // Modal functions
+        let currentAction = 'approve';
+        let currentRequestId = '';
+        let currentEquipmentData = null;
+
+        function openApprovalModal(action, requestId, equipmentData) {
+            currentAction = action;
+            currentRequestId = requestId;
+            currentEquipmentData = equipmentData;
+            
+            const modal = document.getElementById('approvalModal');
+            const backdrop = document.getElementById('approvalBackdrop');
+            const title = document.getElementById('approvalTitle');
+            const confirmBtn = document.getElementById('approvalConfirmBtn');
+            const denyBtn = document.getElementById('approvalDenyBtn');
+            const quantityInput = document.getElementById('approvalQuantity');
+            const requestedQuantity = document.getElementById('approvalRequestedQuantity');
+            const stockWarning = document.getElementById('approvalStockWarning');
+            const stockAvailable = document.getElementById('approvalStockAvailable');
+            const quantityNote = document.getElementById('approvalQuantityNote');
+            
+            if (!equipmentData) {
+                alert('Equipment data not available');
+                return;
+            }
+
+            // Populate equipment details with highlights
+            document.getElementById('approvalItemName').textContent = equipmentData.name;
+            document.getElementById('approvalItemCategoryHighlight').innerHTML = '<span style="color:#7c3aed;font-weight:800">' + (equipmentData.category || '—') + '</span>';
+            document.getElementById('approvalItemType').textContent = equipmentData.type || '—';
+            document.getElementById('approvalItemSerial').textContent = equipmentData.serial || '—';
+            document.getElementById('approvalItemLocation').textContent = equipmentData.location || '—';
+            document.getElementById('approvalItemQuantity').textContent = equipmentData.quantity + ' unit(s)';
+            
+            const availableQty = parseInt(equipmentData.quantity) || 0;
+            const requestedQty = parseInt(equipmentData.requested_quantity) || 1;
+
+            // Show requested quantity
+            requestedQuantity.value = requestedQty;
+
+            // Check stock availability
+            stockWarning.style.display = 'none';
+            stockAvailable.style.display = 'none';
+            
+            if (availableQty <= 0) {
+                stockWarning.innerHTML = '<strong>⚠️ Out of Stock!</strong> No units available for issue. You can deny this request or add a note about restocking.';
+                stockWarning.style.display = 'block';
+                quantityInput.max = 0;
+                quantityInput.disabled = true;
+            } else if (availableQty < requestedQty) {
+                stockWarning.innerHTML = '<strong>⚠️ Limited Stock!</strong> Only ' + availableQty + ' unit(s) available, but ' + requestedQty + ' were requested.';
+                stockWarning.style.display = 'block';
+                stockAvailable.innerHTML = '✓ You can issue up to <strong>' + availableQty + ' units</strong> from available inventory';
+                stockAvailable.style.display = 'block';
+                quantityInput.max = availableQty;
+                quantityNote.textContent = 'Max available: ' + availableQty + ' units';
+            } else {
+                stockAvailable.innerHTML = '✓ Full stock available - All ' + requestedQty + ' unit(s) can be issued';
+                stockAvailable.style.display = 'block';
+                quantityInput.max = availableQty;
+                quantityNote.textContent = 'Max available: ' + availableQty + ' units';
+            }
+
+            if (action === 'approve') {
+                title.textContent = 'Approve Request';
+                confirmBtn.style.display = 'block';
+                denyBtn.style.display = 'none';
+                quantityInput.style.display = 'block';
+                quantityInput.disabled = availableQty <= 0;
+                quantityInput.value = Math.min(requestedQty, availableQty);
+            } else {
+                title.textContent = 'Deny Request';
+                confirmBtn.style.display = 'none';
+                denyBtn.style.display = 'block';
+                quantityInput.style.display = 'none';
+            }
+            
+            // Reset form
+            document.getElementById('approvalNotes').value = '';
+            
+            // Set equipment ID on buttons
+            confirmBtn.dataset.equipmentId = equipmentData.id;
+            denyBtn.dataset.equipmentId = equipmentData.id;
+            
+            modal.classList.add('show');
+            backdrop.classList.add('show');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeApprovalModal() {
+            const modal = document.getElementById('approvalModal');
+            const backdrop = document.getElementById('approvalBackdrop');
+            modal.classList.remove('show');
+            backdrop.classList.remove('show');
+            document.body.style.overflow = '';
+        }
+
+        // Modal event listeners
+        document.addEventListener('DOMContentLoaded', function() {
+            const closeBtn = document.getElementById('approvalCloseBtn');
+            const backdrop = document.getElementById('approvalBackdrop');
+            const confirmBtn = document.getElementById('approvalConfirmBtn');
+            const denyBtn = document.getElementById('approvalDenyBtn');
+            const quantityInput = document.getElementById('approvalQuantity');
+
+            if (!closeBtn || !backdrop) return;
+
+            closeBtn.addEventListener('click', closeApprovalModal);
+            backdrop.addEventListener('click', closeApprovalModal);
+
+            // Validate quantity input
+            quantityInput.addEventListener('change', function() {
+                const max = parseInt(this.max) || 0;
+                const val = parseInt(this.value) || 0;
+                if (val > max) {
+                    this.value = max;
+                }
+            });
+
+            confirmBtn.addEventListener('click', function() {
+                if (!currentEquipmentData) {
+                    alert('Equipment data not found');
+                    return;
+                }
+                const qty = parseInt(document.getElementById('approvalQuantity').value) || 0;
+                if (qty <= 0) {
+                    alert('Please enter a valid quantity');
+                    return;
+                }
+                confirmBtn.disabled = true;
+                doDetailAction(currentRequestId, 'approve', confirmBtn);
+            });
+
+            denyBtn.addEventListener('click', function() {
+                denyBtn.disabled = true;
+                doDetailAction(currentRequestId, 'reject', denyBtn);
+            });
+
+            // Close on Escape key
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && document.getElementById('approvalModal').classList.contains('show')) {
+                    closeApprovalModal();
+                }
+            });
+        });
+
         // wire approve/reject on this page
         (function(){
             const id = '{{ $r->uuid }}';
             const approve = document.getElementById('btn-approve');
             const reject = document.getElementById('btn-reject');
-            if(approve) approve.addEventListener('click', ()=>doDetailAction(id,'approve',approve));
-            if(reject) reject.addEventListener('click', ()=>doDetailAction(id,'reject',reject));
+            
+            // Get equipment data from the request
+            const equipmentData = {
+                id: '{{ $equipment?->id ?? $r->item_id ?? 1 }}',
+                name: '{{ $equipment?->name ?? $r->item_name }}',
+                category: '{{ $equipment?->category ?? "—" }}',
+                type: '{{ $equipment?->type ?? "—" }}',
+                serial: '{{ $equipment?->serial ?? "—" }}',
+                location: '{{ $equipment?->location ?? "—" }}',
+                quantity: {{ $equipment?->quantity ?? $r->quantity ?? 0 }},
+                requested_quantity: {{ $r->quantity ?? 1 }}
+            };
+
+            if(approve) {
+                approve.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    openApprovalModal('approve', id, equipmentData);
+                });
+            }
+            
+            if(reject) {
+                reject.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    openApprovalModal('deny', id, equipmentData);
+                });
+            }
         })();
     </script>
     <script>

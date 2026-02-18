@@ -285,7 +285,31 @@ Route::post('/notifications/requests/{id}/action', function (Request $request, $
     if (!$r) {
         return response()->json(['error' => 'Not found'], 404);
     }
-    $r->status = $action === 'approve' ? 'approved' : 'rejected';
+
+    // Handle approval - deduct from inventory
+    if ($action === 'approve') {
+        $quantity = intval($request->input('quantity', 0));
+        $equipmentId = $request->input('equipment_id');
+        $notes = $request->input('notes', '');
+
+        if ($quantity > 0 && $equipmentId) {
+            $equipment = Equipment::find($equipmentId);
+            if ($equipment) {
+                // Validate sufficient stock
+                if ($equipment->quantity < $quantity) {
+                    return response()->json(['error' => 'Insufficient stock'], 400);
+                }
+                // Deduct from inventory
+                $equipment->quantity -= $quantity;
+                $equipment->save();
+            }
+        }
+
+        $r->status = 'approved';
+    } else {
+        $r->status = 'rejected';
+    }
+
     $r->handled_by = $user->id ?? null;
     $r->updated_at = now();
     $r->save();
@@ -313,9 +337,11 @@ Route::get('/requests', function (Request $request) {
 // Show single request (detail / review)
 Route::get('/requests/{id}', function (Request $request, $id) {
     $r = InventoryRequest::where('uuid', $id)->firstOrFail();
+    // Load equipment relationship
+    $equipment = $r->item_id ? Equipment::find($r->item_id) : null;
     $user = auth()->user();
     $isAdmin = $user && ( ($user->id ?? 0) === 1 || strcasecmp($user->name ?? '', 'admin') === 0 );
-    return view('requests_show', ['r' => $r, 'isAdmin' => $isAdmin]);
+    return view('requests_show', ['r' => $r, 'equipment' => $equipment, 'isAdmin' => $isAdmin]);
 })->middleware('auth');
 // Logout
 Route::post('/logout', function (Request $request) {
