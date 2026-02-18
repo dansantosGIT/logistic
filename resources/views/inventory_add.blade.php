@@ -222,14 +222,15 @@
 
                         <div class="field">
                             <label for="location">Location</label>
-                            <select id="location" name="location">
-                                <option value="">Select Location...</option>
-                                <option value="Logistics">Logistics</option>
-                                <option value="Medical">Medical</option>
-                                <option value="Office">Office</option>
-                                <option value="Vehicle">Vehicle</option>
+                            <select id="location" name="location" class="custom-select">
+                            <option value="" disabled selected>Select Location</option>
+                            <option value="Logistics">Logistics</option>
+                            <option value="Medical">Medical</option>
+                            <option value="Office">Office</option>
+                            <option value="Vehicle">Vehicle</option>
                             </select>
                         </div>
+
                         <div class="field">
                             <label for="date_added">Date Added</label>
                             <input id="date_added" name="date_added" type="date">
