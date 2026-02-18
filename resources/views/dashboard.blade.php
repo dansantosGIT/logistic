@@ -72,6 +72,12 @@
 
         .center{display:grid;grid-template-columns:1fr 360px;gap:14px}
         .list{background:var(--panel);padding:14px;border-radius:10px;min-height:180px;box-shadow:0 6px 20px rgba(15,23,42,0.04)}
+        .recent-list{max-height:220px;overflow:auto;padding-right:6px}
+        .recent-item a{display:flex;justify-content:space-between;gap:12px;padding:10px;border-radius:6px;background:#fff;border:1px solid #eef2f6;color:inherit;text-decoration:none}
+        .recent-item a:hover{background:#f8fafc}
+        .recent-item .meta{min-width:0}
+        .recent-item .title{font-weight:700}
+        .recent-item .sub{font-size:12px;color:var(--muted);margin-top:4px}
         .placeholder{height:200px;border-radius:8px;background:linear-gradient(90deg,#eef2ff,#f0fdf4);display:flex;align-items:center;justify-content:center;color:var(--muted)}
 
         /* Collapsed state adjustments */
@@ -168,22 +174,50 @@
                 <div>
                     <div class="list">
                         <h3 style="margin:0 0 8px">Recent Requests</h3>
-                        <div class="placeholder">Recent requests list (placeholder)</div>
+                        @php
+                            $recentRequests = $recentRequests ?? (\App\Models\InventoryRequest::orderBy('created_at','desc')->take(10)->get());
+                        @endphp
+                        @if($recentRequests && $recentRequests->count())
+                            <div class="recent-list">
+                                <ul style="list-style:none;padding:0;margin:0;display:grid;gap:8px">
+                                    @foreach($recentRequests as $req)
+                                        <li class="recent-item">
+                                            <a href="/requests/{{ $req->uuid }}">
+                                                <div class="meta">
+                                                    <div class="title">{{ $req->item_name }}</div>
+                                                    <div class="sub">{{ $req->requester }} · {{ $req->role ?? '—' }} · Qty: {{ $req->quantity ?? 1 }}</div>
+                                                </div>
+                                                <div style="text-align:right;font-size:12px;color:var(--muted)">
+                                                    <div>{{ $req->created_at->diffForHumans() }}</div>
+                                                    <div style="margin-top:6px"><span class="badge {{ $req->status }}">{{ ucfirst(strtolower($req->status)) }}</span></div>
+                                                </div>
+                                            </a>
+                                        </li>
+                                    @endforeach
+                                </ul>
+                            </div>
+                        @else
+                            <div class="placeholder">No recent requests</div>
+                        @endif
                     </div>
                     <div class="list" style="margin-top:12px">
                         <h3 style="margin:0 0 8px">Recent Equipment Added</h3>
                             @if(isset($recent) && $recent->count())
-                                <ul style="list-style:none;padding:0;margin:0;display:grid;gap:8px">
-                                    @foreach($recent as $item)
-                                        <li style="display:flex;justify-content:space-between;align-items:center;padding:8px;border-radius:6px;background:#fff;border:1px solid #eef2f6">
-                                            <div>
-                                                <div style="font-weight:700">{{ $item->name }}</div>
-                                                <div style="font-size:12px;color:var(--muted)">{{ $item->category }} — {{ $item->location }}</div>
-                                            </div>
-                                            <div style="text-align:right;font-size:12px;color:var(--muted)">{{ $item->created_at->format('Y-m-d') }}</div>
-                                        </li>
-                                    @endforeach
-                                </ul>
+                                <div class="recent-list">
+                                    <ul style="list-style:none;padding:0;margin:0;display:grid;gap:8px">
+                                        @foreach($recent as $item)
+                                            <li class="recent-item">
+                                                <a href="/inventory/{{ $item->id }}">
+                                                    <div class="meta">
+                                                        <div class="title">{{ $item->name }}</div>
+                                                        <div class="sub">{{ $item->category }} — {{ $item->location }}</div>
+                                                    </div>
+                                                    <div style="text-align:right;font-size:12px;color:var(--muted)">{{ $item->created_at->format('Y-m-d') }}</div>
+                                                </a>
+                                            </li>
+                                        @endforeach
+                                    </ul>
+                                </div>
                             @else
                                 <div class="placeholder">No recent equipment</div>
                             @endif
