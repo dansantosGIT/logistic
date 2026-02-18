@@ -31,8 +31,12 @@
         .nav svg{flex-shrink:0}
 
         /* Topbar */
-        .topbar{position:fixed;left:0;right:0;top:0;height:72px;background:rgba(255,255,255,0.95);backdrop-filter:saturate(1.05) blur(4px);box-shadow:0 6px 24px rgba(2,6,23,0.08);z-index:60}
-        .topbar-inner{max-width:1200px;margin:0 auto;padding:12px 20px;display:flex;justify-content:space-between;align-items:center}
+        .topbar{position:fixed;left:0;right:0;top:0;height:72px;background:rgba(255,255,255,0.95);backdrop-filter:saturate(1.05) blur(4px);box-shadow:0 6px 24px rgba(2,6,23,0.08);z-index:60;display:flex;align-items:center;justify-content:space-between;padding:0 20px}
+        .topbar-inner{flex:1;max-width:1200px;margin:0 auto;padding:12px 0;display:flex;justify-content:flex-end;align-items:center}
+        .left-area{display:flex;align-items:center;gap:12px}
+        .branding{display:flex;flex-direction:column}
+        .branding .brand-title{display:flex;align-items:center;gap:6px;font-weight:700}
+        .branding .brand-subtitle{font-size:12px;color:var(--muted);margin-left:calc(40px + 6px)}
         .notif-bell{position:relative;display:inline-flex;align-items:center;gap:8px;margin-right:12px}
         .notif-bell button{background:transparent;border:none;cursor:pointer;padding:8px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center}
         .notif-count{position:absolute;top:-6px;right:-6px;z-index:70;background:#ef4444;color:#fff;font-size:12px;padding:3px 6px;border-radius:999px;min-width:20px;text-align:center;box-shadow:0 6px 18px rgba(2,6,23,0.12)}
@@ -95,20 +99,20 @@
     <div class="overlay" aria-hidden="true"></div>
 
     <div class="topbar" role="banner">
-        <div class="topbar-inner">
-            <div style="display:flex;align-items:center;gap:12px">
-                <button id="burger-top" class="burger" aria-label="Toggle menu" title="Toggle menu">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 12h18M3 6h18M3 18h18" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
-                </button>
-                <div style="display:flex;flex-direction:column">
-                    <div style="display:flex;align-items:center;gap:6px;font-weight:700">
-                        <img src="/images/favi.png" alt="Logo" width="40" height="40" style="display:inline-block" />
-                        <span>Inventory Dashboard</span>
-                    </div>
-                    <div style="font-size:12px;color:var(--muted)">Overview of stocks and recent activity</div>
+        <div class="left-area">
+            <button id="burger-top" class="burger" aria-label="Toggle menu" title="Toggle menu">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 12h18M3 6h18M3 18h18" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+            </button>
+            <div class="branding">
+                <div class="brand-title">
+                    <img src="/images/favi.png" alt="Logo" width="40" height="40" style="display:inline-block" />
+                    <span>Inventory Dashboard</span>
                 </div>
+                <div class="brand-subtitle">Overview of stocks and recent activity</div>
             </div>
-            <div style="text-align:right;display:flex;align-items:center;gap:12px;justify-content:flex-end">
+        </div>
+        <div class="topbar-inner">
+            <div class="right-section" style="text-align:right;display:flex;align-items:center;gap:12px;justify-content:flex-end">
                 <div class="notif-bell" id="notif-bell">
                     <button id="notif-toggle" aria-haspopup="true" aria-expanded="false" title="Notifications">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 10-12 0v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1h6z" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
