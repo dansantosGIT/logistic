@@ -80,6 +80,29 @@
         .recent-item .sub{font-size:12px;color:var(--muted);margin-top:4px}
         .placeholder{height:200px;border-radius:8px;background:linear-gradient(90deg,#eef2ff,#f0fdf4);display:flex;align-items:center;justify-content:center;color:var(--muted)}
 
+        /* Modal backdrop and styling */
+        .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,0.5);display:none;z-index:999;animation:fadeIn 0.2s ease-out}
+        .modal-backdrop.show{display:block}
+        #equipmentModal{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(0.9);background:white;border-radius:16px;box-shadow:0 25px 50px rgba(0,0,0,0.3);width:90%;max-width:700px;max-height:90vh;overflow-y:auto;display:none;z-index:1000;animation:slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1)}
+        #equipmentModal.show{display:block;transform:translate(-50%,-50%) scale(1)}
+        @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+        @keyframes slideUp{from{transform:translate(-50%,-55%) scale(0.95);opacity:0}to{transform:translate(-50%,-50%) scale(1);opacity:1}}
+        .modal-header{display:flex;justify-content:space-between;align-items:center;padding:24px;border-bottom:1px solid #e5e7eb;position:sticky;top:0;background:linear-gradient(135deg,var(--accent),var(--accent-2));color:white}
+        .modal-header h2{margin:0;font-size:22px;font-weight:700}
+        .modal-close{background:rgba(255,255,255,0.2);border:none;cursor:pointer;font-size:28px;color:white;padding:0;width:40px;height:40px;border-radius:8px;display:flex;align-items:center;justify-content:center;transition:background 0.2s;font-weight:300}
+        .modal-close:hover{background:rgba(255,255,255,0.3)}
+        .modal-body{padding:24px}
+        .modal-image{width:100%;height:300px;object-fit:cover;border-radius:12px;margin-bottom:24px;background:#f3f4f6}
+        .modal-section{margin-bottom:24px}
+        .modal-section:last-child{margin-bottom:0}
+        .modal-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-bottom:24px}
+        .modal-info{padding:16px;background:#f9fafb;border-radius:10px;border-left:4px solid var(--accent)}
+        .modal-label{font-weight:700;color:var(--accent);font-size:12px;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;display:block}
+        .modal-value{color:#0f172a;font-size:15px;line-height:1.6;font-weight:500}
+        .modal-divider{height:1px;background:#e5e7eb;margin:24px 0}
+        .recent-item a{cursor:pointer}
+        @media(max-width:768px){#equipmentModal{width:95%;max-height:85vh}.modal-grid{grid-template-columns:1fr}.modal-image{height:200px}}
+
         /* Collapsed state adjustments */
         .sidebar.collapsed .brand .text,
         .sidebar.collapsed .nav a span.label,
@@ -207,7 +230,7 @@
                                     <ul style="list-style:none;padding:0;margin:0;display:grid;gap:8px">
                                         @foreach($recent as $item)
                                             <li class="recent-item">
-                                                <a href="/inventory/{{ $item->id }}">
+                                                <a onclick="openEquipmentModal(this)" data-equipment='{{json_encode(["id" => $item->id, "name" => $item->name, "category" => $item->category ?? "—", "location" => $item->location ?? "—", "serial" => $item->serial ?? "—", "quantity" => $item->quantity, "type" => $item->type ?? "—", "tag" => $item->tag ?? "—", "notes" => $item->notes ?? "No description provided", "image_path" => $item->image_path, "date_added" => $item->date_added ? $item->date_added->format('M d, Y') : $item->created_at->format('M d, Y'), "created_at" => $item->created_at->format('M d, Y'), "updated_at" => $item->updated_at->format('M d, Y')])}}' style="display:flex;justify-content:space-between;gap:12px">
                                                     <div class="meta">
                                                         <div class="title">{{ $item->name }}</div>
                                                         <div class="sub">{{ $item->category }} — {{ $item->location }}</div>
@@ -232,6 +255,74 @@
             </section>
         </main>
     </div>
+
+    <!-- Equipment Modal -->
+    <div class="modal-backdrop" id="equipmentBackdrop"></div>
+    <div id="equipmentModal">
+        <div class="modal-header">
+            <h2 id="modalName">Equipment Details</h2>
+            <button class="modal-close" id="modalCloseBtn">&times;</button>
+        </div>
+        <div class="modal-body">
+            <img id="modalImage" src="" alt="Equipment" class="modal-image" style="display:none">
+            <div id="noImage" style="width:100%;height:300px;background:#e5e7eb;border-radius:12px;margin-bottom:24px;display:flex;align-items:center;justify-content:center;color:#6b7280;font-size:16px">📷 No image available</div>
+            
+            <div class="modal-grid">
+                <div class="modal-info">
+                    <span class="modal-label">Category</span>
+                    <div class="modal-value" id="modalCategory">—</div>
+                </div>
+                <div class="modal-info">
+                    <span class="modal-label">Location</span>
+                    <div class="modal-value" id="modalLocation">—</div>
+                </div>
+                <div class="modal-info">
+                    <span class="modal-label">Quantity</span>
+                    <div class="modal-value" id="modalQuantity">0</div>
+                </div>
+                <div class="modal-info">
+                    <span class="modal-label">Type</span>
+                    <div class="modal-value" id="modalType">—</div>
+                </div>
+            </div>
+
+            <div class="modal-divider"></div>
+
+            <div class="modal-section">
+                <span class="modal-label">Serial Number</span>
+                <div class="modal-value" id="modalSerial">—</div>
+            </div>
+
+            <div class="modal-section">
+                <span class="modal-label">Tag / Identifier</span>
+                <div class="modal-value" id="modalTag">—</div>
+            </div>
+
+            <div class="modal-section">
+                <span class="modal-label">Description / Notes</span>
+                <div class="modal-value" id="modalNotes" style="background:#f9fafb;padding:12px;border-radius:8px;border-left:4px solid var(--accent-2)">No description</div>
+            </div>
+
+            <div class="modal-divider"></div>
+
+            <div class="modal-grid">
+                <div class="modal-info">
+                    <span class="modal-label">Date Added</span>
+                    <div class="modal-value" id="modalDateAdded">—</div>
+                </div>
+                <div class="modal-info">
+                    <span class="modal-label">Created</span>
+                    <div class="modal-value" id="modalCreated">—</div>
+                </div>
+            </div>
+
+            <div class="modal-section">
+                <span class="modal-label">Last Updated</span>
+                <div class="modal-value" id="modalUpdated">—</div>
+            </div>
+        </div>
+    </div>
+
     <form id="logout-form" method="POST" action="/logout" style="display:none">@csrf</form>
     <script>
         (function(){
@@ -375,5 +466,54 @@
             setInterval(fetchNotifs, 8000);
         })();
     </script>
-</body>
-</html>
+    <script>
+        const modal = document.getElementById('equipmentModal');
+        const backdrop = document.getElementById('equipmentBackdrop');
+        const closeBtn = document.getElementById('modalCloseBtn');
+
+        function openEquipmentModal(element) {
+            const data = JSON.parse(element.dataset.equipment);
+            
+            document.getElementById('modalName').textContent = data.name;
+            document.getElementById('modalCategory').textContent = data.category;
+            document.getElementById('modalLocation').textContent = data.location;
+            document.getElementById('modalQuantity').textContent = data.quantity + ' unit(s)';
+            document.getElementById('modalType').textContent = data.type;
+            document.getElementById('modalSerial').textContent = data.serial;
+            document.getElementById('modalTag').textContent = data.tag;
+            document.getElementById('modalNotes').textContent = data.notes;
+            document.getElementById('modalDateAdded').textContent = data.date_added;
+            document.getElementById('modalCreated').textContent = data.created_at;
+            document.getElementById('modalUpdated').textContent = data.updated_at;
+
+            const imageEl = document.getElementById('modalImage');
+            const noImageEl = document.getElementById('noImage');
+            
+            if (data.image_path) {
+                imageEl.src = '/storage/' + data.image_path;
+                imageEl.style.display = 'block';
+                noImageEl.style.display = 'none';
+            } else {
+                imageEl.style.display = 'none';
+                noImageEl.style.display = 'flex';
+            }
+
+            modal.classList.add('show');
+            backdrop.classList.add('show');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeEquipmentModal() {
+            modal.classList.remove('show');
+            backdrop.classList.remove('show');
+            document.body.style.overflow = '';
+        }
+
+        closeBtn.addEventListener('click', closeEquipmentModal);
+        backdrop.addEventListener('click', closeEquipmentModal);
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && modal.classList.contains('show')) {
+                closeEquipmentModal();
+            }
+        });
+    </script>
