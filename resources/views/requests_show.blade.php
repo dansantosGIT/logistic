@@ -67,18 +67,44 @@
         .card .value{font-size:22px;font-weight:700;margin-top:6px}
 
         /* Request detail / form styles (restored) */
-        .panel{max-width:1100px;margin:20px auto;padding:22px;background:var(--panel);border-radius:12px;box-shadow:0 10px 30px rgba(15,23,42,0.06)}
-        .row{display:flex;gap:12px;align-items:center;margin-bottom:8px}
-        .label{width:160px;color:var(--muted);font-weight:700}
-        .value{flex:1}
+        .panel{max-width:1100px;margin:20px auto;padding:26px 28px;background:var(--panel);border-radius:14px;box-shadow:0 14px 40px rgba(15,23,42,0.08)}
+        .panel .panel-header{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:18px}
+        .panel .panel-title{margin:0;font-size:20px;color:#0f172a}
+        .panel .panel-sub{color:var(--muted);font-size:13px}
+        .field-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px 24px;margin-top:6px}
+        .field{background:linear-gradient(180deg,#fff,#fbfdff);padding:12px;border-radius:10px;border:1px solid rgba(14,21,40,0.04);display:flex;align-items:center;gap:12px}
+        .label{width:140px;color:var(--muted);font-weight:700;font-size:13px}
+        .value{flex:1;font-size:14px;color:#0f172a}
+        .value a{color:#2563eb;text-decoration:none}
+        .meta-block{display:flex;flex-direction:column;gap:6px}
+        .request-row{display:flex;align-items:flex-start;gap:18px}
+        .request-title{font-size:32px;font-weight:800;color:#0f172a;margin:8px 0}
+        .request-card{max-width:980px;margin:6px auto 0;padding:18px;background:var(--panel);border-radius:12px;box-shadow:0 18px 40px rgba(2,6,23,0.06)}
+        .meta-table{width:100%;border-radius:10px;overflow:hidden;border:1px solid rgba(14,21,40,0.04);background:linear-gradient(180deg,#fff,#fbfdff)}
+        .meta-row{display:flex;justify-content:space-between;padding:14px 18px;border-bottom:1px solid rgba(14,21,40,0.04);align-items:center}
+        .meta-row .k{color:#0f172a;font-weight:900}
+        .meta-row .v{color:#0f172a}
+        .request-card .card-header{background:#263544;color:#fff;padding:14px;border-radius:10px 10px 0 0;display:flex;justify-content:space-between;align-items:center}
+        .request-card .card-header .request-title{font-size:20px;color:#fff;margin:0;font-weight:800}
+        .request-card .card-header .back-btn{background:#6b7280;border:none;color:#fff;padding:8px 12px;border-radius:8px}
+        .request-card .card-header .back-btn:hover{background:#8b93a0}
+        .items-heading{margin:18px 0 8px 0;font-weight:700}
+        .items-table{width:100%;border-collapse:separate;border-spacing:0 8px}
+        .items-table thead th{background:#263544;color:#fff;padding:12px 14px;text-align:left;font-weight:700;border-top-left-radius:8px;border-top-right-radius:8px}
+        .items-table tbody td{background:#fff;padding:12px 14px;border-bottom:1px solid rgba(14,21,40,0.04)}
+        .items-table tr{box-shadow:0 6px 18px rgba(2,6,23,0.04);border-radius:8px}
+        .items-table tbody tr td:first-child{border-top-left-radius:8px;border-bottom-left-radius:8px}
+        .items-table tbody tr td:last-child{border-top-right-radius:8px;border-bottom-right-radius:8px}
+        .request-actions{display:flex;gap:12px;margin-top:14px}
         .badge{display:inline-flex;align-items:center;justify-content:center;padding:6px 10px;border-radius:999px;font-weight:700}
         .badge.pending{background:#ffebc2;color:#92400e}
         .badge.approved{background:#dcfce7;color:#065f46}
         .badge.rejected{background:#fee2e2;color:#991b1b}
-        .actions{display:flex;gap:8px;justify-content:flex-end;margin-top:18px}
-        .btn{padding:8px 12px;border-radius:8px;border:1px solid #e6e9ef;background:white;cursor:pointer}
-        .btn.ok{background:#10b981;color:#fff;border:none}
-        .btn.rej{background:#ef4444;color:#fff;border:none}
+        .actions{display:flex;gap:12px;justify-content:flex-end;margin-top:18px}
+        .btn{padding:10px 14px;border-radius:10px;border:1px solid #e6e9ef;background:white;cursor:pointer;font-weight:600}
+        .btn.ok{background:#10b981;color:#fff;border:none;box-shadow:0 8px 22px rgba(16,185,129,0.12)}
+        .btn.rej{background:#ef4444;color:#fff;border:none;box-shadow:0 8px 22px rgba(239,68,68,0.12)}
+        a.back{display:inline-flex;align-items:center;gap:8px;margin-bottom:8px;color:#2563eb;font-weight:600}
         a.back{display:inline-block;margin-bottom:12px;color:#2563eb}
 
         .center{display:grid;grid-template-columns:1fr 360px;gap:14px}
@@ -157,37 +183,54 @@
         </aside>
 
         <main class="main">
-            <div class="panel">
-                <a href="/requests?tab=pending" class="back">← Back to requests</a>
-                <h2 style="margin:6px 0 12px 0">Request Review</h2>
-
-                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-                    <div style="color:var(--muted)">Submitted: <strong>{{ $r->created_at->format('F j, Y, g:i A') }}</strong></div>
-                    <div>
-                        <span class="badge {{ $r->status }}">{{ ucfirst($r->status) }}</span>
+            <div>
+                <div class="request-card">
+                    <div class="card-header">
+                        <div class="request-title">Request #{{ $r->id ?? $r->uuid }}</div>
+                        <div><a href="/requests?tab=pending" class="back-btn" style="text-decoration:none">Back</a></div>
                     </div>
+                    <div class="meta-table">
+                        <div class="meta-row"><div class="k">Requested by</div><div class="v">{{ $r->requester }}</div></div>
+                        <div class="meta-row"><div class="k">Role</div><div class="v">{{ $r->role ?? '—' }}</div></div>
+                        <div class="meta-row"><div class="k">Status</div><div class="v"><span class="badge {{ $r->status }}">{{ ucfirst(strtolower($r->status)) }}</span></div></div>
+                        <div class="meta-row"><div class="k">Submitted</div><div class="v">{{ $r->created_at->format('F j, Y, g:i A') }}</div></div>
+                    </div>
+
+                    <div class="items-heading">Items</div>
+                    <div style="overflow:auto">
+                        <table class="items-table">
+                            <thead>
+                                <tr>
+                                    <th>Equipment</th>
+                                    <th>Requested</th>
+                                    <th>Issued</th>
+                                    <th>Return</th>
+                                    <th>Reason</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach($r->items ?? [$r] as $it)
+                                    <tr>
+                                        <td>{{ $it->item_name ?? $it['item_name'] ?? ($r->item_name ?? '—') }}</td>
+                                        <td>{{ $it->quantity ?? $r->quantity ?? 1 }}</td>
+                                        <td>{{ $it->issued ?? 0 }}</td>
+                                        <td>{{ !empty($it->return_date) ? ((($it->return_date instanceof \DateTimeInterface) ? $it->return_date->format('F j, Y') : \Carbon\Carbon::parse($it->return_date)->format('F j, Y'))) : 'Consumable — N/A' }}</td>
+                                        <td>{{ $it->reason ?? $r->reason ?? '—' }}</td>
+                                        <td>{{ $it->status ?? $r->status }}</td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+
+                    @if($isAdmin && $r->status === 'pending')
+                        <div class="request-actions">
+                            <button type="button" class="btn ok" id="btn-approve" onclick="doDetailAction('{{ $r->uuid }}','approve', this)" style="padding:10px 18px;border-radius:8px">Approve</button>
+                            <button type="button" class="btn rej" id="btn-reject" onclick="doDetailAction('{{ $r->uuid }}','reject', this)" style="padding:10px 18px;border-radius:8px">Deny</button>
+                        </div>
+                    @endif
                 </div>
-
-                <div class="row"><div class="label">Equipment</div><div class="value"><a href="/inventory/{{ $r->item_id }}">{{ $r->item_name }}</a></div></div>
-                <div class="row"><div class="label">Requester</div><div class="value">{{ $r->requester }}</div></div>
-                <div class="row"><div class="label">Role</div><div class="value">{{ $r->role ?? '—' }}</div></div>
-                <div class="row"><div class="label">Quantity</div><div class="value">{{ $r->quantity }}</div></div>
-                <div class="row"><div class="label">Return Date</div><div class="value">{{ !empty($r->return_date) ? (($r->return_date instanceof \DateTimeInterface) ? $r->return_date->format('F j, Y') : \Carbon\Carbon::parse($r->return_date)->format('F j, Y')) : 'Consumable — N/A' }}</div></div>
-                <div class="row"><div class="label">Reason</div><div class="value">{{ $r->reason }}</div></div>
-
-                @if($isAdmin && $r->status === 'pending')
-                    <form class="actions" method="POST" action="/notifications/requests/{{ $r->uuid }}/action" onsubmit="return false;">
-                        @csrf
-                        <input type="hidden" name="action" id="form-action" value="">
-                        <button type="button" class="btn rej" id="btn-reject" onclick="doDetailAction('{{ $r->uuid }}','reject', this)">Deny</button>
-                        <button type="button" class="btn ok" id="btn-approve" onclick="doDetailAction('{{ $r->uuid }}','approve', this)">Approve</button>
-                        <noscript>
-                            <style>.actions button{display:inline-block}</style>
-                            <input type="submit" value="Approve" formaction="/notifications/requests/{{ $r->uuid }}/action" formmethod="post" name="action" value="approve">
-                            <input type="submit" value="Deny" formaction="/notifications/requests/{{ $r->uuid }}/action" formmethod="post" name="action" value="reject">
-                        </noscript>
-                    </form>
-                @endif
             </div>
         </main>
     </div>

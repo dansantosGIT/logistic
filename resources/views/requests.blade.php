@@ -78,7 +78,7 @@
         .inventory-table{margin-top:8px;width:100%;box-sizing:border-box;overflow-x:auto}
         .inventory-table table{width:100%;border-collapse:separate;border-spacing:0;background:transparent}
         .inventory-table thead th{background:linear-gradient(90deg,#eef8ff,#f6f0ff);padding:14px 16px;text-align:left;font-size:14px;color:var(--muted);border-bottom:1px solid rgba(14,21,40,0.04)}
-        .inventory-table tbody tr{background:#fff;border-radius:8px;box-shadow:0 6px 18px rgba(2,6,23,0.04);transition:transform .12s ease;display:table-row}
+        .inventory-table tbody tr{background:#fff;border-radius:8px;box-shadow:0 6px 18px rgba(2,6,23,0.04);transition:transform .12s ease;display:table-row;cursor:pointer}
         .inventory-table tbody tr:hover{transform:translateY(-2px)}
         .inventory-table tbody td{padding:12px 16px;vertical-align:middle;font-size:13px;color:#0f172a;border-bottom:1px solid rgba(14,21,40,0.04)}
         .inventory-table tbody td.center{text-align:center;color:var(--muted)}
@@ -403,6 +403,20 @@
             }).catch(e=>{alert('Error');btn.disabled=false});
         }
         function viewRequest(id){ window.location = '/requests/'+id; }
+    </script>
+    <script>
+        (function(){
+            const tbody = document.querySelector('.inventory-table tbody');
+            if(!tbody) return;
+            tbody.addEventListener('click', function(e){
+                const row = e.target.closest('tr[data-uuid]');
+                if(!row) return;
+                // ignore clicks on actionable elements
+                if(e.target.closest('a, button, .icon-btn')) return;
+                const id = row.getAttribute('data-uuid');
+                if(id) viewRequest(id);
+            });
+        })();
     </script>
     <script>
         (function(){
