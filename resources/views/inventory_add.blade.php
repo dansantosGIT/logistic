@@ -222,7 +222,13 @@
 
                         <div class="field">
                             <label for="location">Location</label>
-                            <input id="location" name="location" type="text" placeholder="Location">
+                            <select id="location" name="location">
+                                <option value="">Select Location...</option>
+                                <option value="Logistics">Logistics</option>
+                                <option value="Medical">Medical</option>
+                                <option value="Office">Office</option>
+                                <option value="Vehicle">Vehicle</option>
+                            </select>
                         </div>
                         <div class="field">
                             <label for="date_added">Date Added</label>
