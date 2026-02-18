@@ -109,7 +109,7 @@
                         <img src="/images/favi.png" alt="Logo" width="40" height="40" style="display:inline-block" />
                         <span>San Juan CDRMMD Inventory</span>
                     </div>
-                    <div class="brand-subtitle">Overview of stocks and recent activity</div>
+                    <div class="brand-subtitle">Overview of Stocks</div>
                 </div>
             </div>
             <div style="text-align:right;display:flex;align-items:center;gap:12px;justify-content:flex-end">
