@@ -177,10 +177,10 @@
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 12h18M3 6h18M3 18h18" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
                 </button>
                 <div style="display:flex;flex-direction:column">
-                    <div style="display:flex;align-items:center;gap:6px;font-weight:700">
+                    <a href="/dashboard" style="display:flex;align-items:center;gap:6px;font-weight:700;text-decoration:none;color:inherit">
                         <img src="/images/favi.png" alt="Logo" width="40" height="40" style="display:inline-block" />
                         <span>Request Review</span>
-                    </div>
+                    </a>
                     <div style="font-size:12px;color:var(--muted)">Review the submitted request</div>
                 </div>
             </div>
@@ -202,10 +202,10 @@
 
     <div class="app">
         <aside id="sidebar" class="sidebar">
-            <div class="brand">
+            <a href="/dashboard" class="brand" style="text-decoration:none;color:inherit">
                 <img src="/images/favi.png" alt="San Juan" class="logo-img" style="width:36px;height:36px;border-radius:8px;object-fit:cover">
                 <div class="text" style="font-size:14px">San Juan CDRMMD</div>
-            </div>
+            </a>
             <nav class="nav">
                 <a href="/dashboard" class="{{ request()->is('dashboard') ? 'active' : '' }}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 13h8V3H3v10zM13 21h8V11h-8v10zM13 3v6h8V3h-8zM3 21h8v-6H3v6z" fill="currentColor"/></svg><span class="label">Home</span></a>
                 <a href="/inventory" class="{{ request()->is('inventory*') ? 'active' : '' }}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 7a5 5 0 100 10 5 5 0 000-10zM2 12a10 10 0 1120 0A10 10 0 012 12z" fill="currentColor"/></svg><span class="label">Inventory</span></a>
