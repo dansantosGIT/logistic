@@ -17,7 +17,7 @@ class EquipmentController extends Controller
             'new_category' => 'nullable|string|max:255',
             'type' => 'required|string|max:100',
             'quantity' => 'required|integer|min:0',
-            'location' => 'nullable|string|in:Logistics,Medical,Office,Vehicle',
+            'location' => 'nullable|string',
             'tag' => 'nullable|string|max:255',
             'date_added' => 'nullable|date',
             'image' => 'nullable|file|image|max:5120',
@@ -54,6 +54,6 @@ class EquipmentController extends Controller
             'created_by' => Auth::id(),
         ]);
 
-        return redirect('/inventory')->with('success', 'Equipment added');
+        return redirect('/inventory?location=all')->with('success', 'Equipment added');
     }
 }

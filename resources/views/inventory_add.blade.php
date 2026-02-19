@@ -149,6 +149,8 @@
             .sidebar.open{transform:translateX(0)}
             .main{padding:16px}
         }
+        .thumb-preview{width:120px;height:80px;border-radius:8px;background:#f1f5f9;display:flex;align-items:center;justify-content:center;border:1px solid #e6e9ef;overflow:hidden}
+        .thumb-preview img{width:100%;height:100%;object-fit:cover;display:block}
     </style>
 </head>
 <body>
@@ -224,6 +226,7 @@
                             <label for="location">Location</label>
                             <select id="location" name="location" class="custom-select">
                             <option value="" disabled selected>Select Location</option>
+                            <option value="Cedoc">Cedoc</option>
                             <option value="Logistics">Logistics</option>
                             <option value="Medical">Medical</option>
                             <option value="Office">Office</option>
@@ -248,7 +251,11 @@
 
                         <div class="field full">
                             <label for="image">Image</label>
-                            <input id="image" name="image" type="file">
+                            <div class="file-input">
+                                <input id="image" name="image" type="file" accept="image/*">
+                                <div class="thumb-preview" id="image-preview">No image</div>
+                            </div>
+                            <small class="helper">Optional. JPG/PNG recommended.</small>
                         </div>
 
                         <div class="field full">
@@ -328,6 +335,24 @@
                 const t = setTimeout(hide, 4000);
                 const closer = document.getElementById('toast-close');
                 closer && closer.addEventListener('click', ()=>{ clearTimeout(t); hide(); });
+            }
+
+            // Image preview for add form
+            const addImageInput = document.getElementById('image');
+            const addPreview = document.getElementById('image-preview');
+            if(addImageInput && addPreview){
+                const showPlaceholder = ()=>{ addPreview.innerHTML = 'No image'; };
+                addImageInput.addEventListener('change', function(){
+                    const f = this.files && this.files[0];
+                    if(!f){ showPlaceholder(); return; }
+                    if(!f.type.startsWith('image/')){ showPlaceholder(); return; }
+                    const url = URL.createObjectURL(f);
+                    addPreview.innerHTML = '';
+                    const img = document.createElement('img');
+                    img.src = url;
+                    img.onload = function(){ URL.revokeObjectURL(url); };
+                    addPreview.appendChild(img);
+                });
             }
         })();
     </script>

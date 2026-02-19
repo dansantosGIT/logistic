@@ -171,13 +171,14 @@
         .modal-close{background:rgba(255,255,255,0.2);border:none;cursor:pointer;font-size:28px;color:white;padding:0;width:40px;height:40px;border-radius:8px;display:flex;align-items:center;justify-content:center;transition:background 0.2s;font-weight:300}
         .modal-close:hover{background:rgba(255,255,255,0.3)}
         .modal-body{padding:24px}
-        .modal-image{width:100%;height:300px;object-fit:cover;border-radius:12px;margin-bottom:24px;background:#f3f4f6}
+        .modal-image{display:block;width:100%;height:auto;max-height:60vh;object-fit:contain;border-radius:12px;margin-bottom:24px;background:#f3f4f6}
         .modal-section{margin-bottom:24px}
         .modal-section:last-child{margin-bottom:0}
         .modal-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-bottom:24px}
         .modal-info{padding:16px;background:#f9fafb;border-radius:10px;border-left:4px solid var(--accent)}
         .modal-label{font-weight:700;color:var(--accent);font-size:12px;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;display:block}
         .modal-value{color:#0f172a;font-size:15px;line-height:1.6;font-weight:500}
+        #modalNotes{white-space:pre-wrap;word-break:break-word}
         .modal-divider{height:1px;background:#e5e7eb;margin:24px 0}
         tbody tr{cursor:pointer}
         tbody tr:active{opacity:0.9}
