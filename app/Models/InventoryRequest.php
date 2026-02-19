@@ -12,7 +12,7 @@ class InventoryRequest extends Model
     protected $table = 'inventory_requests';
 
     protected $fillable = [
-        'uuid', 'item_id', 'item_name', 'requester', 'requester_user_id', 'quantity', 'role', 'reason', 'return_date', 'status', 'handled_by'
+        'uuid', 'item_id', 'item_name', 'requester', 'requester_user_id', 'quantity', 'role', 'department', 'reason', 'return_date', 'status', 'handled_by'
     ];
 
     protected $casts = [

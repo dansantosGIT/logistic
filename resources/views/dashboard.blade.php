@@ -208,7 +208,13 @@
                                             <a href="/requests/{{ $req->uuid }}">
                                                 <div class="meta">
                                                     <div class="title">{{ $req->item_name }}</div>
-                                                    <div class="sub">{{ $req->requester }} · {{ $req->role ?? '—' }} · Qty: {{ $req->quantity ?? 1 }}</div>
+                                                    <div class="sub">
+                                                        {{ $req->requester }} · {{ $req->role ?? '—' }}
+                                                        @if(($req->role ?? '') === 'Operations' && !empty($req->department))
+                                                            · {{ $req->department }}
+                                                        @endif
+                                                        · Qty: {{ $req->quantity ?? 1 }}
+                                                    </div>
                                                 </div>
                                                 <div style="text-align:right;font-size:12px;color:var(--muted)">
                                                     <div>{{ $req->created_at->diffForHumans() }}</div>

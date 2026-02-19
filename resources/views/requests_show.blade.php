@@ -228,6 +228,7 @@
                     <div class="meta-table">
                         <div class="meta-row"><div class="k">Requested by</div><div class="v">{{ $r->requester }}</div></div>
                         <div class="meta-row"><div class="k">Role</div><div class="v">{{ $r->role ?? '—' }}</div></div>
+                        <div class="meta-row"><div class="k">Department</div><div class="v">{{ $r->department ?? '—' }}</div></div>
                         <div class="meta-row"><div class="k">Status</div><div class="v"><span class="badge {{ $r->status }}">{{ ucfirst(strtolower($r->status)) }}</span></div></div>
                         <div class="meta-row"><div class="k">Submitted</div><div class="v">{{ $r->created_at->format('F j, Y, g:i A') }}</div></div>
                     </div>

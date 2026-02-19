@@ -164,6 +164,7 @@ Route::post('/inventory/{id}/request', function (Request $request, $id) {
         'quantity' => 'required|integer|min:1',
         'role' => 'nullable|string|max:100',
         'reason' => 'nullable|string|max:1000',
+        'department' => 'required_if:role,Operations|in:Alpha,Bravo,Charlie',
     ];
     // require return_date for non-consumable items
     if (strtolower(trim($item->type ?? '')) !== 'consumable') {
@@ -183,6 +184,7 @@ Route::post('/inventory/{id}/request', function (Request $request, $id) {
         'requester_user_id' => $user ? $user->id : null,
         'quantity' => (int) $request->input('quantity', 1),
         'role' => $request->input('role') ?? null,
+        'department' => $request->input('department') ?: null,
         'reason' => $request->input('reason'),
         'return_date' => $request->input('return_date') ?: null,
         'status' => 'pending',
@@ -230,6 +232,7 @@ Route::get('/notifications/requests', function (Request $request) {
                         'requester_user_id' => $l['requester_user_id'] ?? null,
                         'quantity' => $l['quantity'] ?? 1,
                         'role' => $l['role'] ?? null,
+                        'department' => $l['department'] ?? null,
                         'reason' => $l['reason'] ?? null,
                         'return_date' => $l['return_date'] ?? null,
                         'status' => $l['status'] ?? 'pending',
@@ -262,6 +265,7 @@ Route::get('/notifications/requests', function (Request $request) {
                 'id' => $r->uuid,
                 'item_name' => $r->item_name,
                 'requester' => $r->requester,
+                'department' => $r->department ?? null,
                 'status' => $r->status,
                 'created_at' => $r->created_at->toDateTimeString(),
             ];

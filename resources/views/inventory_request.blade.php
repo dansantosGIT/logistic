@@ -252,10 +252,18 @@
                                         <option>Employee</option>
                                         <option>Volunteer</option>
                                         <option>Medic</option>
-                                        <option>Intern</option>
+                                        <option>Operations</option>
                                     </select>
                                 </div>
-
+                                <div class="field" id="department-field" style="display:none">
+                                    <label for="department">Department</label>
+                                    <select id="department" name="department">
+                                        <option value="">Select department</option>
+                                        <option value="Alpha">Alpha</option>
+                                        <option value="Bravo">Bravo</option>
+                                        <option value="Charlie">Charlie</option>
+                                    </select>
+                                </div>
                                 <div class="field">
                                     <label for="qty">Quantity Requesting</label>
                                     <input id="qty" name="quantity" type="number" min="1" value="1" required>
@@ -442,6 +450,31 @@
             }
 
             update();
+        })();
+    </script>
+    <script>
+        // Show/hide department when Role == Operations
+        (function(){
+            const role = document.getElementById('role');
+            const deptField = document.getElementById('department-field');
+            const deptInput = document.getElementById('department');
+            if(!role || !deptField || !deptInput) return;
+
+            function toggle(){
+                const val = (role.value || '').trim();
+                if(val === 'Operations'){
+                    deptField.style.display = '';
+                    deptInput.setAttribute('required','required');
+                } else {
+                    deptField.style.display = 'none';
+                    deptInput.removeAttribute('required');
+                    deptInput.value = '';
+                }
+            }
+
+            role.addEventListener('change', toggle);
+            // init on load in case of server-rendered value
+            toggle();
         })();
     </script>
 </body>

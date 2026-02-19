@@ -212,11 +212,12 @@
                 <div class="inventory-table">
                     <table>
                         <thead>
-                            <tr>
+                                <tr>
                                 <th>Requested</th>
                                 <th>Equipment</th>
                                 <th>Personnel</th>
                                 <th>Role</th>
+                                <th>Department</th>
                                 <th style="text-align:center">Qty</th>
                                 <th>Return</th>
                                 <th>Actions</th>
@@ -224,11 +225,12 @@
                         </thead>
                         <tbody>
                             @forelse($items as $r)
-                                <tr data-uuid="{{ $r->uuid }}">
+                                    <tr data-uuid="{{ $r->uuid }}">
                                     <td>{{ $r->created_at->format('F j, Y, g:i A') }}</td>
                                     <td><a class="link" href="/inventory/{{ $r->item_id }}">{{ $r->item_name }}</a></td>
                                     <td>{{ $r->requester }}</td>
                                     <td class="center">{{ $r->role ?? '—' }}</td>
+                                    <td class="center">{{ $r->department ?? '—' }}</td>
                                     <td class="center">{{ $r->quantity }}</td>
                                     <td>{{ $r->return_date ? $r->return_date->format('F j, Y') : 'Consumable — N/A' }}</td>
                                     <td class="actions">
@@ -247,7 +249,7 @@
                                     </td>
                                 </tr>
                             @empty
-                                <tr><td colspan="7" class="empty-state">No pending requests.</td></tr>
+                                <tr><td colspan="8" class="empty-state">No pending requests.</td></tr>
                             @endforelse
                         </tbody>
                     </table>
