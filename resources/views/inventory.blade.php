@@ -124,6 +124,11 @@
         /* Action button colors and spacing */
         .btn.request{background:#2563eb;color:white;border:none;text-decoration:none}
         .btn.request:hover{background:#1e4fd8}
+        .header-request{background:white;color:#0f172a;border:1px solid #e6e9ef;text-decoration:none}
+        .header-request:hover{background:#f8fafc;color:#0f172a}
+        /* Ensure only the header request button (panel/header) is white */
+        .panel .btn.header-request, .main .btn.header-request{background:white;color:#0f172a;border:1px solid #e6e9ef;text-decoration:none}
+        .panel .btn.header-request:hover, .main .btn.header-request:hover{background:#f8fafc;color:#0f172a}
         .btn.edit{background:white;color:#0f172a;border:1px solid #e6e9ef}
         .btn.edit:hover{background:#f8fafc;text-decoration:none}
         .btn.delete{background:#ef4444;color:white;border:none}
@@ -254,7 +259,7 @@
                         <button class="btn">Documents</button>
                         <button class="btn">Quick Request</button>
                         <button class="btn">Request Multiple</button>
-                        <button class="btn">Request</button>
+                        <a href="/requests" class="btn request header-request" role="button" title="View requests">Request</a>
                         <a href="/inventory/add" class="btn primary">+ Add Equipment</a>
                     </div>
                 </div>
@@ -631,6 +636,11 @@
                     <span class="modal-label">Last Updated</span>
                     <div class="modal-value" id="modalUpdated">—</div>
                 </div>
+                <div style="height:12px"></div>
+                <div style="display:flex;justify-content:flex-end;gap:8px;padding-top:6px">
+                    <a id="modalRequestBtn" class="btn request" href="#">Request</a>
+                    <a id="modalEditBtn" class="btn edit" href="#">Edit</a>
+                </div>
             </div>
         </div>
 
@@ -665,6 +675,12 @@
                     imageEl.style.display = 'none';
                     noImageEl.style.display = 'flex';
                 }
+
+                    // set modal action links
+                    const reqBtn = document.getElementById('modalRequestBtn');
+                    const editBtn = document.getElementById('modalEditBtn');
+                    if (reqBtn) reqBtn.href = '/inventory/' + data.id + '/request';
+                    if (editBtn) editBtn.href = '/inventory/' + data.id + '/edit';
 
                 modal.classList.add('show');
                 backdrop.classList.add('show');
