@@ -150,7 +150,7 @@
                     <div class="notif-dropdown" id="notif-dropdown" aria-hidden="true"></div>
                 </div>
                 <div style="text-align:right">
-                    <div style="font-size:13px;color:var(--muted-2)">Welcome</div>
+                    <div style="font-size:13px;color:var(--muted-2)">Welcome!</div>
                     <div style="font-weight:700">{{ auth()->user()->name }}</div>
                 </div>
             </div>
