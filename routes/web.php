@@ -150,7 +150,20 @@ Route::post('/inventory/{id}/update', function (Request $request, $id) {
         'quantity' => 'nullable|integer|min:0',
         'date_added' => 'nullable|date',
         'notes' => 'nullable|string|max:500',
+        'image' => 'nullable|file|image|max:5120',
     ]);
+
+    // handle image upload if provided
+    if ($request->hasFile('image')) {
+        try {
+            $imagePath = $request->file('image')->store('equipment', 'public');
+            // update image_path on model
+            $item->image_path = $imagePath;
+        } catch (Throwable $e) {
+            // ignore storage failures but continue with other updates
+        }
+    }
+
     $item->fill($data);
     $item->save();
     return redirect('/inventory')->with('success', 'Equipment updated');
