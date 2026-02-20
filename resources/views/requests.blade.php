@@ -232,12 +232,35 @@
                             @forelse($items as $r)
                                     <tr data-uuid="{{ $r->uuid }}">
                                     <td>{{ $r->created_at->format('F j, Y, g:i A') }}</td>
-                                    <td><a class="link" href="/inventory/{{ $r->item_id }}">{{ $r->item_name }}</a></td>
+                                    @php
+                                        $isGroup = isset($r->items) && $r->items->count();
+                                    @endphp
+                                    <td>
+                                        @if($isGroup)
+                                            <div style="font-weight:700">Multiple items ({{ $r->items->count() }})</div>
+                                            <div class="small">
+                                                @foreach($r->items as $it)
+                                                    <div>{{ $it->item_name ?? ($it->equipment->name ?? '—') }} &times; {{ $it->quantity }} @if(!empty($it->location)) — {{ $it->location }}@endif</div>
+                                                @endforeach
+                                            </div>
+                                        @else
+                                            <a class="link" href="/inventory/{{ $r->item_id }}">{{ $r->item_name }}</a>
+                                        @endif
+                                    </td>
                                     <td>{{ $r->requester }}</td>
                                     <td class="center">{{ $r->role ?? '—' }}</td>
                                     <td class="center">{{ $r->department ?? '—' }}</td>
-                                    <td class="center">{{ $r->quantity }}</td>
-                                    <td>{{ $r->return_date ? $r->return_date->format('F j, Y') : 'Consumable — N/A' }}</td>
+                                    <td class="center">{{ $isGroup ? $r->items->sum('quantity') : $r->quantity }}</td>
+                                    <td>
+                                        @if($isGroup)
+                                            @php
+                                                $hasReturn = $r->items->contains(function($i){ return !empty($i->return_date); });
+                                            @endphp
+                                            {{ $hasReturn ? 'Multiple' : 'Consumable — N/A' }}
+                                        @else
+                                            {{ $r->return_date ? $r->return_date->format('F j, Y') : 'Consumable — N/A' }}
+                                        @endif
+                                    </td>
                                     <td class="actions">
                                         <span class="badge pending">{{ ucfirst($r->status) }}</span>
                                         <button class="icon-btn view" title="View request" aria-label="View request" onclick="viewRequest('{{ $r->uuid }}')">
@@ -435,6 +458,55 @@
                 if(!item) return;
                 const id = item.dataset.uuid || item.getAttribute('data-uuid') || item.getAttribute('data-id');
                 if(id) window.location.href = '/requests/' + id;
+            });
+        })();
+    </script>
+    <script>
+        // Add non-invasive sort indicators and tooltips to the requests table headers.
+        (function(){
+            const table = document.querySelector('.inventory-table table');
+            if(!table) return;
+            const thead = table.tHead || table.querySelector('thead');
+            const tbody = table.tBodies[0];
+            if(!thead || !tbody) return;
+            const headers = Array.from(thead.querySelectorAll('th'));
+
+            headers.forEach(h=>{ if(!h.dataset.origTitle) h.dataset.origTitle = h.getAttribute('title') || ''; h.style.cursor = h.style.cursor || 'pointer'; });
+
+            headers.forEach((th, colIdx) => {
+                th.addEventListener('click', function(){
+                    const rows = Array.from(tbody.querySelectorAll('tr')).filter(r=> r.style.display !== 'none');
+                    if(!rows.length) return;
+
+                    const getCell = (row) => { const cell = row.children[colIdx]; return cell ? cell.innerText.trim() : ''; };
+                    let sample = '';
+                    for(const r of rows){ sample = getCell(r); if(sample) break; }
+                    const isDate = sample && !isNaN(Date.parse(sample));
+                    const numTest = sample && sample.replace(/[^0-9.\-]/g,'');
+                    const isNum = numTest && /^-?[0-9,.]+$/.test(numTest.replace(/,/g,''));
+
+                    const current = th.getAttribute('data-sort-order') || 'none';
+                    const asc = current !== 'asc';
+
+                    headers.forEach(h=>{ if(h!==th){ h.removeAttribute('data-sort-order'); h.removeAttribute('aria-sort'); const old = h.querySelector('[data-sort-indicator]'); if(old) old.remove(); if(h.dataset.origTitle) h.setAttribute('title', h.dataset.origTitle); } });
+
+                    th.setAttribute('data-sort-order', asc ? 'asc' : 'desc');
+                    th.setAttribute('aria-sort', asc ? 'ascending' : 'descending');
+                    th.setAttribute('title', (asc ? 'Sort: Ascending' : 'Sort: Descending') + ' — click to toggle');
+
+                    const existing = th.querySelector('[data-sort-indicator]'); if(existing) existing.remove();
+                    const ind = document.createElement('span'); ind.setAttribute('data-sort-indicator','1'); ind.setAttribute('aria-hidden','true'); ind.style.marginLeft = '6px'; ind.textContent = asc ? '▲' : '▼'; th.appendChild(ind);
+
+                    const collator = new Intl.Collator(undefined, {numeric:true, sensitivity:'base'});
+                    rows.sort((a,b)=>{
+                        const va = getCell(a); const vb = getCell(b);
+                        if(isNum){ const na = parseFloat(va.replace(/[^0-9.-]+/g,'')) || 0; const nb = parseFloat(vb.replace(/[^0-9.-]+/g,'')) || 0; return asc ? na - nb : nb - na; }
+                        if(isDate){ const da = Date.parse(va) || 0; const db = Date.parse(vb) || 0; return asc ? da - db : db - da; }
+                        return asc ? collator.compare(va, vb) : collator.compare(vb, va);
+                    });
+
+                    rows.forEach(r=> tbody.appendChild(r));
+                });
             });
         })();
     </script>

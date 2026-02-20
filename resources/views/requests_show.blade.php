@@ -92,6 +92,7 @@
         .items-table{width:100%;border-collapse:separate;border-spacing:0 8px}
         .items-table thead th{background:#263544;color:#fff;padding:12px 14px;text-align:left;font-weight:700;border-top-left-radius:8px;border-top-right-radius:8px}
         .items-table tbody td{background:#fff;padding:12px 14px;border-bottom:1px solid rgba(14,21,40,0.04)}
+        .items-table tbody td:last-child{display:flex;align-items:center;justify-content:space-between;gap:12px}
         .items-table tr{box-shadow:0 6px 18px rgba(2,6,23,0.04);border-radius:8px}
         .items-table tbody tr td:first-child{border-top-left-radius:8px;border-bottom-left-radius:8px}
         .items-table tbody tr td:last-child{border-top-right-radius:8px;border-bottom-right-radius:8px}
@@ -247,14 +248,72 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach($r->items ?? [$r] as $it)
+                                @php
+                                    $iterableItems = (isset($r->items) && is_countable($r->items) && $r->items->count() > 0) ? $r->items : [$r];
+                                @endphp
+                                @foreach($iterableItems as $it)
+                                    @php
+                                            $requestedQty = $it->quantity ?? ($it['quantity'] ?? $r->quantity ?? 1);
+                                            $issued = $it->issued ?? $r->issued ?? 0;
+                                            $returnDate = $it->return_date ?? $r->return_date ?? null;
+                                            $reasonText = $it->notes ?? $it->reason ?? $r->reason ?? '—';
+
+                                            // find equipment model if available (prefer loaded relation, then equipment_id/item_id, then parent request, then page-level `$equipment`)
+                                            $equipModel = null;
+                                            try {
+                                                // Prefer an eager-loaded relation when present
+                                                if (is_object($it) && isset($it->equipment) && $it->equipment) {
+                                                    $equipModel = $it->equipment;
+                                                } else {
+                                                    // Determine a candidate equipment id from the item or parent
+                                                    $equipId = null;
+                                                    if (is_object($it)) {
+                                                        if (!empty($it->equipment_id)) $equipId = $it->equipment_id;
+                                                        elseif (!empty($it->item_id)) $equipId = $it->item_id;
+                                                    } elseif (is_array($it)) {
+                                                        if (!empty($it['equipment_id'])) $equipId = $it['equipment_id'];
+                                                        elseif (!empty($it['item_id'])) $equipId = $it['item_id'];
+                                                    }
+
+                                                    if ($equipId) {
+                                                        $equipModel = \App\Models\Equipment::find($equipId);
+                                                    } elseif (!empty($r->item_id)) {
+                                                        $equipModel = \App\Models\Equipment::find($r->item_id);
+                                                    }
+                                                }
+                                            } catch (\Throwable $_) { $equipModel = null; }
+
+                                            // Final fallback: use the page-level `$equipment` (single-item view) when available
+                                            if (empty($equipModel) && isset($equipment) && $equipment) {
+                                                $equipModel = $equipment;
+                                            }
+
+                                                // Prefer actual equipment name when available (child items may inherit parent label "Multiple items")
+                                            $itemName = $equipModel?->name ?? ($it->item_name ?? ($it['item_name'] ?? ($r->item_name ?? '—')));
+
+                                            $equipData = [
+                                                'id' => $equipModel?->id ?? ($it->equipment_id ?? $r->item_id ?? null),
+                                                'request_item_id' => $it->id ?? ($it['id'] ?? null),
+                                                'name' => $itemName,
+                                                'category' => $equipModel?->category ?? null,
+                                                'type' => $equipModel?->type ?? null,
+                                                'serial' => $equipModel?->serial ?? null,
+                                                'location' => $equipModel?->location ?? ($it->location ?? null),
+                                                'quantity' => $equipModel?->quantity ?? 0,
+                                                'requested_quantity' => $requestedQty,
+                                            ];
+                                        @endphp
                                     <tr>
-                                        <td>{{ $it->item_name ?? $it['item_name'] ?? ($r->item_name ?? '—') }}</td>
-                                        <td>{{ $it->quantity ?? $r->quantity ?? 1 }}</td>
-                                        <td>{{ $it->issued ?? 0 }}</td>
-                                        <td>{{ !empty($it->return_date) ? ((($it->return_date instanceof \DateTimeInterface) ? $it->return_date->format('F j, Y') : \Carbon\Carbon::parse($it->return_date)->format('F j, Y'))) : 'Consumable — N/A' }}</td>
-                                        <td>{{ $it->reason ?? $r->reason ?? '—' }}</td>
-                                        <td>{{ $it->status ?? $r->status }}</td>
+                                        <td>{{ $itemName }}</td>
+                                        <td>{{ $requestedQty }}</td>
+                                        <td>{{ $issued }}</td>
+                                        <td>{{ !empty($returnDate) ? ((($returnDate instanceof \DateTimeInterface) ? $returnDate->format('F j, Y') : \Carbon\Carbon::parse($returnDate)->format('F j, Y'))) : 'Consumable — N/A' }}</td>
+                                        <td>{{ $reasonText }}</td>
+                                        <td>
+                                            <div style="flex:0 0 auto">{{ $it->status ?? $r->status }}</div>
+                                            @php $hasChildren = isset($r->items) && is_countable($r->items) && $r->items->count() > 0; @endphp
+                                            {{-- Per-row approve/deny removed: use single approve/deny for the whole request --}}
+                                        </td>
                                     </tr>
                                 @endforeach
                             </tbody>
@@ -268,7 +327,35 @@
                         </div>
                     @endif
 
-                    @if($isAdmin && $r->status === 'approved' && (!empty($equipment) && strtolower(trim($equipment->type ?? '')) !== 'consumable'))
+                    @php
+                        $hasNonConsumable = false;
+                        if(!empty($equipment) && strtolower(trim($equipment->type ?? '')) !== 'consumable') {
+                            $hasNonConsumable = true;
+                        } elseif(isset($r->items) && is_countable($r->items) && $r->items->count() > 0) {
+                            foreach($r->items as $it) {
+                                try {
+                                    $type = null;
+                                    if (is_object($it) && isset($it->equipment) && $it->equipment) {
+                                        $type = $it->equipment->type ?? null;
+                                    }
+                                    if (empty($type) && is_object($it)) {
+                                        $type = $it->type ?? null;
+                                    }
+                                    if (empty($type) && is_array($it)) {
+                                        $type = $it['type'] ?? null;
+                                    }
+                                    if (!empty($type) && strtolower(trim($type)) !== 'consumable') {
+                                        $hasNonConsumable = true;
+                                        break;
+                                    }
+                                } catch (\Throwable $_) {
+                                    // ignore
+                                }
+                            }
+                        }
+                    @endphp
+
+                    @if($isAdmin && $r->status === 'approved' && $hasNonConsumable)
                         <div class="request-actions">
                             <button type="button" class="btn" id="btn-mark-returned" style="background:#6b7280;color:#fff;border:none">Mark returned</button>
                         </div>
@@ -476,13 +563,26 @@
             btn.disabled = true;
             const notes = document.getElementById('approvalNotes').value;
             const quantity = action === 'approve' ? document.getElementById('approvalQuantity').value : null;
-            const equipmentId = btn.dataset.equipmentId;
-            
+            // prefer dataset, but fall back to the currentEquipmentData populated when modal opened
+            const equipmentId = (btn && btn.dataset && btn.dataset.equipmentId) ? btn.dataset.equipmentId : (currentEquipmentData ? currentEquipmentData.id : null);
+            const requestItemId = (btn && btn.dataset && btn.dataset.requestItemId) ? btn.dataset.requestItemId : (currentEquipmentData ? currentEquipmentData.request_item_id : null);
+
+            const payload = { action: action, notes: notes, quantity: quantity, equipment_id: equipmentId, request_item_id: requestItemId };
+            // safety: if modal was opened for a specific item but request_item_id is missing, abort to avoid parent-level fallback
+            if (currentIsItem && !requestItemId) {
+                console.error('Per-item action aborted: missing request_item_id', payload);
+                alert('Request item identifier missing — action aborted');
+                btn.disabled = false;
+                return;
+            }
+
+            console.log('Sending approval payload', payload);
+
             fetch('/notifications/requests/'+encodeURIComponent(id)+'/action', {
                 method: 'POST',
                 headers: { 'Content-Type':'application/json','X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content },
                 credentials: 'same-origin',
-                body: JSON.stringify({ action: action, notes: notes, quantity: quantity, equipment_id: equipmentId })
+                body: JSON.stringify(payload)
             }).then(r=>{
                 if (r.ok) window.location = '/requests?tab=pending';
                 else { alert('Failed'); btn.disabled=false }
@@ -493,11 +593,13 @@
         let currentAction = 'approve';
         let currentRequestId = '';
         let currentEquipmentData = null;
+        let currentIsItem = false; // true when modal opened for a specific request item
 
         function openApprovalModal(action, requestId, equipmentData) {
             currentAction = action;
             currentRequestId = requestId;
             currentEquipmentData = equipmentData;
+            currentIsItem = !!(equipmentData && equipmentData.request_item_id);
             
             const modal = document.getElementById('approvalModal');
             const backdrop = document.getElementById('approvalBackdrop');
@@ -511,8 +613,18 @@
             const quantityNote = document.getElementById('approvalQuantityNote');
             
             if (!equipmentData) {
-                alert('Equipment data not available');
-                return;
+                // Allow opening the modal for a parent-level action (multiple items)
+                equipmentData = {
+                    name: 'Multiple Items',
+                    category: '—',
+                    type: '—',
+                    serial: '—',
+                    location: '—',
+                    quantity: 0,
+                    requested_quantity: 0,
+                    request_item_id: null,
+                    id: null
+                };
             }
 
             // Populate equipment details with highlights
@@ -572,6 +684,8 @@
             // Set equipment ID on buttons
             confirmBtn.dataset.equipmentId = equipmentData.id;
             denyBtn.dataset.equipmentId = equipmentData.id;
+            confirmBtn.dataset.requestItemId = equipmentData.request_item_id ?? '';
+            denyBtn.dataset.requestItemId = equipmentData.request_item_id ?? '';
             
             modal.classList.add('show');
             backdrop.classList.add('show');

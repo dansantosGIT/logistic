@@ -364,25 +364,78 @@ Route::post('/notifications/requests/{id}/action', function (Request $request, $
         return response()->json(['error' => 'Not found'], 404);
     }
 
-    // Handle approval - deduct from inventory
-    if ($action === 'approve') {
-        $quantity = intval($request->input('quantity', 0));
-        $equipmentId = $request->input('equipment_id');
-        $notes = $request->input('notes', '');
+    // Support per-item approvals when `request_item_id` is provided.
+    $requestItemId = $request->input('request_item_id');
+    $equipmentId = $request->input('equipment_id');
+    $notes = $request->input('notes', '');
+    $quantity = intval($request->input('quantity', 0));
 
+    // If the client sent a `request_item_id` key (including null/empty), treat this as a per-item request.
+    if ($request->exists('request_item_id')) {
+        // validate presence (non-empty, non-null)
+        if ($requestItemId === null || $requestItemId === '') {
+            return response()->json(['error' => 'request_item_id missing'], 400);
+        }
+        
+        // continue handling per-item
+        
+        
+    
+        $item = \App\Models\InventoryRequestItem::find($requestItemId);
+        
+        if (!$item || $item->inventory_request_id != $r->id) {
+            return response()->json(['error' => 'Request item not found'], 404);
+        }
+
+        if ($action === 'approve') {
+            $issueQty = $quantity > 0 ? $quantity : intval($item->quantity);
+            $equipment = $equipmentId ? Equipment::find($equipmentId) : ($item->equipment_id ? Equipment::find($item->equipment_id) : null);
+            if ($issueQty > 0 && $equipment) {
+                if ($equipment->quantity < $issueQty) {
+                    return response()->json(['error' => 'Insufficient stock'], 400);
+                }
+                $equipment->quantity -= $issueQty;
+                $equipment->save();
+                $item->issued_quantity = $issueQty;
+            }
+            $item->status = 'approved';
+        } else {
+            $item->status = 'rejected';
+        }
+
+        $item->handled_by = $user->id ?? null;
+        $item->handled_at = now();
+        $item->save();
+
+        // Recompute parent status based on child items
+        $total = $r->items()->count();
+        $approved = $r->items()->where('status', 'approved')->count();
+        $rejected = $r->items()->where('status', 'rejected')->count();
+
+        if ($total > 0) {
+            if ($approved === $total) $r->status = 'approved';
+            elseif ($rejected === $total) $r->status = 'rejected';
+            else $r->status = 'partial';
+        }
+        $r->handled_by = $user->id ?? null;
+        $r->updated_at = now();
+        $r->save();
+
+        return response()->json(['ok' => true]);
+    }
+
+    // Fallback: act on parent request (legacy single-item behavior)
+    if ($action === 'approve') {
         if ($quantity > 0 && $equipmentId) {
             $equipment = Equipment::find($equipmentId);
             if ($equipment) {
-                // Validate sufficient stock
                 if ($equipment->quantity < $quantity) {
                     return response()->json(['error' => 'Insufficient stock'], 400);
                 }
-                // Deduct from inventory
                 $equipment->quantity -= $quantity;
                 $equipment->save();
             }
         }
-
         $r->status = 'approved';
     } else {
         $r->status = 'rejected';
@@ -415,18 +468,40 @@ Route::post('/requests/{id}/return', function (Request $request, $id) {
         return back()->withErrors(['status' => 'Consumable requests do not require return.']);
     }
 
-    // mark returned and restore stock if equipment exists
+    // mark returned
     $r->status = 'returned';
     $r->handled_by = $user->id ?? null;
     $r->updated_at = now();
     $r->save();
 
+    // If this is a multi-item request, update each child item and restore stock per item
     try {
-        if ($equipment) {
-            $qty = intval($r->quantity ?? 0);
-            if ($qty > 0) {
-                $equipment->quantity = intval($equipment->quantity ?? 0) + $qty;
-                $equipment->save();
+        if (isset($r->items) && is_countable($r->items) && $r->items->count() > 0) {
+            foreach ($r->items as $it) {
+                try {
+                    $equip = $it->equipment_id ? Equipment::find($it->equipment_id) : null;
+                    // determine quantity to restore: prefer issued_quantity, fall back to requested quantity
+                    $restoreQty = intval($it->issued_quantity ?? $it->quantity ?? 0);
+                    if ($equip && $restoreQty > 0) {
+                        $equip->quantity = intval($equip->quantity ?? 0) + $restoreQty;
+                        $equip->save();
+                    }
+                    $it->status = 'returned';
+                    $it->handled_by = $user->id ?? null;
+                    $it->handled_at = now();
+                    $it->save();
+                } catch (Throwable $_) {
+                    // continue with other items even if one fails
+                }
+            }
+        } else {
+            // single-item (legacy) behavior: restore stock for parent equipment if present
+            if ($equipment) {
+                $qty = intval($r->quantity ?? 0);
+                if ($qty > 0) {
+                    $equipment->quantity = intval($equipment->quantity ?? 0) + $qty;
+                    $equipment->save();
+                }
             }
         }
     } catch (Throwable $e) {
@@ -445,8 +520,14 @@ Route::get('/requests', function (Request $request) {
     } elseif ($tab === 'waiting') {
         // Only show approved requests for non-consumable items (waiting for return)
         $q->where('status', 'approved')
-          ->whereHas('equipment', function($qq){
-              $qq->whereRaw('LOWER(COALESCE(`type`, "")) <> ?', ['consumable']);
+          ->where(function($sub){
+              $sub->whereHas('equipment', function($qq){
+                  $qq->whereRaw('LOWER(COALESCE(`type`, "")) <> ?', ['consumable']);
+              })->orWhereHas('items', function($qq){
+                  $qq->whereHas('equipment', function($q2){
+                      $q2->whereRaw('LOWER(COALESCE(`type`, "")) <> ?', ['consumable']);
+                  });
+              });
           });
     } elseif ($tab === 'history') {
         // History includes rejected, returned, and approved (if desired)
@@ -456,6 +537,125 @@ Route::get('/requests', function (Request $request) {
     $items = $q->orderBy('created_at', 'desc')->get();
 
     return view('requests', ['items' => $items, 'tab' => $tab]);
+})->middleware('auth');
+
+// Request multiple items (form)
+Route::get('/requests/multiple', function () {
+    $equipment = Equipment::orderBy('name')->get();
+    return view('requests_multiple', compact('equipment'));
+})->middleware('auth');
+
+// Handle multiple requests submission
+Route::post('/requests/multiple', function (Request $request) {
+    $data = $request->all();
+    $rules = [
+        'requester' => 'required|string|max:255',
+        'role' => 'required|string|max:100',
+        'role_other' => 'nullable|string|max:255',
+        'department' => 'nullable|string|max:100',
+        'items' => 'required|array|min:1',
+        'items.*.equipment_id' => 'required|integer|exists:equipment,id',
+        'items.*.quantity' => 'required|integer|min:1',
+        'items.*.notes' => 'nullable|string|max:1000',
+        'items.*.return_date' => 'nullable|date',
+    ];
+
+    if ($request->input('role') === 'Others') {
+        $rules['role_other'] = 'required|string|max:255';
+    }
+
+    $validator = \Illuminate\Support\Facades\Validator::make($data, $rules);
+    if ($validator->fails()) {
+        return back()->withErrors($validator)->withInput();
+    }
+
+    // server-side quantity checks
+    $items = $request->input('items', []);
+    $errors = [];
+    foreach ($items as $idx => $it) {
+        $equip = Equipment::find($it['equipment_id']);
+        if (!$equip) {
+            $errors["items.$idx.equipment_id"] = 'Selected equipment not found.';
+            continue;
+        }
+        $reqQty = intval($it['quantity'] ?? 0);
+        if ($reqQty > intval($equip->quantity ?? 0)) {
+            $errors["items.$idx.quantity"] = 'Requested quantity exceeds available stock for "' . $equip->name . '".';
+        }
+        // require return_date for non-consumable items
+        $type = strtolower(trim($equip->type ?? ''));
+        if ($type !== 'consumable') {
+            $rd = trim($it['return_date'] ?? '');
+            if (empty($rd)) {
+                $errors["items.$idx.return_date"] = 'Return date is required for non-consumable item "' . $equip->name . '".';
+            } else {
+                try {
+                    \Carbon\Carbon::parse($rd);
+                } catch (Throwable $e) {
+                    $errors["items.$idx.return_date"] = 'Return date is not a valid date for "' . $equip->name . '".';
+                }
+            }
+        }
+    }
+    if (!empty($errors)) {
+        return back()->withErrors($errors)->withInput();
+    }
+
+    $user = auth()->user();
+
+    // Create a parent InventoryRequest to group these items
+    \DB::beginTransaction();
+    try {
+        $totalQty = array_sum(array_map(function($i){ return intval($i['quantity'] ?? 0); }, $items));
+
+        $parent = InventoryRequest::create([
+            'uuid' => (string) uniqid('R', true),
+            'item_id' => null,
+            'item_name' => 'Multiple items',
+            'requester' => $request->input('requester'),
+            'requester_user_id' => $user ? $user->id : null,
+            'quantity' => $totalQty > 0 ? $totalQty : 1,
+            'role' => $request->input('role') ?? null,
+            'department' => $request->input('department') ?: null,
+            'reason' => null,
+            'return_date' => null,
+            'status' => 'pending',
+        ]);
+
+        foreach ($items as $it) {
+            \App\Models\InventoryRequestItem::create([
+                'inventory_request_id' => $parent->id,
+                'equipment_id' => $it['equipment_id'],
+                'quantity' => intval($it['quantity']),
+                'notes' => $it['notes'] ?? null,
+                'return_date' => (!empty($it['return_date']) ? $it['return_date'] : null),
+                'location' => $it['location'] ?? null,
+            ]);
+        }
+
+        // append parent to legacy JSON as well
+        try {
+            $path = 'requests.json';
+            $list = [];
+            if (Storage::exists($path)) {
+                $list = json_decode(Storage::get($path), true) ?: [];
+            }
+            $entry = $parent->toArray();
+            $entry['id'] = $parent->uuid;
+            array_unshift($list, $entry);
+            Storage::put($path, json_encode($list, JSON_PRETTY_PRINT));
+        } catch (Throwable $e) {
+            // ignore
+        }
+
+        \DB::commit();
+    } catch (Throwable $e) {
+        \DB::rollBack();
+        try { \Log::error('requests/multiple create error', ['exception' => $e]); } catch (Throwable $_) {}
+        return back()->withErrors(['server' => 'Failed to create request group'])->withInput();
+    }
+
+    return redirect('/requests')->with('success', 'Request submitted');
 })->middleware('auth');
 
 // Show single request (detail / review)

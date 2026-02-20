@@ -23,4 +23,9 @@ class InventoryRequest extends Model
     {
         return $this->belongsTo(Equipment::class, 'item_id');
     }
+
+    public function items()
+    {
+        return $this->hasMany(\App\Models\InventoryRequestItem::class, 'inventory_request_id');
+    }
 }

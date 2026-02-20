@@ -260,7 +260,7 @@
                         <button class="btn">Export CSV</button>
                         <button class="btn">Documents</button>
                         <button class="btn">Quick Request</button>
-                        <button class="btn">Request Multiple</button>
+                        <a href="/requests/multiple" class="btn">Request Multiple</a>
                         <a href="/requests" class="btn request header-request" role="button" title="View requests">Request</a>
                         <a href="/inventory/add" class="btn primary">+ Add Equipment</a>
                     </div>
@@ -519,6 +519,8 @@
             });
         })();
     </script>
+
+    
     <script>
         (function(){
             const bell = document.getElementById('notif-bell');
@@ -681,6 +683,95 @@
                 })();
             })();
         </script>
+    <script>
+        // Lightweight client-side column sorting for tables with class `inventory-table`.
+        // Adds a small arrow indicator and tooltip via JS only (no CSS changes).
+        (function(){
+            const tables = document.querySelectorAll('table.inventory-table');
+            if(!tables || !tables.length) return;
+
+            tables.forEach(table => {
+                const thead = table.tHead || table.querySelector('thead');
+                const tbody = table.tBodies[0];
+                if(!thead || !tbody) return;
+                const headers = Array.from(thead.querySelectorAll('th'));
+
+                // store original titles to preserve any existing tooltip
+                headers.forEach(h=>{ if(!h.dataset.origTitle) h.dataset.origTitle = h.getAttribute('title') || ''; });
+
+                headers.forEach((th, colIdx) => {
+                    th.style.cursor = th.style.cursor || 'pointer';
+                    th.addEventListener('click', function(){
+                        const rows = Array.from(tbody.querySelectorAll('tr')).filter(r=> r.style.display !== 'none');
+                        if(!rows.length) return;
+
+                        const getCell = (row) => {
+                            const cell = row.children[colIdx];
+                            return cell ? cell.innerText.trim() : '';
+                        };
+
+                        // detect simple column type from first non-empty cell
+                        let sample = '';
+                        for(const r of rows){ sample = getCell(r); if(sample) break; }
+                        const isDate = sample && !isNaN(Date.parse(sample));
+                        const numTest = sample && sample.replace(/[^0-9.\-]/g,'');
+                        const isNum = numTest && /^-?[0-9,.]+$/.test(numTest.replace(/,/g,''));
+
+                        const current = th.getAttribute('data-sort-order') || 'none';
+                        const asc = current !== 'asc';
+                        // reset other headers: remove indicator, aria-sort and data attribute
+                        headers.forEach(h=>{
+                            if(h !== th){
+                                h.removeAttribute('data-sort-order');
+                                h.removeAttribute('aria-sort');
+                                // remove indicator span if present
+                                const old = h.querySelector('[data-sort-indicator]');
+                                if(old) old.remove();
+                                // restore original title (if any)
+                                if(h.dataset.origTitle) h.setAttribute('title', h.dataset.origTitle);
+                            }
+                        });
+
+                        th.setAttribute('data-sort-order', asc ? 'asc' : 'desc');
+                        th.setAttribute('aria-sort', asc ? 'ascending' : 'descending');
+                        // update tooltip/title
+                        th.setAttribute('title', (asc ? 'Sort: Ascending' : 'Sort: Descending') + ' — click to toggle');
+
+                        // remove any existing indicator then append new one
+                        const existing = th.querySelector('[data-sort-indicator]');
+                        if(existing) existing.remove();
+                        const ind = document.createElement('span');
+                        ind.setAttribute('data-sort-indicator', '1');
+                        ind.setAttribute('aria-hidden', 'true');
+                        ind.style.marginLeft = '6px';
+                        ind.textContent = asc ? '▲' : '▼';
+                        th.appendChild(ind);
+
+                        const collator = new Intl.Collator(undefined, {numeric:true, sensitivity:'base'});
+
+                        rows.sort((a,b)=>{
+                            const va = getCell(a);
+                            const vb = getCell(b);
+                            if(isNum){
+                                const na = parseFloat(va.replace(/[^0-9.-]+/g,'')) || 0;
+                                const nb = parseFloat(vb.replace(/[^0-9.-]+/g,'')) || 0;
+                                return asc ? na - nb : nb - na;
+                            }
+                            if(isDate){
+                                const da = Date.parse(va) || 0;
+                                const db = Date.parse(vb) || 0;
+                                return asc ? da - db : db - da;
+                            }
+                            return asc ? collator.compare(va, vb) : collator.compare(vb, va);
+                        });
+
+                        // re-append rows in sorted order (preserves event listeners on row elements)
+                        rows.forEach(r => tbody.appendChild(r));
+                    });
+                });
+            });
+        })();
+    </script>
 
         <!-- Equipment Details Modal -->
         <div class="modal-backdrop" id="equipmentBackdrop"></div>
