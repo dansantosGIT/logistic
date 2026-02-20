@@ -202,9 +202,8 @@ Route::post('/inventory/{id}/request', function (Request $request, $id) {
         'quantity' => 'required|integer|min:1',
         'role' => 'required|string|max:100',
         'role_other' => 'nullable|string|max:255',
-        'employee_department' => 'nullable|string|max:100',
-        'reason' => 'nullable|string|max:1000',
         'department' => 'nullable|string|max:100',
+        'reason' => 'nullable|string|max:1000',
     ];
 
     // require return_date for non-consumable items
@@ -218,18 +217,22 @@ Route::post('/inventory/{id}/request', function (Request $request, $id) {
     if ($request->input('role') === 'Others') {
         $rules['role_other'] = 'required|string|max:255';
     }
-    if ($request->input('role') === 'Employee') {
-        $rules['employee_department'] = 'required|string|max:100';
-    }
-    if ($request->input('role') === 'Operations') {
+    // Require department for staff and operations roles
+    if (in_array($request->input('role'), ['Employee','Volunteer','Intern','Operations'])) {
         $rules['department'] = 'required|string|max:100';
     }
 
     $request->validate($rules);
 
+    // ensure requested quantity does not exceed available stock
+    $requestedQty = (int) $request->input('quantity', 1);
+    if ($requestedQty > ($item->quantity ?? 0)) {
+        return back()->withErrors(['quantity' => 'Requested quantity exceeds available stock.'])->withInput();
+    }
+
     // persist to DB
     $user = auth()->user();
-    $departmentValue = $request->input('employee_department') ?: $request->input('department');
+    $departmentValue = $request->input('department');
 
     // build payload and only include `department` if the column exists in DB
     $payload = [
@@ -392,6 +395,47 @@ Route::post('/notifications/requests/{id}/action', function (Request $request, $
     return response()->json(['ok' => true]);
 })->middleware('auth');
 
+// Mark a request as returned (admin only)
+Route::post('/requests/{id}/return', function (Request $request, $id) {
+    $user = auth()->user();
+    $isAdmin = $user && ( ($user->id ?? 0) === 1 || strcasecmp($user->name ?? '', 'admin') === 0 );
+    if (!$isAdmin) {
+        return back()->withErrors(['permission' => 'Forbidden']);
+    }
+
+    $r = InventoryRequest::where('uuid', $id)->firstOrFail();
+
+    // Only approved, non-consumable requests may be marked returned
+    if ($r->status !== 'approved') {
+        return back()->withErrors(['status' => 'Only approved requests can be marked returned.']);
+    }
+
+    $equipment = $r->item_id ? Equipment::find($r->item_id) : null;
+    if ($equipment && strtolower(trim($equipment->type ?? '')) === 'consumable') {
+        return back()->withErrors(['status' => 'Consumable requests do not require return.']);
+    }
+
+    // mark returned and restore stock if equipment exists
+    $r->status = 'returned';
+    $r->handled_by = $user->id ?? null;
+    $r->updated_at = now();
+    $r->save();
+
+    try {
+        if ($equipment) {
+            $qty = intval($r->quantity ?? 0);
+            if ($qty > 0) {
+                $equipment->quantity = intval($equipment->quantity ?? 0) + $qty;
+                $equipment->save();
+            }
+        }
+    } catch (Throwable $e) {
+        // ignore stock restore failures but keep request marked returned
+    }
+
+    return back()->with('success', 'Request marked returned');
+})->middleware('auth');
+
 Route::get('/requests', function (Request $request) {
     $tab = $request->query('tab', 'pending');
 
@@ -399,9 +443,14 @@ Route::get('/requests', function (Request $request) {
     if ($tab === 'pending') {
         $q->where('status', 'pending');
     } elseif ($tab === 'waiting') {
-        $q->where('status', 'approved');
+        // Only show approved requests for non-consumable items (waiting for return)
+        $q->where('status', 'approved')
+          ->whereHas('equipment', function($qq){
+              $qq->whereRaw('LOWER(COALESCE(`type`, "")) <> ?', ['consumable']);
+          });
     } elseif ($tab === 'history') {
-        $q->whereIn('status', ['approved','rejected']);
+        // History includes rejected, returned, and approved (if desired)
+        $q->whereIn('status', ['approved','rejected','returned']);
     }
 
     $items = $q->orderBy('created_at', 'desc')->get();

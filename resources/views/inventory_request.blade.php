@@ -238,7 +238,7 @@
                             </div>
                         </div>
 
-                        <form id="request-form" method="POST" action="/inventory/{{ $item->id }}/request" data-item-type="{{ strtolower(trim($item->type ?? '')) }}">
+                        <form id="request-form" method="POST" action="/inventory/{{ $item->id }}/request" data-item-type="{{ strtolower(trim($item->type ?? '')) }}" data-available="{{ $item->quantity ?? 0 }}">
                             @csrf
                             <div class="form-grid" style="grid-template-columns:1fr 1fr;gap:10px">
                                 <div class="field">
@@ -256,20 +256,23 @@
                                         <option>Others</option>
                                     </select>
                                 </div>
+
+                                <div class="field">
+                                    <label for="quantity">Quantity</label>
+                                    <input id="quantity" name="quantity" type="number" min="1" value="1" required>
+                                    <div id="quantity-error" style="color:#ef4444;font-size:13px;margin-top:6px"></div>
+                                </div>
                                 <div class="field" id="department-field" style="display:none">
                                     <label for="department">Department</label>
                                     <select id="department" name="department">
                                         <option value="">Select department</option>
-                                        <option value="Alpha">Alpha</option>
-                                        <option value="Bravo">Bravo</option>
-                                        <option value="Charlie">Charlie</option>
                                     </select>
                                 </div>
-                                <div class="field">
-                                    <label for="qty">Quantity Requesting</label>
-                                    <input id="qty" name="quantity" type="number" min="1" value="1" required>
-                                </div>
 
+                                <div class="field" id="role-other-field" style="display:none">
+                                    <label for="role_other">If Other, specify role</label>
+                                    <input id="role_other" name="role_other" type="text" placeholder="e.g. Field Coordinator">
+                                </div>
                                 <div class="field" id="return-date-field">
                                     <label for="return_date">Date of Return</label>
                                     <input id="return_date" name="return_date" type="date">
@@ -454,28 +457,92 @@
         })();
     </script>
     <script>
-        // Show/hide department when Role == Operations
+        // Dynamic department / other-role behavior
         (function(){
             const role = document.getElementById('role');
             const deptField = document.getElementById('department-field');
             const deptInput = document.getElementById('department');
+            const roleOtherField = document.getElementById('role-other-field');
+            const roleOtherInput = document.getElementById('role_other');
             if(!role || !deptField || !deptInput) return;
+
+            const opsOptions = ['<option value="">Select department</option>','<option value="Alpha">Alpha</option>','<option value="Bravo">Bravo</option>','<option value="Charlie">Charlie</option>'].join('');
+            const staffOptions = ['<option value="">Select department</option>','<option value="Admin & Training">Admin & Training</option>','<option value="Planning & Research">Planning & Research</option>','<option value="CEDOC">CEDOC</option>'].join('');
+
+            function showDept(optsHtml){
+                deptInput.innerHTML = optsHtml;
+                deptField.style.display = '';
+                deptInput.setAttribute('required','required');
+                if(roleOtherField){ roleOtherField.style.display = 'none'; roleOtherInput && (roleOtherInput.removeAttribute('required'), roleOtherInput.value = ''); }
+            }
+
+            function hideDept(){
+                deptField.style.display = 'none';
+                deptInput.removeAttribute('required');
+                deptInput.value = '';
+            }
+
+            function showOther(){
+                if(roleOtherField){ roleOtherField.style.display = ''; roleOtherInput && roleOtherInput.setAttribute('required','required'); }
+                hideDept();
+            }
 
             function toggle(){
                 const val = (role.value || '').trim();
                 if(val === 'Operations'){
-                    deptField.style.display = '';
-                    deptInput.setAttribute('required','required');
+                    showDept(opsOptions);
+                } else if (['Employee','Volunteer','Intern'].includes(val)){
+                    showDept(staffOptions);
+                } else if (val === 'Others'){
+                    showOther();
                 } else {
-                    deptField.style.display = 'none';
-                    deptInput.removeAttribute('required');
-                    deptInput.value = '';
+                    hideDept();
+                    if(roleOtherField){ roleOtherField.style.display = 'none'; roleOtherInput && (roleOtherInput.removeAttribute('required'), roleOtherInput.value = ''); }
                 }
             }
 
             role.addEventListener('change', toggle);
             // init on load in case of server-rendered value
             toggle();
+        })();
+    </script>
+    <script>
+        // validate quantity vs available (client-side)
+        (function(){
+            const form = document.getElementById('request-form');
+            const qtyInput = document.getElementById('quantity');
+            const qtyError = document.getElementById('quantity-error');
+            if(!form || !qtyInput) return;
+            const available = parseInt(form.getAttribute('data-available') || '0', 10);
+            // set max attribute so native UI shows limit
+            qtyInput.setAttribute('max', String(Math.max(0, available)));
+
+            function validate(){
+                const v = parseInt(qtyInput.value || '0', 10) || 0;
+                if (available <= 0) {
+                    qtyError.textContent = 'Item out of stock';
+                    return false;
+                }
+                if (v < 1) {
+                    qtyError.textContent = 'Quantity must be at least 1';
+                    return false;
+                }
+                if (v > available) {
+                    qtyError.textContent = 'Requested quantity exceeds available (' + available + ')';
+                    return false;
+                }
+                qtyError.textContent = '';
+                return true;
+            }
+
+            qtyInput.addEventListener('input', validate);
+            form.addEventListener('submit', function(e){
+                if(!validate()){
+                    e.preventDefault();
+                    qtyInput.focus();
+                    return false;
+                }
+            });
         })();
     </script>
 </body>

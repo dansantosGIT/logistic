@@ -267,6 +267,12 @@
                             <button type="button" class="btn rej" id="btn-reject" style="padding:10px 18px;border-radius:8px">Deny</button>
                         </div>
                     @endif
+
+                    @if($isAdmin && $r->status === 'approved' && (!empty($equipment) && strtolower(trim($equipment->type ?? '')) !== 'consumable'))
+                        <div class="request-actions">
+                            <button type="button" class="btn" id="btn-mark-returned" style="background:#6b7280;color:#fff;border:none">Mark returned</button>
+                        </div>
+                    @endif
                 </div>
             </div>
         </main>
@@ -672,6 +678,34 @@
                 if(!item) return;
                 const id = item.dataset.uuid || item.getAttribute('data-uuid') || item.getAttribute('data-id');
                 if(id) window.location.href = '/requests/' + id;
+            });
+        })();
+    </script>
+    <script>
+        // Mark returned action
+        (function(){
+            const btn = document.getElementById('btn-mark-returned');
+            if(!btn) return;
+            btn.addEventListener('click', async function(){
+                if(!confirm('Confirm mark this request as returned?')) return;
+                btn.disabled = true;
+                try{
+                    const res = await fetch('/requests/{{ $r->uuid }}/return', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                        },
+                        credentials: 'same-origin',
+                        body: JSON.stringify({})
+                    });
+                    if(res.ok){
+                        location.reload();
+                    } else {
+                        alert('Failed to mark returned');
+                        btn.disabled = false;
+                    }
+                }catch(err){alert('Error');btn.disabled=false}
             });
         })();
     </script>
