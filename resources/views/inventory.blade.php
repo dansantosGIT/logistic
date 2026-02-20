@@ -67,8 +67,10 @@
         .panel h2, .panel h3{font-weight:700;margin:0}
         .row{display:flex;gap:12px;align-items:center}
         .tabs{display:flex;gap:6px;margin-bottom:12px}
-        .tab{background:#f1f5f9;padding:8px 12px;border-radius:8px;font-size:13px;color:#0f172a}
-        .tab.active{background:white;box-shadow:0 2px 8px rgba(2,6,23,0.04)}
+        .tab{background:#f1f5f9;padding:8px 12px;border-radius:8px;font-size:13px;color:#0f172a;transition:background .12s ease,transform .12s ease,box-shadow .12s ease}
+        /* Active tab: stronger visual anchor with gradient, left accent bar and subtle elevation */
+        .tab.active{background:linear-gradient(90deg,var(--accent),var(--accent-2));color:#fff;font-weight:700;box-shadow:0 8px 24px rgba(37,99,235,0.12);transform:translateY(-2px);position:relative}
+        .tab.active::before{content:"";position:absolute;left:0;top:8px;bottom:8px;width:4px;border-radius:4px;background:linear-gradient(180deg,var(--accent),var(--accent-2));}
 
         /* Table styles */
         .search-row{display:flex;gap:12px;margin-bottom:12px}
@@ -137,9 +139,9 @@
         tbody td .btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:6px 10px;font-size:13px;border-radius:8px;margin-left:6px;white-space:nowrap;vertical-align:middle}
         tbody td .btn.edit{margin-left:0} /* keep edit closer to item */
 
-        /* Tabs hover to match button feedback */
+        /* Tabs hover to match button feedback (don't override active tab) */
         .tabs .tab{transition:transform .08s ease,box-shadow .08s ease,background .08s ease}
-        .tabs .tab:hover{cursor:pointer;transform:translateY(-1px);background:#fff;box-shadow:0 6px 18px rgba(15,23,42,0.04)}
+        .tabs .tab:not(.active):hover{cursor:pointer;transform:translateY(-1px);background:#fff;box-shadow:0 6px 18px rgba(15,23,42,0.04)}
 
         /* Collapsed state adjustments (same behavior as dashboard) */
         .sidebar.collapsed .brand .text,
