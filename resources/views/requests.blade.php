@@ -134,7 +134,13 @@
         .notif-dropdown .actions{display:flex;gap:6px;flex-shrink:0}
         .notif-dropdown .empty{padding:12px;color:var(--muted);text-align:center}
 
-        .sort-link{color:#2563eb;font-weight:800;text-decoration:underline;margin-bottom:10px;display:inline-block;font-size:16px}
+        /* Header sort controls */
+        .th-sort-btn{background:transparent;border:none;cursor:pointer;font-size:13px;padding:4px;border-radius:6px;color:var(--muted-2);display:inline-flex;align-items:center;gap:6px;position:absolute;right:10px;top:50%;transform:translateY(-50%)}
+        .inventory-table thead th{position:relative;padding-right:44px}
+        .th-sort-menu{position:absolute;top:calc(100% + 6px);right:6px;display:none;flex-direction:column;background:#fff;border:1px solid #e6e9ef;border-radius:8px;box-shadow:0 8px 24px rgba(2,6,23,0.08);overflow:hidden;z-index:200}
+        .th-sort-menu.show{display:flex}
+        .th-sort-menu button{padding:8px 12px;border:none;background:transparent;text-align:left;cursor:pointer;font-size:13px;color:#0f172a}
+        .th-sort-menu button:hover{background:#f6f8fb}
 
         @media(max-width:900px){.sidebar{position:fixed;left:0;top:0;bottom:0;z-index:90;height:100vh}.sidebar.open{transform:translateX(0)}.main{padding:16px}}
     </style>
@@ -199,7 +205,6 @@
                 </div>
 
                 <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;gap:12px">
-                    <a href="#" class="sort-link">Requested ▾</a>
                     <div style="margin-left:auto"></div>
                     <div class="segment" role="tablist" aria-label="Request filters">
                         <a href="/requests?tab=pending" class="seg-btn {{ $tab==='pending' ? 'active' : '' }}">Pending</a>
@@ -431,6 +436,128 @@
                 const id = item.dataset.uuid || item.getAttribute('data-uuid') || item.getAttribute('data-id');
                 if(id) window.location.href = '/requests/' + id;
             });
+        })();
+    </script>
+    <script>
+        // Per-column sort controls with custom options per header
+        (function(){
+            const table = document.querySelector('.inventory-table table');
+            if(!table) return;
+            const thead = table.tHead || table.querySelector('thead');
+            if(!thead) return;
+            const ths = Array.from(thead.querySelectorAll('th'));
+
+            // Helper functions
+            function getCellText(row, index){ const cell = row.children[index]; return cell ? cell.innerText.trim() : ''; }
+            function parseNumber(s){ if(!s) return NaN; const n = parseFloat(s.replace(/[^0-9.-]+/g,'')); return isNaN(n)?NaN:n; }
+            function toDateValue(s){ if(!s) return 0; const d = Date.parse(s); if(!isNaN(d)) return d; const m = s.match(/(19|20)\d{2}/); if(m) return new Date(parseInt(m[0],10),0,1).getTime(); return 0; }
+
+            function classifyReturnText(s){
+                if(!s) return 'pending';
+                const txt = s.toLowerCase();
+                if(txt.includes('missing')) return 'missing';
+                if(txt.includes('consumable') || txt.includes('n/a') || txt.includes('not returned')) return 'notreturned';
+                // if it's a parsable date -> returned
+                if(!isNaN(Date.parse(s))) return 'returned';
+                return 'pending';
+            }
+
+            // Mapping of header index to menu options
+            ths.forEach((th, idx)=>{
+                const key = (th.textContent||'').trim().toLowerCase();
+                if(key === 'actions') return; // skip actions column
+
+                th.style.position = th.style.position || 'relative';
+                const btn = document.createElement('button');
+                btn.type = 'button'; btn.className = 'th-sort-btn'; btn.title = 'Sort'; btn.setAttribute('aria-haspopup','true'); btn.innerHTML = '▾';
+                const menu = document.createElement('div'); menu.className = 'th-sort-menu';
+
+                // Build custom menu per header
+                let html = '';
+                if(key === 'requested'){
+                    html = '<button data-sort="date-desc">Latest to Oldest</button><button data-sort="date-asc">Oldest to Latest</button><button data-sort="date-desc">Date Modified</button>';
+                } else if(key === 'equipment'){
+                    html = '<button data-sort="az">Alphabetical (A - Z)</button><button data-sort="za">Reverse (Z - A)</button>';
+                } else if(key === 'personnel'){
+                    html = '<button data-sort="az">A - Z</button>';
+                } else if(key === 'role'){
+                    // only provide Employee, Training, Volunteer (then alphabetical)
+                    html = '<button data-sort="role:Employee">Employee</button><button data-sort="role:Training">Training</button><button data-sort="role:Volunteer">Volunteer</button><button data-sort="az">A - Z</button>';
+                } else if(key === 'department'){
+                    // place Cedoc, Planning, Operations, Admin prominently; offer alphabetical fallback
+                    html = '<button data-sort="dept:Cedoc">Cedoc</button><button data-sort="dept:Planning">Planning</button><button data-sort="dept:Operations">Operations</button><button data-sort="dept:Admin">Admin</button><button data-sort="az">A - Z</button>';
+                } else if(key === 'qty' || key === 'quantity'){
+                    html = '<button data-sort="num-asc">Low to High</button><button data-sort="num-desc">High to Low</button>';
+                } else if(key === 'return'){
+                    html = '<button data-sort="ret:pending">Pending</button><button data-sort="ret:notreturned">Not returned</button><button data-sort="ret:missing">Missing</button><button data-sort="ret:returned">Returned</button><button data-sort="date-desc">Date (Newest)</button>';
+                } else {
+                    // default
+                    html = '<button data-sort="az">A - Z</button><button data-sort="date-desc">Date (Newest)</button>';
+                }
+
+                menu.innerHTML = html;
+                th.appendChild(btn); th.appendChild(menu);
+
+                btn.addEventListener('click', function(e){ e.stopPropagation(); menu.classList.toggle('show'); });
+                menu.addEventListener('click', function(e){ const opt = e.target && e.target.getAttribute('data-sort'); if(!opt) return; sortByColumn(idx,opt); menu.classList.remove('show'); });
+            });
+
+            function sortByColumn(index, mode){
+                const tbody = table.tBodies[0]; if(!tbody) return; const rows = Array.from(tbody.querySelectorAll('tr'));
+
+                rows.sort((a,b)=>{
+                    const va = getCellText(a,index);
+                    const vb = getCellText(b,index);
+
+                    // numeric sorts
+                    if(mode === 'num-asc' || mode === 'num-desc'){
+                        const na = parseNumber(va); const nb = parseNumber(vb);
+                        if(isNaN(na) && isNaN(nb)) return 0; if(isNaN(na)) return 1; if(isNaN(nb)) return -1;
+                        return mode === 'num-asc' ? na - nb : nb - na;
+                    }
+
+                    // alphabetical
+                    if(mode === 'az') return va.localeCompare(vb, undefined, {numeric:true, sensitivity:'base'});
+                    if(mode === 'za') return vb.localeCompare(va, undefined, {numeric:true, sensitivity:'base'});
+
+                    // date sorts
+                    if(mode === 'date-desc') return toDateValue(vb) - toDateValue(va);
+                    if(mode === 'date-asc') return toDateValue(va) - toDateValue(vb);
+
+                    // role specific: mode like 'role:Employee' — prefer Employee, Training, Volunteer
+                    if(mode && mode.indexOf('role:') === 0){
+                        const target = mode.split(':')[1].toLowerCase();
+                        const colIdx = 3; // role column
+                        const ra = getCellText(a,colIdx).toLowerCase();
+                        const rb = getCellText(b,colIdx).toLowerCase();
+                        const matchA = ra === target;
+                        const matchB = rb === target;
+                        if(matchA && !matchB) return -1;
+                        if(!matchA && matchB) return 1;
+                        // otherwise sort alphabetically by role
+                        return ra.localeCompare(rb, undefined, {sensitivity:'base'});
+                    }
+
+                    // department specific: 'dept:Name'
+                    if(mode && mode.indexOf('dept:') === 0){
+                        const target = mode.split(':')[1].toLowerCase(); const colIdx = 4; const da = getCellText(a,colIdx).toLowerCase(); const db = getCellText(b,colIdx).toLowerCase();
+                        const matchA = da === target; const matchB = db === target; if(matchA && !matchB) return -1; if(!matchA && matchB) return 1; return da.localeCompare(db, undefined, {sensitivity:'base'});
+                    }
+
+                    // return status grouping: 'ret:pending' etc.
+                    if(mode && mode.indexOf('ret:') === 0){
+                        const target = mode.split(':')[1].toLowerCase(); const ra = classifyReturnText(getCellText(a,6)); const rb = classifyReturnText(getCellText(b,6));
+                        const matchA = ra === target; const matchB = rb === target; if(matchA && !matchB) return -1; if(!matchA && matchB) return 1; return ra.localeCompare(rb, undefined, {sensitivity:'base'});
+                    }
+
+                    return 0;
+                });
+
+                rows.forEach(r=>tbody.appendChild(r));
+            }
+
+            // close menus on outside click
+            document.addEventListener('click', function(e){ if(!e.target.closest('.th-sort-menu') && !e.target.closest('.th-sort-btn')){ document.querySelectorAll('.th-sort-menu.show').forEach(m=>m.classList.remove('show')); } });
         })();
     </script>
 </body>
