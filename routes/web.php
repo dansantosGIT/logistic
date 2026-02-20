@@ -107,6 +107,30 @@ Route::get('/inventory', function () {
     return view('inventory', compact('equipment'));
 })->middleware('auth');
 
+// Inventory search (AJAX): returns rendered table rows for the query
+Route::get('/inventory/search', function (Request $request) {
+    $q = trim((string) $request->query('q', ''));
+    $page = max(1, (int) $request->query('page', 1));
+
+    // If query too short, return empty result set to avoid heavy queries
+    if ($q === '' || strlen($q) < 2) {
+        $equipment = Equipment::orderBy('created_at','desc')->paginate(25);
+        // Return the first page rows to keep behavior predictable
+        return view('partials.inventory_rows', compact('equipment'));
+    }
+
+    $items = Equipment::query()
+        ->where('name', 'like', "%{$q}%")
+        ->orWhere('category', 'like', "%{$q}%")
+        ->orWhere('location', 'like', "%{$q}%")
+        ->orWhere('serial', 'like', "%{$q}%")
+        ->orWhere('tag', 'like', "%{$q}%")
+        ->orderBy('created_at', 'desc')
+        ->paginate(25, ['*'], 'page', $page);
+
+    return view('partials.inventory_rows', ['equipment' => $items]);
+})->middleware('auth');
+
 // Add equipment form
 Route::get('/inventory/add', function () {
     // provide distinct existing categories from equipment table so new categories appear in the select

@@ -273,9 +273,9 @@
                 </div>
 
                 <div class="search-row">
-                    <input class="search" placeholder="Search name, category, location or tag">
+                    <input id="inventory-search" class="search" placeholder="Search name, category, location or tag">
                     <select class="page-size"><option>25</option><option>50</option><option>100</option></select>
-                    <button class="btn primary">Search</button>
+                    <button class="btn primary" id="inventory-search-clear" type="button" style="display:none">Clear</button>
                 </div>
 
                 <div class="table-wrap" style="overflow:auto">
@@ -406,6 +406,114 @@
                 if(!item) return;
                 const id = item.dataset.uuid || item.getAttribute('data-uuid') || item.getAttribute('data-id');
                 if(id) window.location.href = '/requests/' + id;
+            });
+        })();
+    </script>
+    <script>
+        // Live AJAX search for inventory
+        (function(){
+            const input = document.getElementById('inventory-search');
+            const clearBtn = document.getElementById('inventory-search-clear');
+            const tbody = document.querySelector('table.inventory-table tbody');
+            const pagination = document.querySelector('.pagination');
+            if(!input || !tbody) return;
+
+            // keep a snapshot of the original table so we can restore without reloading
+            const _originalTbody = tbody.innerHTML;
+            const _originalPaginationDisplay = pagination ? (pagination.style.display || '') : '';
+
+            let timer = null;
+            let controller = null;
+            // smaller debounce for snappier UX
+            const DEBOUNCE = 150;
+            const MIN_CHARS = 2;
+
+            // simple in-memory cache (query -> rendered HTML) with small LRU behavior
+            const _cache = new Map();
+            const _cacheOrder = [];
+            const _CACHE_MAX = 20;
+
+            // removed setLoading helper; placeholder handling uses setPlaceholder()
+
+            function setPlaceholder(message){
+                // show the existing placeholder row if present, otherwise fallback to replacing tbody
+                const placeholder = tbody.querySelector('tr.no-results');
+                const html = '<div class="placeholder-msg" style="width:100%;padding:10px 8px;background:linear-gradient(180deg,#ffffff,#fbfdff);text-align:center;color:var(--muted)">' + message + '</div>';
+                if(placeholder){
+                    // hide all data rows
+                    Array.from(tbody.querySelectorAll('tr')).forEach(r=> r.style.display = 'none');
+                    placeholder.style.display = '';
+                    const td = placeholder.querySelector('td');
+                    if(td) td.innerHTML = html;
+                } else {
+                    tbody.dataset.prev = tbody.innerHTML;
+                    tbody.innerHTML = '<tr class="no-results"><td colspan="9">' + html + '</td></tr>';
+                }
+                if(pagination) pagination.style.display = 'none';
+            }
+
+            function doSearch(q){
+                // immediate cache hit: render cached HTML and skip network
+                if(_cache.has(q)){
+                    tbody.innerHTML = _cache.get(q);
+                    if(pagination) pagination.style.display = 'none';
+                    return Promise.resolve();
+                }
+                if(controller){
+                    try{ controller.abort(); }catch(e){}
+                }
+                controller = new AbortController();
+                // show temporary placeholder while searching (previously used setLoading())
+                setPlaceholder('Searching...');
+                return fetch('/inventory/search?q=' + encodeURIComponent(q), {credentials:'same-origin', signal: controller.signal})
+                    .then(r => {
+                        if(!r.ok) throw new Error('Network');
+                        return r.text();
+                    })
+                    .then(html => {
+                        tbody.innerHTML = html;
+                        try{
+                            // store in cache
+                            _cache.set(q, html);
+                            _cacheOrder.push(q);
+                            if(_cacheOrder.length > _CACHE_MAX){
+                                const old = _cacheOrder.shift();
+                                _cache.delete(old);
+                            }
+                        }catch(e){}
+                    })
+                    .catch(err => {
+                        if(err.name === 'AbortError') return;
+                        console.error(err);
+                        setPlaceholder('Search failed');
+                    })
+                    .finally(()=>{
+                        controller = null;
+                    });
+            }
+
+            input.addEventListener('input', function(e){
+                const q = input.value.trim();
+                clearTimeout(timer);
+                if(q.length >= MIN_CHARS){
+                    clearBtn.style.display = '';
+                    timer = setTimeout(()=> doSearch(q), DEBOUNCE);
+                } else if(q.length === 0) {
+                    // restore original page state without reloading
+                    clearBtn.style.display = 'none';
+                    if(pagination) pagination.style.display = _originalPaginationDisplay || '';
+                    tbody.innerHTML = _originalTbody;
+                } else {
+                    // short query: show hint
+                    setPlaceholder('Type at least ' + MIN_CHARS + ' characters to search');
+                }
+            });
+
+            clearBtn.addEventListener('click', function(){
+                input.value = '';
+                clearBtn.style.display = 'none';
+                if(pagination) pagination.style.display = _originalPaginationDisplay || '';
+                tbody.innerHTML = _originalTbody;
             });
         })();
     </script>
