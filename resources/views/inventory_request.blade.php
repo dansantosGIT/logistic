@@ -251,8 +251,9 @@
                                     <select id="role" name="role">
                                         <option>Employee</option>
                                         <option>Volunteer</option>
-                                        <option>Medic</option>
                                         <option>Operations</option>
+                                        <option>Intern</option>
+                                        <option>Others</option>
                                     </select>
                                 </div>
                                 <div class="field" id="department-field" style="display:none">

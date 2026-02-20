@@ -196,24 +196,43 @@ Route::post('/inventory/{id}/update', function (Request $request, $id) {
 // Handle request submission (persist to storage/requests.json)
 Route::post('/inventory/{id}/request', function (Request $request, $id) {
     $item = App\Models\Equipment::findOrFail($id);
+
     $rules = [
         'requester' => 'required|string|max:255',
         'quantity' => 'required|integer|min:1',
-        'role' => 'nullable|string|max:100',
+        'role' => 'required|string|max:100',
+        'role_other' => 'nullable|string|max:255',
+        'employee_department' => 'nullable|string|max:100',
         'reason' => 'nullable|string|max:1000',
-        'department' => 'required_if:role,Operations|in:Alpha,Bravo,Charlie',
+        'department' => 'nullable|string|max:100',
     ];
+
     // require return_date for non-consumable items
     if (strtolower(trim($item->type ?? '')) !== 'consumable') {
         $rules['return_date'] = 'required|date';
     } else {
         $rules['return_date'] = 'nullable|date';
     }
+
+    // additional conditional requirements
+    if ($request->input('role') === 'Others') {
+        $rules['role_other'] = 'required|string|max:255';
+    }
+    if ($request->input('role') === 'Employee') {
+        $rules['employee_department'] = 'required|string|max:100';
+    }
+    if ($request->input('role') === 'Operations') {
+        $rules['department'] = 'required|string|max:100';
+    }
+
     $request->validate($rules);
 
     // persist to DB
     $user = auth()->user();
-    $req = InventoryRequest::create([
+    $departmentValue = $request->input('employee_department') ?: $request->input('department');
+
+    // build payload and only include `department` if the column exists in DB
+    $payload = [
         'uuid' => (string) uniqid('r', true),
         'item_id' => $item->id,
         'item_name' => $item->name,
@@ -221,11 +240,26 @@ Route::post('/inventory/{id}/request', function (Request $request, $id) {
         'requester_user_id' => $user ? $user->id : null,
         'quantity' => (int) $request->input('quantity', 1),
         'role' => $request->input('role') ?? null,
-        'department' => $request->input('department') ?: null,
         'reason' => $request->input('reason'),
         'return_date' => $request->input('return_date') ?: null,
         'status' => 'pending',
-    ]);
+    ];
+
+    try {
+        if (\Illuminate\Support\Facades\Schema::hasColumn('inventory_requests', 'department')) {
+            $payload['department'] = $departmentValue ?: null;
+        }
+    } catch (Throwable $e) {
+        // schema check failed (e.g., DB not available) — skip adding department
+    }
+
+    $req = InventoryRequest::create($payload);
+
+    // append role_other into reason for admin visibility
+    if ($request->filled('role_other')) {
+        $req->reason = trim(($req->reason ? $req->reason . "\n" : '') . "Role detail: " . $request->input('role_other'));
+        $req->save();
+    }
 
     // also append to legacy JSON for compatibility
     try {
