@@ -260,7 +260,7 @@
                         <button class="btn">Export CSV</button>
                         <button class="btn">Documents</button>
                         <button class="btn">Quick Request</button>
-                        <a href="/requests/multiple" class="btn">Request Multiple</a>
+                        <a href="/requests/multiple" class="btn header-request">Request Multiple</a>
                         <a href="/requests" class="btn request header-request" role="button" title="View requests">Request</a>
                         <a href="/inventory/add" class="btn primary">+ Add Equipment</a>
                     </div>

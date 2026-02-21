@@ -46,7 +46,7 @@
         .tab.alt{background:transparent;border:1px solid #e6e9ef;color:#64748b}
 
         table.inventory-table{width:100%;border-collapse:separate;border-spacing:0;background:transparent;table-layout:auto}
-        thead th{background:linear-gradient(90deg,#eef8ff,#f6f0ff);padding:14px 16px;text-align:left;font-size:14px;color:var(--muted);border-bottom:1px solid rgba(14,21,40,0.04)}
+        thead th{background:linear-gradient(90deg,#08306b,#0b3d91);padding:14px 16px;text-align:left;font-size:14px;color:#ffffff;border-bottom:1px solid rgba(14,21,40,0.06)}
         /* card-style row */
         .row-card{display:flex;align-items:center;gap:12px;padding:14px;background:#ffffff;border-radius:8px;box-shadow:0 6px 18px rgba(2,6,23,0.04)}
         .rc-left{min-width:220px}
@@ -59,7 +59,7 @@
         .badge.pending{background:#ffebc2;color:#92400e}
 
         .small{font-size:12px;color:var(--muted-2)}
-        .actions{display:flex;gap:6px;align-items:center}
+        .actions{display:flex;gap:6px;align-items:flex-start}
         .rc-actions{display:flex;gap:8px;align-items:center;margin-left:auto}
         .btn{padding:4px 6px;font-size:12px;border-radius:6px;border:1px solid #e6e9ef;background:white;cursor:pointer;min-width:32px;display:inline-flex;align-items:center;justify-content:center}
         .btn.view{background:#fff;border:1px solid #e6eef9;padding:4px 6px;border-radius:6px}
@@ -77,12 +77,25 @@
         /* Use semantic table for reliable alignment */
         .inventory-table{margin-top:8px;width:100%;box-sizing:border-box;overflow-x:auto}
         .inventory-table table{width:100%;border-collapse:separate;border-spacing:0;background:transparent}
-        .inventory-table thead th{background:linear-gradient(90deg,#eef8ff,#f6f0ff);padding:14px 16px;text-align:left;font-size:14px;color:var(--muted);border-bottom:1px solid rgba(14,21,40,0.04)}
+        .inventory-table thead th{background:linear-gradient(90deg,#08306b,#0b3d91);padding:14px 16px;text-align:left;font-size:14px;color:#ffffff;border-bottom:1px solid rgba(14,21,40,0.06)}
         .inventory-table tbody tr{background:#fff;border-radius:8px;box-shadow:0 6px 18px rgba(2,6,23,0.04);transition:transform .12s ease;display:table-row;cursor:pointer}
         .inventory-table tbody tr:hover{transform:translateY(-2px)}
         .inventory-table tbody td{padding:12px 16px;vertical-align:middle;font-size:13px;color:#0f172a;border-bottom:1px solid rgba(14,21,40,0.04)}
         .inventory-table tbody td.center{text-align:center;color:var(--muted)}
-        .inventory-table tbody td.actions{text-align:right;white-space:nowrap}
+        .inventory-table tbody td.actions{text-align:right;white-space:nowrap;vertical-align:top}
+        /* stronger overrides for action alignment when rows grow taller */
+          /* Make the actions cell absolutely center its buttons so they remain vertically centered
+              regardless of surrounding cell height. Use a responsive fallback for narrow screens. */
+        /* Make the actions container fill the action cell and center its buttons vertically.
+           This avoids absolute positioning and keeps layout consistent for very tall rows. */
+        .inventory-table tbody tr td.actions{vertical-align:middle !important;padding-right:18px}
+        .inventory-table tbody tr td.actions .actions{position:static;height:100%;display:flex;align-items:center;justify-content:flex-end;gap:6px}
+
+        /* Responsive: on very small screens keep normal document flow so actions don't overlap */
+        @media(max-width:560px){
+            .inventory-table tbody tr td.actions{padding-right:0}
+            .inventory-table tbody tr td.actions .actions{position:static;height:auto;transform:none;justify-content:flex-start}
+        }
         .badge.pending{display:inline-block;padding:6px 10px;border-radius:999px;background:#ffebc2;color:#92400e;font-weight:700}
         .btn{padding:6px 10px;font-size:13px;border-radius:8px;border:1px solid #e6e9ef;background:white;cursor:pointer;display:inline-flex;align-items:center;justify-content:center}
         .btn.view{background:#fff;border:1px solid #e6eef9}
@@ -134,9 +147,15 @@
         .notif-dropdown .actions{display:flex;gap:6px;flex-shrink:0}
         .notif-dropdown .empty{padding:12px;color:var(--muted);text-align:center}
 
+        /* Toast success */
+        .toast{position:fixed;right:24px;bottom:24px;background:#10b981;color:#fff;padding:12px 16px;border-radius:8px;box-shadow:0 10px 30px rgba(2,6,23,0.12);transform:translateY(12px);opacity:0;transition:opacity .22s,transform .22s;z-index:220;display:flex;align-items:center;gap:10px}
+        .toast.show{opacity:1;transform:translateY(0)}
+        .toast .close{cursor:pointer;padding:6px;border-radius:6px;background:rgba(255,255,255,0.12);color:rgba(255,255,255,0.9)}
+        .toast.error{background:#ef4444}
+
         /* Header sort controls */
         .th-sort-btn{background:transparent;border:none;cursor:pointer;font-size:13px;padding:4px;border-radius:6px;color:var(--muted-2);display:inline-flex;align-items:center;gap:6px;position:absolute;right:10px;top:50%;transform:translateY(-50%)}
-        .inventory-table thead th{position:relative;padding-right:44px}
+        .inventory-table thead th{position:relative;padding-right:44px;color:#ffffff}
         .th-sort-menu{position:absolute;top:calc(100% + 6px);right:6px;display:none;flex-direction:column;background:#fff;border:1px solid #e6e9ef;border-radius:8px;box-shadow:0 8px 24px rgba(2,6,23,0.08);overflow:hidden;z-index:200}
         .th-sort-menu.show{display:flex}
         .th-sort-menu button{padding:8px 12px;border:none;background:transparent;text-align:left;cursor:pointer;font-size:13px;color:#0f172a}
@@ -262,18 +281,20 @@
                                         @endif
                                     </td>
                                     <td class="actions">
-                                        <span class="badge pending">{{ ucfirst($r->status) }}</span>
-                                        <button class="icon-btn view" title="View request" aria-label="View request" onclick="viewRequest('{{ $r->uuid }}')">
-                                            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.6"/></svg>
-                                        </button>
-                                        @if($r->status==='pending')
-                                            <button class="icon-btn ok" title="Approve request" aria-label="Approve request" onclick="actionRequest('{{ $r->uuid }}','approve', this)">
-                                                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M20 6L9 17l-5-5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                                        <div class="actions">
+                                            <span class="badge pending">{{ ucfirst($r->status) }}</span>
+                                            <button class="icon-btn view" title="View request" aria-label="View request" onclick="viewRequest('{{ $r->uuid }}')">
+                                                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.6"/></svg>
                                             </button>
-                                            <button class="icon-btn rej" title="Reject request" aria-label="Reject request" onclick="actionRequest('{{ $r->uuid }}','reject', this)">
-                                                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                                            </button>
-                                        @endif
+                                            @if($r->status==='pending')
+                                                <button class="icon-btn ok" title="Approve request" aria-label="Approve request" onclick="actionRequest('{{ $r->uuid }}','approve', this)">
+                                                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M20 6L9 17l-5-5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                                                </button>
+                                                <button class="icon-btn rej" title="Reject request" aria-label="Reject request" onclick="actionRequest('{{ $r->uuid }}','reject', this)">
+                                                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                                                </button>
+                                            @endif
+                                        </div>
                                     </td>
                                 </tr>
                             @empty
@@ -286,6 +307,28 @@
         </main>
     </div>
     <form id="logout-form" method="POST" action="/logout" style="display:none">@csrf</form>
+    
+                @if(session('success'))
+                    <div class="toast" id="toast-success">{{ session('success') }}</div>
+                @else
+                    <div class="toast" id="toast-success" style="display:none"></div>
+                @endif
+
+                <!-- Confirmation modal for approve/reject actions -->
+                <div id="confirmBackdrop" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:230"></div>
+                <div id="confirmModal" style="display:none;position:fixed;right:50%;bottom:50%;transform:translate(50%,50%);width:360px;max-width:calc(100% - 32px);background:#fff;border-radius:12px;box-shadow:0 20px 50px rgba(2,6,23,0.16);z-index:240;padding:18px;">
+                    <div style="display:flex;align-items:flex-start;gap:12px">
+                        <div style="flex:1">
+                            <div id="confirmTitle" style="font-weight:800;font-size:16px;margin-bottom:8px">Confirm action</div>
+                            <div id="confirmMessage" style="color:#475569;font-size:13px;margin-bottom:12px">Are you sure you want to perform this action?</div>
+                            <div style="display:flex;gap:8px;justify-content:flex-end">
+                                <button id="confirmCancel" class="btn" style="background:#f3f4f6;color:#111">Cancel</button>
+                                <button id="confirmOk" class="btn ok" style="background:#2563eb;color:#fff">Confirm</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
     <script>
         (function(){
             const bell = document.getElementById('notif-bell');
@@ -336,13 +379,18 @@
                 }catch(e){console.error(e)}
             }
 
-            // delegate actions
+            // delegate actions (notifications dropdown)
             dropdown.addEventListener('click', async function(e){
                 const btn = e.target.closest('button[data-id]');
                 if(!btn) return;
                 const id = btn.getAttribute('data-id');
                 const action = btn.getAttribute('data-action');
                 try{
+                    // show the nicer confirmation modal instead of native confirm()
+                    const info = (action === 'approve') ? 'This will approve the request and issue items from inventory.' : 'This will reject the request — it will remain in records as rejected.';
+                    const ok = await showConfirm(action, id, info);
+                    if(!ok) return;
+
                     btn.disabled = true;
                     const res = await fetch('/notifications/requests/'+encodeURIComponent(id)+'/action', {
                         method: 'POST',
@@ -354,11 +402,13 @@
                         body: JSON.stringify({ action })
                     });
                     if(res.ok){
+                        if(action === 'approve') showToast('Request approved', 'success');
+                        else showToast('Request rejected', 'error');
                         await fetchNotifs();
                     } else {
-                        alert('Action failed');
+                        showToast('Action failed', 'error');
                     }
-                }catch(err){console.error(err);alert('Action error')}
+                }catch(err){console.error(err);showToast('Action error','error')}
                 finally{btn.disabled = false}
             });
 
@@ -421,29 +471,93 @@
             });
         })();
 
-        function actionRequest(id, action, btn) {
-            if (!confirm('Are you sure?')) return;
-            btn.disabled = true;
-            fetch('/notifications/requests/'+id+'/action', {
-                method: 'POST',
-                headers: { 'Content-Type':'application/json','X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content },
-                body: JSON.stringify({ action: action })
-            }).then(r=>r.json()).then(j=>{
-                if (j.ok) location.reload(); else { alert('Failed'); btn.disabled=false }
-            }).catch(e=>{alert('Error');btn.disabled=false});
-        }
         function viewRequest(id){ window.location = '/requests/'+id; }
     </script>
-    <script>
-        (function(){
+        <script>
+            // Small helper to show success/error toasts dynamically
+            function showToast(message, type) {
+                const id = (type === 'error') ? 'toast-error' : 'toast-success';
+                let el = document.getElementById(id);
+                if (!el) {
+                    el = document.createElement('div');
+                    el.id = id;
+                    el.className = 'toast' + (type === 'error' ? ' error' : '');
+                    document.body.appendChild(el);
+                }
+                el.textContent = message;
+                el.style.display = '';
+                setTimeout(function(){ el.classList.add('show'); }, 50);
+                setTimeout(function(){ el.classList.remove('show'); }, 4200);
+            }
+
+            // Confirmation modal helper — returns a Promise that resolves true/false
+            function showConfirm(action, id, infoText) {
+                return new Promise(function(resolve){
+                    const backdrop = document.getElementById('confirmBackdrop');
+                    const modal = document.getElementById('confirmModal');
+                    const title = document.getElementById('confirmTitle');
+                    const msg = document.getElementById('confirmMessage');
+                    const ok = document.getElementById('confirmOk');
+                    const cancel = document.getElementById('confirmCancel');
+
+                    title.textContent = (action === 'approve') ? 'Approve Request' : 'Deny Request';
+                    msg.textContent = infoText || ((action === 'approve') ? 'Approving will issue the items and update inventory. Proceed?' : 'Denying will mark this request as rejected. Proceed?');
+
+                    function cleanup() {
+                        backdrop.style.display = 'none';
+                        modal.style.display = 'none';
+                        ok.removeEventListener('click', onOk);
+                        cancel.removeEventListener('click', onCancel);
+                    }
+
+                    function onOk(){ cleanup(); resolve(true); }
+                    function onCancel(){ cleanup(); resolve(false); }
+
+                    ok.addEventListener('click', onOk);
+                    cancel.addEventListener('click', onCancel);
+
+                    backdrop.style.display = '';
+                    modal.style.display = '';
+                });
+            }
+
+            // Replace location.reload() with toast+reload for approve/reject actions
+            (function(){
+                const orig = window.actionRequest;
+                window.actionRequest = async function(id, action, btn){
+                    // show a nicer confirm modal with contextual text
+                    const info = (action === 'approve') ? 'This will approve the request and issue items from inventory.' : 'This will reject the request — it will remain in records as rejected.';
+                    const ok = await showConfirm(action, id, info);
+                    if(!ok) return;
+                    btn.disabled = true;
+                    try{
+                        const res = await fetch('/notifications/requests/'+id+'/action', {
+                            method: 'POST',
+                            headers: { 'Content-Type':'application/json','X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content },
+                            body: JSON.stringify({ action: action })
+                        });
+                        const j = await res.json();
+                        if (j.ok) {
+                            if(action === 'approve') showToast('Request approved', 'success');
+                            else showToast('Request rejected', 'error');
+                            setTimeout(function(){ location.reload(); }, 700);
+                        } else { alert('Failed'); btn.disabled=false }
+                    }catch(e){ alert('Error'); btn.disabled=false }
+                };
+                })();
+            </script>
+            <script>
+            (function(){
             const tbody = document.querySelector('.inventory-table tbody');
             if(!tbody) return;
             tbody.addEventListener('click', function(e){
-                const row = e.target.closest('tr[data-uuid]');
+                const target = e.target;
+                // ignore clicks on interactive elements/buttons/links and elements explicitly marked to skip row-click
+                if (target.closest('a, button, input, select, textarea, .icon-btn, .actions, [data-no-row-click], [onclick]')) return;
+                // find the row container
+                const row = target.closest('tr[data-uuid]');
                 if(!row) return;
-                // ignore clicks on actionable elements
-                if(e.target.closest('a, button, .icon-btn')) return;
-                const id = row.getAttribute('data-uuid');
+                const id = row.dataset.uuid || row.getAttribute('data-uuid');
                 if(id) viewRequest(id);
             });
         })();
@@ -459,6 +573,18 @@
                 const id = item.dataset.uuid || item.getAttribute('data-uuid') || item.getAttribute('data-id');
                 if(id) window.location.href = '/requests/' + id;
             });
+        })();
+    </script>
+    <script>
+        (function(){
+            const msg = {!! json_encode(session('success')) !!};
+            const toast = document.getElementById('toast-success');
+            if(msg && toast){
+                toast.textContent = msg;
+                toast.style.display = '';
+                setTimeout(function(){ toast.classList.add('show'); }, 50);
+                setTimeout(function(){ toast.classList.remove('show'); }, 4200);
+            }
         })();
     </script>
     <script>

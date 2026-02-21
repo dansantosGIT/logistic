@@ -333,7 +333,12 @@
                         body: JSON.stringify({ action })
                     });
                     if(res.ok){
+                        if(action === 'approve') showToast('Request approved', 'success');
+                        else showToast('Request rejected', 'error');
                         await fetchNotifs();
+                        setTimeout(()=>location.reload(), 700);
+                    } else {
+                        alert('Action failed');
                     }
                 }catch(err){console.error(err);alert('Action error')}
                 finally{btn.disabled = false}

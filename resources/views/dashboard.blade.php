@@ -198,7 +198,7 @@
                     <div class="list">
                         <h3 style="margin:0 0 8px">Recent Requests</h3>
                         @php
-                            $recentRequests = $recentRequests ?? (\App\Models\InventoryRequest::orderBy('created_at','desc')->take(10)->get());
+                            $recentRequests = $recentRequests ?? (\App\Models\InventoryRequest::orderBy('created_at','desc')->take(5)->get());
                         @endphp
                         @if($recentRequests && $recentRequests->count())
                             <div class="recent-list">
@@ -234,7 +234,7 @@
                             @if(isset($recent) && $recent->count())
                                 <div class="recent-list">
                                     <ul style="list-style:none;padding:0;margin:0;display:grid;gap:8px">
-                                        @foreach($recent as $item)
+                                        @foreach($recent->take(5) as $item)
                                             <li class="recent-item">
                                                 <a onclick="openEquipmentModal(this)" data-equipment='{{json_encode(["id" => $item->id, "name" => $item->name, "category" => $item->category ?? "—", "location" => $item->location ?? "—", "serial" => $item->serial ?? "—", "quantity" => $item->quantity, "type" => $item->type ?? "—", "tag" => $item->tag ?? "—", "notes" => $item->notes ?? "No description provided", "image_path" => $item->image_path, "date_added" => $item->date_added ? $item->date_added->format('M d, Y') : $item->created_at->format('M d, Y'), "created_at" => $item->created_at->format('M d, Y'), "updated_at" => $item->updated_at->format('M d, Y')])}}' style="display:flex;justify-content:space-between;gap:12px">
                                                     <div class="meta">
@@ -252,10 +252,26 @@
                             @endif
                     </div>
                 </div>
-                <aside>
-                    <div class="card">
-                        <h4 style="margin:0 0 8px">Stock Analytics</h4>
-                        <div class="placeholder">Chart placeholder</div>
+                    <aside>
+                    <div class="card" style="height:420px;display:flex;flex-direction:column">
+                        <div style="display:flex;align-items:center;justify-content:space-between;margin:0 0 8px">
+                            <h4 style="margin:0 0 0 0">Requests by Department</h4>
+                            <div id="analyticsLabel" style="font-size:13px;color:var(--muted)">Loading…</div>
+                        </div>
+                        <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
+                            <label style="font-size:13px;color:var(--muted);margin-right:6px">Range</label>
+                            <select id="analyticsMonths" style="padding:6px;border-radius:6px">
+                                <option value="1">This month</option>
+                                <option value="3">Last 3 months</option>
+                                <option value="6">Last 6 months</option>
+                                <option value="12">Last 12 months</option>
+                            </select>
+                            <button id="analyticsToggle" class="btn" style="margin-left:auto">Pie</button>
+                        </div>
+                        <div style="flex:1;min-height:240px">
+                            <canvas id="deptChart"></canvas>
+                        </div>
+                        <div style="margin-top:8px;text-align:right"><a href="#" style="color:var(--accent)">View details</a></div>
                     </div>
                 </aside>
             </section>
@@ -371,6 +387,93 @@
                 sidebar.classList.remove('open');
                 setOverlay(false);
             });
+        })();
+    </script>
+
+    <!-- Chart.js (CDN) + Analytics script -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        (function(){
+            const ctxEl = document.getElementById('deptChart');
+            if(!ctxEl) return;
+            const ctx = ctxEl.getContext('2d');
+            let chartType = 'pie';
+            let deptChart = null;
+
+            function updateChart(type, labels, values){
+                const bg = labels.map((_,i)=>`hsl(${(i*60)%360} 70% 50% / 0.85)`);
+                if(deptChart) deptChart.destroy();
+                deptChart = new Chart(ctx, {
+                    type: type,
+                    data: { labels: labels, datasets: [{ label: 'Requests', data: values, backgroundColor: bg }] },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                // show legend for pie charts, hide for bar charts where the legend isn't useful
+                                display: type === 'pie',
+                                labels: { usePointStyle: true }
+                            }
+                        }
+                    }
+                });
+            }
+
+            function formatYM(ym){
+                try{
+                    // ym -> YYYY-MM
+                    const d = new Date(ym + '-01');
+                    return d.toLocaleString(undefined, { month: 'short', year: 'numeric' });
+                }catch(e){return ym}
+            }
+
+            async function fetchAnalytics(){
+                const months = document.getElementById('analyticsMonths').value || '1';
+                try{
+                    const res = await fetch('/api/analytics/department-requests?months='+encodeURIComponent(months), { credentials: 'same-origin' });
+                    if(!res.ok) return;
+                    const data = await res.json();
+
+                    // update the label (server-driven when available)
+                    const labelEl = document.getElementById('analyticsLabel');
+                    if(labelEl){
+                        if(months === '1' && data.month){
+                            labelEl.textContent = formatYM(data.month);
+                        } else if(data.months && Array.isArray(data.months) && data.months.length){
+                            const first = data.months[0];
+                            const last = data.months[data.months.length-1];
+                            labelEl.textContent = formatYM(first) + ' – ' + formatYM(last);
+                        } else {
+                            // client-side fallback
+                            const now = new Date();
+                            labelEl.textContent = now.toLocaleString(undefined, { month: 'short', year: 'numeric' });
+                        }
+                    }
+
+                    // months==1: { labels, data }
+                    if(data.labels && data.data){
+                        updateChart(chartType === 'bar' ? 'bar' : 'pie', data.labels, data.data);
+                        return;
+                    }
+                    // fallback for monthly series: show latest month totals
+                    if(data.months && data.series){
+                        const lastIdx = data.months.length - 1;
+                        const labels = data.series.map(s=>s.department);
+                        const values = data.series.map(s=>s.data[lastIdx] || 0);
+                        updateChart(chartType === 'bar' ? 'bar' : 'pie', labels, values);
+                    }
+                }catch(e){console.error('analytics fetch', e)}
+            }
+
+            document.getElementById('analyticsMonths').addEventListener('change', fetchAnalytics);
+            document.getElementById('analyticsToggle').addEventListener('click', function(){
+                chartType = chartType === 'bar' ? 'pie' : 'bar';
+                this.textContent = chartType === 'bar' ? 'Pie' : 'Bar';
+                fetchAnalytics();
+            });
+
+            fetchAnalytics();
         })();
     </script>
     <script>

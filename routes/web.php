@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\EquipmentController;
+use App\Http\Controllers\AnalyticsController;
 use App\Models\Equipment;
 use Illuminate\Support\Facades\Storage;
 use App\Models\InventoryRequest;
@@ -346,6 +347,10 @@ Route::get('/notifications/requests', function (Request $request) {
         })->toArray(),
     ]);
 })->middleware('auth');
+
+// Analytics: department requests (used by dashboard Chart.js)
+Route::get('/api/analytics/department-requests', [AnalyticsController::class, 'departmentRequests'])->middleware('auth');
+
 
 // Notifications action: approve or reject (admin only)
 Route::post('/notifications/requests/{id}/action', function (Request $request, $id) {

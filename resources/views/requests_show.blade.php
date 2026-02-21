@@ -166,6 +166,11 @@
         .approval-btn-deny:hover{background:#dc2626;box-shadow:0 6px 16px rgba(239,68,68,0.3)}
         .approval-btn:disabled{opacity:0.6;cursor:not-allowed}
         @media(max-width:768px){.approval-modal{width:95%;max-width:none}}
+        /* Toast styles (used for approve/reject feedback) */
+        .toast{position:fixed;right:24px;bottom:24px;background:#10b981;color:#fff;padding:12px 16px;border-radius:8px;box-shadow:0 10px 30px rgba(2,6,23,0.12);transform:translateY(12px);opacity:0;transition:opacity .22s,transform .22s;z-index:220;display:flex;align-items:center;gap:10px}
+        .toast.show{opacity:1;transform:translateY(0)}
+        .toast .close{cursor:pointer;padding:6px;border-radius:6px;background:rgba(255,255,255,0.12);color:rgba(255,255,255,0.9)}
+        .toast.error{background:#ef4444}
     </style>
 </head>
 <body>
@@ -559,6 +564,22 @@
             });
         })();
 
+        // helper to show transient toasts (success/error)
+        function showToast(message, type) {
+            const id = (type === 'error') ? 'toast-error' : 'toast-success';
+            let el = document.getElementById(id);
+            if (!el) {
+                el = document.createElement('div');
+                el.id = id;
+                el.className = 'toast' + (type === 'error' ? ' error' : '');
+                document.body.appendChild(el);
+            }
+            el.textContent = message;
+            el.style.display = '';
+            setTimeout(function(){ el.classList.add('show'); }, 50);
+            setTimeout(function(){ el.classList.remove('show'); }, 4200);
+        }
+
         function doDetailAction(id, action, btn) {
             btn.disabled = true;
             const notes = document.getElementById('approvalNotes').value;
@@ -583,9 +604,16 @@
                 headers: { 'Content-Type':'application/json','X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content },
                 credentials: 'same-origin',
                 body: JSON.stringify(payload)
-            }).then(r=>{
-                if (r.ok) window.location = '/requests?tab=pending';
-                else { alert('Failed'); btn.disabled=false }
+            }).then(r=>r.json()).then(j=>{
+                if (j.ok) {
+                    // show colored toast, close modal and reload shortly after
+                    if(action === 'approve') showToast('Request approved', 'success');
+                    else showToast('Request rejected', 'error');
+                    closeApprovalModal();
+                    setTimeout(function(){ window.location = '/requests?tab=pending'; }, 700);
+                } else {
+                    alert('Failed'); btn.disabled=false;
+                }
             }).catch(e=>{alert('Error');btn.disabled=false});
         }
 
