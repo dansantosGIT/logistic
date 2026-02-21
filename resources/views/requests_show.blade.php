@@ -172,6 +172,7 @@
         .toast .close{cursor:pointer;padding:6px;border-radius:6px;background:rgba(255,255,255,0.12);color:rgba(255,255,255,0.9)}
         .toast.error{background:#ef4444}
     </style>
+    @include('partials._bg-preload')
 </head>
 <body>
     <div class="bg" aria-hidden="true"></div>

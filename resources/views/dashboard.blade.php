@@ -14,7 +14,9 @@
         *{box-sizing:border-box}
         body{margin:0;font-family:Inter,system-ui,Arial,Helvetica;background:var(--bg);color:#0f172a}
         /* Full-bleed background image (slightly transparent via overlay) */
-        .bg{position:fixed;inset:0;background-image:url('/images/welcome-bg.jpg');background-size:cover;background-position:center center;filter:brightness(0.6) saturate(0.95);z-index:-3}
+        /* lightweight placeholder shown immediately; full image swaps in once loaded */
+        .bg{position:fixed;inset:0;background-image:linear-gradient(180deg,#e9f0fb,#f6fbf9);background-size:cover;background-position:center center;filter:brightness(0.6) saturate(0.95);z-index:-3;transition:opacity .28s ease}
+        .bg.has-image{background-image:url('{{ asset('images/welcome-bg.jpg') }}');background-size:cover;background-position:center center}
         .overlay{position:fixed;inset:0;background:linear-gradient(180deg,rgba(2,6,23,0.28),rgba(2,6,23,0.4));z-index:-2}
         .app{display:flex;min-height:100vh}
 
@@ -122,6 +124,7 @@
             .main{padding:16px}
         }
     </style>
+    @include('partials._bg-preload')
 </head>
 <body>
     <div class="bg" aria-hidden="true"></div>
@@ -476,6 +479,21 @@
             fetchAnalytics();
         })();
     </script>
+        <script>
+            // Gradually load the full background to improve perceived page-switch speed
+            (function(){
+                try {
+                    const bg = document.querySelector('.bg');
+                    if(!bg) return;
+                    const img = new Image();
+                    // set high priority but allow browser to manage caching
+                    img.src = '{{ asset("images/welcome-bg.jpg") }}';
+                    img.onload = function(){
+                        bg.classList.add('has-image');
+                    };
+                } catch(e) { console.error('bg preload', e); }
+            })();
+        </script>
     <script>
         (function(){
             const dd = document.querySelector('.notif-dropdown');

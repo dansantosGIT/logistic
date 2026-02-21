@@ -205,6 +205,7 @@
             .main{padding:16px}
         }
     </style>
+    @include('partials._bg-preload')
 </head>
 <body>
     <div class="bg" aria-hidden="true"></div>

@@ -151,6 +151,7 @@
         }
     </style>
 </head>
+    @include('partials._bg-preload')
 <body>
     <div class="bg" aria-hidden="true"></div>
     <div class="overlay" aria-hidden="true"></div>
