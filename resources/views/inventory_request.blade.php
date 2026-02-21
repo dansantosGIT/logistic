@@ -229,8 +229,14 @@
 
                             <div style="flex:0 0 140px;display:flex;align-items:center;justify-content:center">
                                 <div style="width:120px;height:90px;border-radius:8px;background:#f6f8fb;border:1px dashed #e6e9ef;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:13px;overflow:hidden">
-                                    @if(!empty($item->photo))
-                                        <img src="{{ $item->photo }}" alt="{{ $item->name }}" style="width:100%;height:100%;object-fit:cover">
+                                    @if(!empty($item->image_path))
+                                        <div class="preview-link" data-full="{{ asset('storage/' . $item->image_path) }}" role="button" aria-label="View full image" style="cursor:pointer;display:block;width:100%;height:100%">
+                                            <img src="{{ asset('storage/' . $item->image_path) }}" alt="{{ $item->name }}" style="max-width:100%;max-height:100%;object-fit:contain;display:block;margin:auto;background:#fff;padding:6px;box-sizing:border-box">
+                                        </div>
+                                    @elseif(!empty($item->photo))
+                                        <div class="preview-link" data-full="{{ $item->photo }}" role="button" aria-label="View full image" style="cursor:pointer;display:block;width:100%;height:100%">
+                                            <img src="{{ $item->photo }}" alt="{{ $item->name }}" style="max-width:100%;max-height:100%;object-fit:contain;display:block;margin:auto;background:#fff;padding:6px;box-sizing:border-box">
+                                        </div>
                                     @else
                                         No Photo
                                     @endif
@@ -329,6 +335,51 @@
                 sidebar.classList.remove('open');
                 setOverlay(false);
             });
+        })();
+    </script>
+    <!-- Full-size preview modal (hidden by default). Opens only when user clicks thumbnail. -->
+    <div id="imageModal" aria-hidden="true" style="display:none;position:fixed;inset:0;z-index:1200;align-items:center;justify-content:center;background:rgba(0,0,0,0.85);padding:24px;box-sizing:border-box;">
+        <div id="imageModalBackdrop" style="position:absolute;inset:0"></div>
+        <img id="imageModalImg" src="" alt="Full image" style="max-width:calc(100vw - 48px);max-height:calc(100vh - 48px);width:auto;height:auto;object-fit:contain;border-radius:8px;box-shadow:0 12px 40px rgba(2,6,23,0.6);background:#fff;padding:6px;box-sizing:border-box;position:relative;z-index:1201;" />
+        <button id="imageModalClose" aria-label="Close image" style="position:fixed;right:32px;top:32px;z-index:1202;background:rgba(255,255,255,0.08);border:none;color:#fff;padding:8px 10px;border-radius:8px;cursor:pointer;font-size:16px;">✕</button>
+    </div>
+
+    <script>
+        (function(){
+            const modal = document.getElementById('imageModal');
+            const modalImg = document.getElementById('imageModalImg');
+            const backdrop = document.getElementById('imageModalBackdrop');
+            const closeBtn = document.getElementById('imageModalClose');
+
+            function open(src){
+                if(!src) return;
+                modalImg.src = src;
+                modal.style.display = 'flex';
+                modal.setAttribute('aria-hidden','false');
+                document.body.style.overflow = 'hidden';
+            }
+
+            function close(){
+                modal.style.display = 'none';
+                modalImg.src = '';
+                modal.setAttribute('aria-hidden','true');
+                document.body.style.overflow = '';
+            }
+
+            // open when clicking the thumbnail (.preview-link)
+            document.addEventListener('click', function(e){
+                const target = e.target.closest('.preview-link');
+                if(!target) return;
+                e.preventDefault();
+                const src = target.getAttribute('data-full') || target.dataset.full;
+                if(!src) return;
+                open(src);
+            });
+
+            // close when clicking backdrop or close button, not when clicking the image itself
+            backdrop.addEventListener('click', close);
+            closeBtn.addEventListener('click', close);
+            document.addEventListener('keydown', function(e){ if(e.key === 'Escape' && modal.style.display === 'flex'){ close(); } });
         })();
     </script>
     <script>

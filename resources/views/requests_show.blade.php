@@ -309,7 +309,21 @@
                                             ];
                                         @endphp
                                     <tr>
-                                        <td>{{ $itemName }}</td>
+                                        <td>
+                                            @php
+                                                $payload = [
+                                                    'id' => $equipData['id'] ?? null,
+                                                    'name' => $equipData['name'] ?? null,
+                                                    'category' => $equipData['category'] ?? null,
+                                                    'type' => $equipData['type'] ?? null,
+                                                    'serial' => $equipData['serial'] ?? null,
+                                                    'location' => $equipData['location'] ?? null,
+                                                    'quantity' => $equipData['quantity'] ?? 0,
+                                                    'image_path' => $equipModel?->image_path ?? $equipModel?->photo ?? null,
+                                                ];
+                                            @endphp
+                                            <a href="#" class="item-link" data-equipment='@json($payload)'>{{ $itemName }}</a>
+                                        </td>
                                         <td>{{ $requestedQty }}</td>
                                         <td>{{ $issued }}</td>
                                         <td>{{ !empty($returnDate) ? ((($returnDate instanceof \DateTimeInterface) ? $returnDate->format('F j, Y') : \Carbon\Carbon::parse($returnDate)->format('F j, Y'))) : 'Consumable — N/A' }}</td>
@@ -851,5 +865,105 @@
             });
         })();
     </script>
+
+    <!-- Equipment Details Modal (uses approval modal styles for consistency) -->
+    <div class="approval-backdrop" id="equipmentBackdrop"></div>
+    <div class="approval-modal" id="equipmentModal">
+        <div class="approval-header">
+            <h2 id="equipmentModalName">Equipment Details</h2>
+            <button class="approval-close" id="equipmentModalClose">&times;</button>
+        </div>
+        <div class="approval-body">
+            <img id="equipmentModalImage" src="" alt="Equipment" class="modal-image" style="display:none;display:block;width:100%;height:auto;max-height:60vh;object-fit:contain;border-radius:12px;margin-bottom:16px;background:#f3f4f6;padding:6px;box-sizing:border-box">
+            <div id="equipmentModalNoImage" style="width:100%;height:auto;max-height:60vh;background:#e5e7eb;border-radius:12px;margin-bottom:16px;display:flex;align-items:center;justify-content:center;color:#6b7280;font-size:16px;padding:12px;box-sizing:border-box">📷 No image available</div>
+            <div class="approval-item-meta">
+                <div>
+                    <div class="meta-label">Category</div>
+                    <div class="meta-item" id="equipmentModalCategory">—</div>
+                </div>
+                <div>
+                    <div class="meta-label">Type</div>
+                    <div class="meta-item" id="equipmentModalType">—</div>
+                </div>
+                <div>
+                    <div class="meta-label">Location</div>
+                    <div class="meta-item" id="equipmentModalLocation">—</div>
+                </div>
+                <div>
+                    <div class="meta-label">Quantity</div>
+                    <div class="meta-item" id="equipmentModalQuantity">0</div>
+                </div>
+            </div>
+            <div style="height:12px"></div>
+            <div>
+                <div class="meta-label">Serial</div>
+                <div class="meta-item" id="equipmentModalSerial">—</div>
+            </div>
+            <div style="height:8px"></div>
+            <div>
+                <div class="meta-label">Notes</div>
+                <div class="meta-item" id="equipmentModalNotes">—</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        (function(){
+            function openEquipmentModal(data){
+                if(!data) return;
+                const modal = document.getElementById('equipmentModal');
+                const backdrop = document.getElementById('equipmentBackdrop');
+                document.getElementById('equipmentModalName').textContent = data.name || 'Equipment Details';
+                document.getElementById('equipmentModalCategory').textContent = data.category || '—';
+                document.getElementById('equipmentModalType').textContent = data.type || '—';
+                document.getElementById('equipmentModalLocation').textContent = data.location || '—';
+                document.getElementById('equipmentModalQuantity').textContent = (data.quantity !== undefined) ? (data.quantity + ' unit(s)') : '0';
+                document.getElementById('equipmentModalSerial').textContent = data.serial || '—';
+                document.getElementById('equipmentModalNotes').textContent = data.notes || '—';
+
+                const img = document.getElementById('equipmentModalImage');
+                const noImg = document.getElementById('equipmentModalNoImage');
+                if(data.image_path){
+                    img.src = '/storage/' + data.image_path;
+                    img.style.display = 'block';
+                    noImg.style.display = 'none';
+                } else {
+                    img.style.display = 'none';
+                    noImg.style.display = 'flex';
+                }
+
+                modal.classList.add('show');
+                backdrop.classList.add('show');
+                document.body.style.overflow = 'hidden';
+            }
+
+            function closeEquipmentModal(){
+                const modal = document.getElementById('equipmentModal');
+                const backdrop = document.getElementById('equipmentBackdrop');
+                modal.classList.remove('show');
+                backdrop.classList.remove('show');
+                document.body.style.overflow = '';
+            }
+
+            // delegate clicks on equipment links
+            document.addEventListener('click', function(e){
+                const a = e.target.closest('.item-link');
+                if(!a) return;
+                e.preventDefault();
+                try{
+                    const data = a.dataset && a.dataset.equipment ? JSON.parse(a.dataset.equipment) : null;
+                    openEquipmentModal(data);
+                }catch(err){console.error('Invalid equipment payload', err)}
+            });
+
+            // close handlers
+            const closeBtn = document.getElementById('equipmentModalClose');
+            const backdrop = document.getElementById('equipmentBackdrop');
+            if(closeBtn) closeBtn.addEventListener('click', closeEquipmentModal);
+            if(backdrop) backdrop.addEventListener('click', closeEquipmentModal);
+            document.addEventListener('keydown', function(e){ if(e.key === 'Escape'){ closeEquipmentModal(); } });
+        })();
+    </script>
+
 </body>
 </html>
