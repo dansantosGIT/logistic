@@ -54,6 +54,6 @@ class EquipmentController extends Controller
             'created_by' => Auth::id(),
         ]);
 
-        return redirect('/inventory?location=all')->with('success', 'Equipment added');
+        return redirect('/inventory/' . $equipment->id . '/edit')->with('success', 'Equipment added');
     }
 }

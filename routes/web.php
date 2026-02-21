@@ -164,7 +164,7 @@ Route::get('/inventory/{id}/request', function ($id) {
     return view('inventory_request', compact('item'));
 })->middleware('auth');
 
-// Update equipment (simple handler)
+// Update equipment (handler with robust image handling)
 Route::post('/inventory/{id}/update', function (Request $request, $id) {
     $item = App\Models\Equipment::findOrFail($id);
     $data = $request->validate([
@@ -176,22 +176,47 @@ Route::post('/inventory/{id}/update', function (Request $request, $id) {
         'date_added' => 'nullable|date',
         'notes' => 'nullable|string|max:500',
         'image' => 'nullable|file|image|max:5120',
+        'existing_image' => 'nullable|string'
     ]);
 
-    // handle image upload if provided
-    if ($request->hasFile('image')) {
+    // remove image from $data so fill() doesn't attempt to set it
+    if (array_key_exists('image', $data)) {
+        unset($data['image']);
+    }
+
+    // handle image upload if provided and valid
+    if ($request->hasFile('image') && $request->file('image')->isValid()) {
         try {
-            $imagePath = $request->file('image')->store('equipment', 'public');
-            // update image_path on model
-            $item->image_path = $imagePath;
+            $newPath = $request->file('image')->store('equipment', 'public');
+            if ($newPath) {
+                // delete old image if it exists and is different
+                try {
+                    if ($item->image_path && $item->image_path !== $newPath && Storage::disk('public')->exists($item->image_path)) {
+                        Storage::disk('public')->delete($item->image_path);
+                    }
+                } catch (Throwable $__e) {
+                    // ignore deletion errors
+                }
+                $item->image_path = $newPath;
+            }
         } catch (Throwable $e) {
             // ignore storage failures but continue with other updates
         }
     }
 
+    // If no new upload but form provided existing_image, preserve it
+    if ((!$request->hasFile('image') || !$request->file('image')->isValid()) && $request->filled('existing_image')) {
+        // only set if model doesn't already have a value
+        if (!$item->image_path) {
+            $item->image_path = $request->input('existing_image');
+        }
+    }
+
     $item->fill($data);
     $item->save();
-    return redirect('/inventory')->with('success', 'Equipment updated');
+
+    // Redirect back to edit page so user sees the updated preview
+    return redirect('/inventory/' . $item->id . '/edit')->with('success', 'Equipment updated');
 })->middleware('auth');
 
 // Handle request submission (persist to storage/requests.json)

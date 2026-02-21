@@ -193,8 +193,27 @@
         </aside>
         <main class="main">
             <div class="panel">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+                    <h2 style="margin:0">Edit Equipment</h2>
+                    <a href="/inventory" class="btn header-request" style="text-decoration:none">Back</a>
+                </div>
+                @if ($errors->any())
+                    <div id="edit-error-toast" class="toast" role="alert" aria-live="assertive" style="background:#ef4444">
+                        <div class="message">
+                            <strong>There were errors with your submission:</strong>
+                            <ul style="margin:8px 0 0;padding-left:18px">
+                                @foreach ($errors->all() as $error)
+                                    <li>{{ $error }}</li>
+                                @endforeach
+                            </ul>
+                        </div>
+                        <div class="close" id="edit-error-close">✕</div>
+                    </div>
+                @endif
+
                 <form method="POST" action="/inventory/{{ $item->id }}/update" enctype="multipart/form-data">
                     @csrf
+                    <input type="hidden" name="existing_image" value="{{ $item->image_path }}">
                     <div class="form-grid">
                         <div class="field">
                             <label for="name">Name <span style="color:#ef4444;margin-left:6px;font-weight:700">*</span></label>
@@ -282,6 +301,34 @@
                     imgPreview.innerHTML = '<img src="'+url+'" alt="Preview" style="width:120px;height:80px;object-fit:cover;border-radius:8px;border:1px solid #e6e9ef">';
                 });
             }
+
+            // prevent double submit and show saving state when uploading
+            const form = document.querySelector('form[enctype="multipart/form-data"]');
+            if(form){
+                form.addEventListener('submit', function(e){
+                    const submit = form.querySelector('button[type="submit"]');
+                    const file = imgInput && imgInput.files && imgInput.files[0];
+                    const MAX_BYTES = 5 * 1024 * 1024; // 5MB server limit mirrored
+                    if (file) {
+                        // Basic client-side type check
+                        if (!file.type.startsWith('image/')) {
+                            e.preventDefault();
+                            showClientError('Selected file is not an image.');
+                            return;
+                        }
+                        if (file.size > MAX_BYTES) {
+                            e.preventDefault();
+                            showClientError('Image is too large. Maximum size is 5 MB.');
+                            return;
+                        }
+                    }
+
+                    if(submit){
+                        submit.disabled = true;
+                        submit.textContent = 'Saving...';
+                    }
+                });
+            }
         })();
     </script>
 
@@ -321,6 +368,25 @@
                 sidebar.classList.remove('open');
                 setOverlay(false);
             });
+        })();
+    </script>
+    @if(session('success') || session('status'))
+        <div id="edit-success-toast" class="toast" role="status" aria-live="polite">
+            <div class="message">{{ session('success') ?? session('status') }}</div>
+            <div class="close" id="edit-toast-close">✕</div>
+        </div>
+    @endif
+
+    <script>
+        (function(){
+            const toast = document.getElementById('edit-success-toast');
+            if(toast){
+                setTimeout(()=> toast.classList.add('show'), 60);
+                const hide = ()=> toast.classList.remove('show');
+                const t = setTimeout(hide, 4000);
+                const closer = document.getElementById('edit-toast-close');
+                closer && closer.addEventListener('click', ()=>{ clearTimeout(t); hide(); });
+            }
         })();
     </script>
 </body>

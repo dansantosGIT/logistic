@@ -99,6 +99,15 @@
         thead th:nth-child(8), tbody td:nth-child(8){min-width:90px}
         thead th:nth-child(9), tbody td:nth-child(9){min-width:120px;text-align:right}
 
+        /* Row status tint + left accent for quick scanning */
+        tbody tr.low td{background:linear-gradient(180deg,#fffaf0,#fffdf8)}
+        tbody tr.low td:first-child{box-shadow:inset 6px 0 0 rgba(249,115,22,0.14)}
+
+        tbody tr.out td{background:linear-gradient(180deg,#fff1f2,#fff8f9)}
+        tbody tr.out td:first-child{box-shadow:inset 6px 0 0 rgba(239,68,68,0.12)}
+
+        /* instock: keep default background for minimal noise */
+
         /* Ensure action buttons fit comfortably — make them smaller instead of forcing layout scroll */
         table.inventory-table tbody td:last-child{white-space:nowrap;padding-right:8px}
         /* Match status badge sizing: slightly smaller label text and fixed height so visually consistent */
@@ -298,7 +307,10 @@
                     <tbody>
                         @if(isset($equipment) && $equipment->count())
                             @foreach($equipment as $item)
-                                <tr data-location="{{ strtolower($item->location ?? '') }}" class="equipment-row" onclick="openEquipmentModal(this)" data-equipment='{{json_encode(["id" => $item->id, "name" => $item->name, "category" => $item->category ?? "—", "location" => $item->location ?? "—", "serial" => $item->serial ?? "—", "quantity" => $item->quantity, "type" => $item->type ?? "—", "tag" => $item->tag ?? "—", "notes" => $item->notes ?? "No description provided", "image_path" => $item->image_path, "date_added" => $item->date_added ? $item->date_added->format('M d, Y') : $item->created_at->format('M d, Y'), "created_at" => $item->created_at->format('M d, Y H:i'), "updated_at" => $item->updated_at->format('M d, Y H:i')])}}'>
+                                @php
+                                    $rowStatus = ($item->quantity <= 0) ? 'out' : (($item->quantity < 10) ? 'low' : 'instock');
+                                @endphp
+                                <tr data-location="{{ strtolower($item->location ?? '') }}" class="equipment-row {{ $rowStatus }}" onclick="openEquipmentModal(this)" data-equipment='{{json_encode(["id" => $item->id, "name" => $item->name, "category" => $item->category ?? "—", "location" => $item->location ?? "—", "serial" => $item->serial ?? "—", "quantity" => $item->quantity, "type" => $item->type ?? "—", "tag" => $item->tag ?? "—", "notes" => $item->notes ?? "No description provided", "image_path" => $item->image_path, "date_added" => $item->date_added ? $item->date_added->format('M d, Y') : $item->created_at->format('M d, Y'), "created_at" => $item->created_at->format('M d, Y H:i'), "updated_at" => $item->updated_at->format('M d, Y H:i')])}}'>
                                     <td>{{ $item->name }}</td>
                                     <td>{{ $item->category }}</td>
                                     <td>{{ $item->location }}</td>
