@@ -1028,7 +1028,8 @@
                 <button class="approval-close" id="deleteClose">&times;</button>
             </div>
             <div class="approval-body">
-                <p id="deleteMessage" style="margin:0 0 12px 0">Are you sure you want to delete this item?</p>
+                <p id="deleteItemName" style="margin:0 0 8px 0;font-weight:800;font-size:16px;color:#0f172a">This equipment</p>
+                <p id="deleteMessage" style="margin:0 0 12px 0;color:#6b7280">This action will permanently remove the equipment from inventory.</p>
                 <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:18px">
                     <button id="deleteCancel" class="btn ghost">Cancel</button>
                     <button id="deleteConfirm" class="btn delete">Delete</button>
@@ -1036,18 +1037,44 @@
             </div>
         </div>
 
-        <script>
+            <!-- Delete success modal (reuses approval modal styles) -->
+            <div class="approval-backdrop" id="deleteSuccessBackdrop" style="display:none"></div>
+            <div class="approval-modal" id="deleteSuccessModal" style="display:none">
+                <div class="approval-header">
+                    <h2 id="deleteSuccessTitle">Deleted</h2>
+                    <button class="approval-close" id="deleteSuccessClose">&times;</button>
+                </div>
+                <div class="approval-body">
+                    <p id="deleteSuccessItemName" style="margin:0 0 8px 0;font-weight:800;font-size:16px;color:#0f172a">Item</p>
+                    <p id="deleteSuccessBody" style="margin:0 0 12px 0;color:#6b7280">The equipment has been deleted successfully.</p>
+                </div>
+            </div>
+
+            <script>
             (function(){
-                const deleteModal = document.getElementById('deleteModal');
-                const deleteBackdrop = document.getElementById('deleteBackdrop');
-                const deleteClose = document.getElementById('deleteClose');
-                const deleteCancel = document.getElementById('deleteCancel');
-                const deleteConfirm = document.getElementById('deleteConfirm');
-                const deleteMessage = document.getElementById('deleteMessage');
-                let pendingHref = null;
+                    const deleteModal = document.getElementById('deleteModal');
+                    const deleteBackdrop = document.getElementById('deleteBackdrop');
+                    const deleteClose = document.getElementById('deleteClose');
+                    const deleteCancel = document.getElementById('deleteCancel');
+                    const deleteConfirm = document.getElementById('deleteConfirm');
+                    const deleteMessage = document.getElementById('deleteMessage');
+                    let pendingHref = null;
+                    let pendingItemName = null;
+                    // delete success modal elements
+                    const deleteSuccessModal = document.getElementById('deleteSuccessModal');
+                    const deleteSuccessBackdrop = document.getElementById('deleteSuccessBackdrop');
+                    const deleteSuccessClose = document.getElementById('deleteSuccessClose');
+                    const deleteSuccessItemName = document.getElementById('deleteSuccessItemName');
+                    const deleteSuccessBody = document.getElementById('deleteSuccessBody');
+                    let _deleteSuccessTimeout = null;
 
                 function showDeleteModal(name, ref){
-                    deleteMessage.innerHTML = '<strong>' + (name || 'This item') + '</strong> will be permanently deleted. <br><small>Reference: ' + (ref || '') + '</small>';
+                    const displayName = name || 'This equipment';
+                    const nameEl = document.getElementById('deleteItemName');
+                    if(nameEl) nameEl.textContent = displayName;
+                    // store pending item name for success notification
+                    pendingItemName = displayName;
+                    deleteMessage.innerHTML = 'This <strong>equipment</strong> will be <strong style="color:#e11d48">permanently deleted</strong>.';
                     deleteBackdrop.style.display = 'block';
                     deleteModal.style.display = 'block';
                     setTimeout(()=>{ deleteBackdrop.classList.add('show'); deleteModal.classList.add('show'); }, 10);
@@ -1058,6 +1085,24 @@
                     deleteBackdrop.classList.remove('show');
                     setTimeout(()=>{ deleteBackdrop.style.display = 'none'; deleteModal.style.display = 'none'; }, 220);
                     pendingHref = null;
+                }
+
+                function showDeleteSuccess(name){
+                    if(deleteSuccessItemName) deleteSuccessItemName.textContent = name || 'Item';
+                    if(deleteSuccessBody) deleteSuccessBody.textContent = 'The equipment has been deleted successfully.';
+                    deleteSuccessBackdrop.style.display = 'block';
+                    deleteSuccessModal.style.display = 'block';
+                    setTimeout(()=>{ deleteSuccessBackdrop.classList.add('show'); deleteSuccessModal.classList.add('show'); }, 10);
+                    // auto-dismiss and reload after 3s
+                    clearTimeout(_deleteSuccessTimeout);
+                    _deleteSuccessTimeout = setTimeout(()=>{ hideDeleteSuccess(true); }, 3000);
+                }
+
+                function hideDeleteSuccess(shouldReload){
+                    deleteSuccessModal.classList.remove('show');
+                    deleteSuccessBackdrop.classList.remove('show');
+                    clearTimeout(_deleteSuccessTimeout);
+                    setTimeout(()=>{ deleteSuccessBackdrop.style.display = 'none'; deleteSuccessModal.style.display = 'none'; if(shouldReload) window.location.reload(); }, 220);
                 }
 
                 // delegate clicks on delete links (use capture so td.stopPropagation() doesn't block it)
@@ -1079,6 +1124,10 @@
                     pendingHref = ref;
                     showDeleteModal(name, ref);
                 }, true);
+
+                // wire up success modal close actions
+                if(deleteSuccessClose) deleteSuccessClose.addEventListener('click', function(){ hideDeleteSuccess(true); });
+                if(deleteSuccessBackdrop) deleteSuccessBackdrop.addEventListener('click', function(){ hideDeleteSuccess(true); });
 
                 if(deleteClose) deleteClose.addEventListener('click', hideDeleteModal);
                 if(deleteCancel) deleteCancel.addEventListener('click', hideDeleteModal);
@@ -1104,11 +1153,11 @@
                         if(res.ok){
                             // remove the row from the DOM if present, then reload to ensure pagination/state
                             const link = document.querySelector('a.btn.delete[href="' + pendingHref + '"]');
-                            const row = link ? link.closest('tr') : null;
-                            if(row) row.remove();
-                            hideDeleteModal();
-                            // refresh to reflect server-side changes (keeps pagination consistent)
-                            window.location.reload();
+                                    const row = link ? link.closest('tr') : null;
+                                    if(row) row.remove();
+                                    hideDeleteModal();
+                                    // show delete-success modal (auto-dismiss then reload)
+                                    try{ showDeleteSuccess(pendingItemName); }catch(e){ window.location.reload(); }
                         } else {
                             // fallback: submit a POST form (method-spoof DELETE) to ensure server receives POST
                             const tokenInput = '<input type="hidden" name="_token" value="' + token + '">';
