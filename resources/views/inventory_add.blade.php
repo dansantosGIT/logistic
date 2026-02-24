@@ -151,6 +151,32 @@
         }
         .thumb-preview{width:120px;height:80px;border-radius:8px;background:#f1f5f9;display:flex;align-items:center;justify-content:center;border:1px solid #e6e9ef;overflow:hidden}
         .thumb-preview img{width:100%;height:100%;object-fit:cover;display:block}
+        .date-input-wrapper{position:relative;display:flex;align-items:center}
+        .date-input-wrapper input[type="date"]{width:100%;padding:11px 12px;padding-right:44px;border:1px solid #e6e9ef;border-radius:10px;background:linear-gradient(180deg,#fff,#fbfdff);font-size:14px;color:#0f172a;cursor:pointer}
+        .date-input-wrapper input[type="date"]::-webkit-calendar-picker-indicator{cursor:pointer;position:absolute;right:12px;width:20px;height:20px;background:transparent;filter:invert(0.5)}
+        .date-input-wrapper button{position:absolute;right:8px;background:none;border:none;cursor:pointer;padding:6px;display:flex;align-items:center;justify-content:center;color:var(--muted);z-index:1}
+        
+        /* Custom Calendar Picker */
+        .calendar-picker{position:absolute;top:100%;left:0;margin-top:6px;background:white;border:1px solid #e6e9ef;border-radius:10px;box-shadow:0 10px 30px rgba(2,6,23,0.12);z-index:100;width:320px;padding:12px;display:none;font-size:14px}
+        .calendar-picker.active{display:block}
+        .calendar-header{position:relative;display:flex;justify-content:center;align-items:center;margin-bottom:12px;padding:12px 0;border-bottom:1px solid #e6e9ef}
+        .calendar-header button{position:absolute;background:none;border:1px solid #e6e9ef;cursor:pointer;padding:8px 10px;color:var(--muted);font-weight:600;border-radius:6px;transition:background .1s ease,border-color .1s ease;display:flex;align-items:center;justify-content:center;width:36px;height:36px;top:0}
+        .calendar-header #prev-month{left:0}
+        .calendar-header #next-month{right:0}
+        .calendar-header button:hover{background:#f1f5f9;border-color:#2563eb;color:#2563eb}
+        .calendar-header .month-year{font-weight:700;color:#0f172a;text-align:center}
+        .calendar-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-bottom:6px}
+        .day-header{text-align:center;font-weight:600;color:var(--muted);padding:8px 0;font-size:12px}
+        .calendar-day{text-align:center;padding:8px 0;border-radius:6px;cursor:pointer;transition:background .1s ease,color .1s ease;user-select:none}
+        .calendar-day:hover:not(.empty):not(.other-month){background:#e6e9ef}
+        .calendar-day.today{background:#2563eb;color:white;font-weight:600}
+        .calendar-day.selected{background:#10b981;color:white;font-weight:600}
+        .calendar-day.empty,.calendar-day.other-month{color:#d1d5db;cursor:default}
+        .calendar-footer{display:flex;gap:6px;justify-content:flex-end;padding-top:6px;border-top:1px solid #e6e9ef}
+        .calendar-footer button{padding:6px 12px;border-radius:6px;border:1px solid #e6e9ef;background:white;cursor:pointer;transition:background .1s ease}
+        .calendar-footer button:hover{background:#f1f5f9}
+        .calendar-footer .btn-primary{background:#2563eb;color:white;border:none}
+        .calendar-footer .btn-primary:hover{background:#1e4fd8}
     </style>
 </head>
     @include('partials._bg-preload')
@@ -237,7 +263,36 @@
 
                         <div class="field">
                             <label for="date_added">Date Added</label>
-                            <input id="date_added" name="date_added" type="date">
+                            <div class="date-input-wrapper">
+                                <input id="date_added" name="date_added" type="date">
+                                <button type="button" id="date-picker-btn" title="Open date picker">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <rect x="4" y="5" width="16" height="16" rx="2" stroke="currentColor" stroke-width="1.5"/>
+                                        <path d="M8 1v6M16 1v6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                                        <path d="M4 11h16" stroke="currentColor" stroke-width="1.5"/>
+                                    </svg>
+                                </button>
+                                <div id="calendar-picker" class="calendar-picker">
+                                    <div class="calendar-header">
+                                        <button type="button" id="prev-month" title="Previous month">
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                <polyline points="15 18 9 12 15 6"></polyline>
+                                            </svg>
+                                        </button>
+                                        <div class="month-year" id="month-year"></div>
+                                        <button type="button" id="next-month" title="Next month">
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                <polyline points="9 18 15 12 9 6"></polyline>
+                                            </svg>
+                                        </button>
+                                    </div>
+                                    <div class="calendar-grid" id="calendar-grid"></div>
+                                    <div class="calendar-footer">
+                                        <button type="button" id="today-btn">Today</button>
+                                        <button type="button" id="done-btn" class="btn-primary">Done</button>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
 
                         <div class="field full">
@@ -285,6 +340,161 @@
     @endif
 
         (function(){
+            // Custom Calendar Picker
+            const dateInput = document.getElementById('date_added');
+            const datePickerBtn = document.getElementById('date-picker-btn');
+            const calendarPicker = document.getElementById('calendar-picker');
+            const prevMonthBtn = document.getElementById('prev-month');
+            const nextMonthBtn = document.getElementById('next-month');
+            const monthYearDisplay = document.getElementById('month-year');
+            const calendarGrid = document.getElementById('calendar-grid');
+            const todayBtn = document.getElementById('today-btn');
+            const doneBtn = document.getElementById('done-btn');
+
+            let currentDate = new Date();
+            let selectedDate = null;
+
+            // Set date to today by default
+            if(dateInput && !dateInput.value){
+                const today = new Date().toISOString().split('T')[0];
+                dateInput.value = today;
+                selectedDate = new Date(today);
+            } else if(dateInput && dateInput.value){
+                selectedDate = new Date(dateInput.value + 'T00:00:00');
+            }
+
+            // Format date to YYYY-MM-DD
+            function formatDate(date){
+                const year = date.getFullYear();
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                const day = String(date.getDate()).padStart(2, '0');
+                return `${year}-${month}-${day}`;
+            }
+
+            // Generate calendar grid
+            function generateCalendar(){
+                const year = currentDate.getFullYear();
+                const month = currentDate.getMonth();
+                
+                monthYearDisplay.textContent = currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+                
+                const firstDay = new Date(year, month, 1);
+                const lastDay = new Date(year, month + 1, 0);
+                const prevLastDay = new Date(year, month, 0);
+                
+                const firstDayOfWeek = firstDay.getDay();
+                const lastDateOfMonth = lastDay.getDate();
+                const lastDateOfPrevMonth = prevLastDay.getDate();
+                
+                calendarGrid.innerHTML = '';
+                
+                // Day headers
+                const dayHeaders = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
+                dayHeaders.forEach(day => {
+                    const dayEl = document.createElement('div');
+                    dayEl.className = 'day-header';
+                    dayEl.textContent = day;
+                    calendarGrid.appendChild(dayEl);
+                });
+                
+                // Previous month days
+                for(let i = firstDayOfWeek - 1; i >= 0; i--){
+                    const dayEl = document.createElement('div');
+                    dayEl.className = 'calendar-day empty other-month';
+                    dayEl.textContent = lastDateOfPrevMonth - i;
+                    calendarGrid.appendChild(dayEl);
+                }
+                
+                // Current month days
+                const today = new Date();
+                for(let day = 1; day <= lastDateOfMonth; day++){
+                    const dayEl = document.createElement('div');
+                    dayEl.className = 'calendar-day';
+                    dayEl.textContent = day;
+                    
+                    const date = new Date(year, month, day);
+                    const dateStr = formatDate(date);
+                    
+                    // Check if today
+                    if(formatDate(today) === dateStr){
+                        dayEl.classList.add('today');
+                    }
+                    
+                    // Check if selected
+                    if(selectedDate && formatDate(selectedDate) === dateStr){
+                        dayEl.classList.add('selected');
+                    }
+                    
+                    dayEl.addEventListener('click', function(){
+                        selectedDate = new Date(year, month, day);
+                        generateCalendar();
+                    });
+                    
+                    calendarGrid.appendChild(dayEl);
+                }
+                
+                // Next month days
+                const totalCells = calendarGrid.children.length - 7; // Exclude day headers
+                const remainingCells = 42 - totalCells; // 6 rows x 7 days
+                for(let day = 1; day <= remainingCells; day++){
+                    const dayEl = document.createElement('div');
+                    dayEl.className = 'calendar-day empty other-month';
+                    dayEl.textContent = day;
+                    calendarGrid.appendChild(dayEl);
+                }
+            }
+
+            // Toggle calendar
+            function toggleCalendar(){
+                calendarPicker.classList.toggle('active');
+                if(calendarPicker.classList.contains('active')){
+                    generateCalendar();
+                }
+            }
+
+            // Close calendar when clicking outside
+            document.addEventListener('click', function(e){
+                if(!e.target.closest('.date-input-wrapper')){
+                    calendarPicker.classList.remove('active');
+                }
+            });
+
+            // Button handlers
+            datePickerBtn.addEventListener('click', function(e){
+                e.preventDefault();
+                toggleCalendar();
+            });
+
+            prevMonthBtn.addEventListener('click', function(e){
+                e.preventDefault();
+                currentDate.setMonth(currentDate.getMonth() - 1);
+                generateCalendar();
+            });
+
+            nextMonthBtn.addEventListener('click', function(e){
+                e.preventDefault();
+                currentDate.setMonth(currentDate.getMonth() + 1);
+                generateCalendar();
+            });
+
+            todayBtn.addEventListener('click', function(e){
+                e.preventDefault();
+                selectedDate = new Date();
+                currentDate = new Date();
+                generateCalendar();
+            });
+
+            doneBtn.addEventListener('click', function(e){
+                e.preventDefault();
+                if(selectedDate){
+                    dateInput.value = formatDate(selectedDate);
+                }
+                calendarPicker.classList.remove('active');
+            });
+
+            // Initialize calendar
+            generateCalendar();
+
             const incr = document.getElementById('qty-incr');
             const decr = document.getElementById('qty-decr');
             const qty = document.getElementById('quantity');

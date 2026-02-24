@@ -82,28 +82,44 @@
         .recent-item .sub{font-size:12px;color:var(--muted);margin-top:4px}
         .placeholder{height:200px;border-radius:8px;background:linear-gradient(90deg,#eef2ff,#f0fdf4);display:flex;align-items:center;justify-content:center;color:var(--muted)}
 
-        /* Modal backdrop and styling */
-        .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,0.5);display:none;z-index:999;animation:fadeIn 0.2s ease-out}
+        /* Modal backdrop and styling - Professional upgrade */
+        .modal-backdrop{position:fixed;inset:0;background:rgba(2,6,23,0.6);display:none;z-index:999;animation:fadeIn 0.2s ease-out;backdrop-filter:blur(2px)}
         .modal-backdrop.show{display:block}
-        #equipmentModal{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(0.9);background:white;border-radius:16px;box-shadow:0 25px 50px rgba(0,0,0,0.3);width:90%;max-width:700px;max-height:90vh;overflow-y:auto;display:none;z-index:1000;animation:slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1)}
+        #equipmentModal{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(0.95);background:linear-gradient(180deg,#ffffff,#f8fafc);border-radius:20px;box-shadow:0 40px 80px rgba(0,0,0,0.25);width:95%;max-width:1400px;max-height:88vh;overflow-y:auto;display:none;z-index:1000;animation:slideUp 0.35s cubic-bezier(0.16,1,0.3,1)}
         #equipmentModal.show{display:block;transform:translate(-50%,-50%) scale(1)}
         @keyframes fadeIn{from{opacity:0}to{opacity:1}}
-        @keyframes slideUp{from{transform:translate(-50%,-55%) scale(0.95);opacity:0}to{transform:translate(-50%,-50%) scale(1);opacity:1}}
-        .modal-header{display:flex;justify-content:space-between;align-items:center;padding:24px;border-bottom:1px solid #e5e7eb;position:sticky;top:0;background:linear-gradient(135deg,var(--accent),var(--accent-2));color:white}
-        .modal-header h2{margin:0;font-size:22px;font-weight:700}
-        .modal-close{background:rgba(255,255,255,0.2);border:none;cursor:pointer;font-size:28px;color:white;padding:0;width:40px;height:40px;border-radius:8px;display:flex;align-items:center;justify-content:center;transition:background 0.2s;font-weight:300}
-        .modal-close:hover{background:rgba(255,255,255,0.3)}
-        .modal-body{padding:24px}
-        .modal-image{display:block;width:100%;height:auto;max-height:60vh;object-fit:contain;border-radius:12px;margin-bottom:24px;background:#f3f4f6}
-        .modal-section{margin-bottom:24px}
+        @keyframes slideUp{from{transform:translate(-50%,-60%) scale(0.92);opacity:0}to{transform:translate(-50%,-50%) scale(1);opacity:1}}
+        .modal-header{display:flex;justify-content:space-between;align-items:flex-start;padding:28px 32px;background:linear-gradient(135deg,var(--accent),var(--accent-2));color:white;border-radius:20px 20px 0 0;gap:16px;position:sticky;top:0;z-index:10}
+        .modal-header h2{margin:0;font-size:26px;font-weight:700;letter-spacing:-0.5px;flex:1}
+        .modal-close{background:rgba(255,255,255,0.15);border:none;cursor:pointer;font-size:32px;color:white;padding:0;width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;transition:background 0.25s,transform 0.2s;font-weight:300;flex-shrink:0}
+        .modal-close:hover{background:rgba(255,255,255,0.25);transform:scale(1.05)}
+        .modal-body{padding:28px 32px;display:grid;grid-template-columns:280px 1fr;gap:28px;align-items:start}
+        .modal-image-section{display:flex;flex-direction:column;gap:16px}
+        .modal-image{display:block;width:100%;height:auto;max-height:400px;object-fit:cover;border-radius:16px;background:#e2e8f0;border:1px solid rgba(14,21,40,0.08)}
+        .modal-image-container{width:100%}
+        #noImage{width:100%;height:300px;background:linear-gradient(135deg,#f0f4ff,#e2e8f0);border-radius:16px;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#64748b;font-size:16px;border:2px dashed rgba(37,99,235,0.2);gap:8px}
+        .modal-content-section{display:flex;flex-direction:column;gap:24px}
+        .modal-section{margin-bottom:0}
         .modal-section:last-child{margin-bottom:0}
-        .modal-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-bottom:24px}
-        .modal-info{padding:16px;background:#f9fafb;border-radius:10px;border-left:4px solid var(--accent)}
-        .modal-label{font-weight:700;color:var(--accent);font-size:12px;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;display:block}
-        .modal-value{color:#0f172a;font-size:15px;line-height:1.6;font-weight:500}
-        .modal-divider{height:1px;background:#e5e7eb;margin:24px 0}
+        .modal-grid{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:16px;margin-bottom:0}
+        .modal-grid-2col{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+        .modal-grid-3col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
+        .modal-info{padding:14px 16px;background:linear-gradient(135deg,#f6f9ff,#f0f4ff);border-radius:14px;border:1px solid rgba(37,99,235,0.12);transition:all 0.2s ease}
+        .modal-info:hover{box-shadow:0 8px 24px rgba(37,99,235,0.08);transform:translateY(-2px)}
+        .modal-label{font-weight:700;color:#2563eb;font-size:10px;text-transform:uppercase;letter-spacing:0.7px;margin-bottom:6px;display:block}
+        .modal-value{color:#0f172a;font-size:14px;line-height:1.5;font-weight:600}
+        .modal-section-title{font-weight:700;color:#0f172a;font-size:13px;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:12px;padding-bottom:12px;border-bottom:2px solid #e2e8f0}
+        #modalNotes{white-space:pre-wrap;word-break:break-word;background:linear-gradient(135deg,#f8fafc,#f1f5f9);padding:14px;border-radius:12px;border-left:5px solid var(--accent-2);font-size:14px;line-height:1.6;color:#1e293b}
+        .modal-divider{height:1px;background:linear-gradient(90deg,transparent,#e5e7eb,transparent);margin:20px 0}
+        .modal-actions{display:flex;gap:12px;justify-content:flex-end;padding-top:16px;border-top:1px solid #e5e7eb;margin-top:16px}
+        .modal-actions .btn{padding:11px 18px;font-size:13px;font-weight:600;border-radius:10px;transition:all 0.2s ease;display:inline-flex;align-items:center;justify-content:center;gap:6px}
+        .modal-actions .btn.request{background:linear-gradient(135deg,var(--accent),var(--accent-2));color:white;border:none;flex:1}
+        .modal-actions .btn.request:hover{transform:translateY(-2px);box-shadow:0 12px 28px rgba(37,99,235,0.3)}
+        .modal-actions .btn.edit{background:white;color:#0f172a;border:1.5px solid #e5e7eb}
+        .modal-actions .btn.edit:hover{background:#f8fafc;border-color:#2563eb;color:#2563eb}
         .recent-item a{cursor:pointer}
-        @media(max-width:768px){#equipmentModal{width:95%;max-height:85vh}.modal-grid{grid-template-columns:1fr}.modal-image{max-height:50vh}}
+        @media(max-width:1200px){#equipmentModal{max-width:96%;width:96%}.modal-body{grid-template-columns:1fr;gap:20px}.modal-grid{grid-template-columns:1fr 1fr}}
+        @media(max-width:768px){#equipmentModal{width:96%;max-width:100%;max-height:95vh;border-radius:20px;overflow-y:auto}.modal-header{padding:20px 24px;font-size:22px}.modal-body{padding:24px;grid-template-columns:1fr;gap:16px}.modal-image-section{gap:12px}.modal-grid{grid-template-columns:1fr}}
 
         /* Collapsed state adjustments */
         .sidebar.collapsed .brand .text,
@@ -286,64 +302,85 @@
     <div id="equipmentModal">
         <div class="modal-header">
             <h2 id="modalName">Equipment Details</h2>
-            <button class="modal-close" id="modalCloseBtn">&times;</button>
+            <button class="modal-close" id="modalCloseBtn">✕</button>
         </div>
         <div class="modal-body">
-            <img id="modalImage" src="" alt="Equipment" class="modal-image" style="display:none">
-            <div id="noImage" style="width:100%;height:300px;background:#e5e7eb;border-radius:12px;margin-bottom:24px;display:flex;align-items:center;justify-content:center;color:#6b7280;font-size:16px">📷 No image available</div>
-            
-            <div class="modal-grid">
-                <div class="modal-info">
-                    <span class="modal-label">Category</span>
-                    <div class="modal-value" id="modalCategory">—</div>
-                </div>
-                <div class="modal-info">
-                    <span class="modal-label">Location</span>
-                    <div class="modal-value" id="modalLocation">—</div>
-                </div>
-                <div class="modal-info">
-                    <span class="modal-label">Quantity</span>
-                    <div class="modal-value" id="modalQuantity">0</div>
-                </div>
-                <div class="modal-info">
-                    <span class="modal-label">Type</span>
-                    <div class="modal-value" id="modalType">—</div>
+            <!-- Image Section (Left) -->
+            <div class="modal-image-section">
+                <div class="modal-image-container">
+                    <img id="modalImage" src="" alt="Equipment" class="modal-image" style="display:none">
+                    <div id="noImage" style="display:flex">
+                        <div style="text-align:center;flex:1;width:100%;display:flex;flex-direction:column;align-items:center;justify-content:center">
+                            <p style="margin:0;font-weight:600">No image available</p>
+                            <p style="margin:4px 0 0 0;font-size:12px;color:#94a3b8">Add an image to showcase equipment</p>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <div class="modal-divider"></div>
-
-            <div class="modal-section">
-                <span class="modal-label">Serial Number</span>
-                <div class="modal-value" id="modalSerial">—</div>
-            </div>
-
-            <div class="modal-section">
-                <span class="modal-label">Tag / Identifier</span>
-                <div class="modal-value" id="modalTag">—</div>
-            </div>
-
-            <div class="modal-section">
-                <span class="modal-label">Description / Notes</span>
-                <div class="modal-value" id="modalNotes" style="background:#f9fafb;padding:12px;border-radius:8px;border-left:4px solid var(--accent-2)">No description</div>
-            </div>
-
-            <div class="modal-divider"></div>
-
-            <div class="modal-grid">
-                <div class="modal-info">
-                    <span class="modal-label">Date Added</span>
-                    <div class="modal-value" id="modalDateAdded">—</div>
+            <!-- Content Section (Right) -->
+            <div class="modal-content-section">
+                <!-- Key Information -->
+                <div class="modal-section">
+                    <div class="modal-grid">
+                        <div class="modal-info">
+                            <span class="modal-label">Category</span>
+                            <div class="modal-value" id="modalCategory">—</div>
+                        </div>
+                        <div class="modal-info">
+                            <span class="modal-label">Location</span>
+                            <div class="modal-value" id="modalLocation">—</div>
+                        </div>
+                        <div class="modal-info">
+                            <span class="modal-label">Quantity</span>
+                            <div class="modal-value" id="modalQuantity">0</div>
+                        </div>
+                        <div class="modal-info">
+                            <span class="modal-label">Type</span>
+                            <div class="modal-value" id="modalType">—</div>
+                        </div>
+                    </div>
                 </div>
-                <div class="modal-info">
-                    <span class="modal-label">Created</span>
-                    <div class="modal-value" id="modalCreated">—</div>
-                </div>
-            </div>
 
-            <div class="modal-section">
-                <span class="modal-label">Last Updated</span>
-                <div class="modal-value" id="modalUpdated">—</div>
+                <!-- Identification -->
+                <div class="modal-section">
+                    <div class="modal-section-title">Identification</div>
+                    <div class="modal-grid-2col">
+                        <div class="modal-info">
+                            <span class="modal-label">Serial Number</span>
+                            <div class="modal-value" id="modalSerial">—</div>
+                        </div>
+                        <div class="modal-info">
+                            <span class="modal-label">Tag / Identifier</span>
+                            <div class="modal-value" id="modalTag">—</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Timeline -->
+                <div class="modal-section">
+                    <div class="modal-section-title">Timeline</div>
+                    <div class="modal-grid-3col">
+                        <div class="modal-info">
+                            <span class="modal-label">Date Added</span>
+                            <div class="modal-value" id="modalDateAdded">—</div>
+                        </div>
+                        <div class="modal-info">
+                            <span class="modal-label">Created On</span>
+                            <div class="modal-value" id="modalCreated">—</div>
+                        </div>
+                        <div class="modal-info">
+                            <span class="modal-label">Last Updated</span>
+                            <div class="modal-value" id="modalUpdated">—</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Notes -->
+                <div class="modal-section">
+                    <div class="modal-section-title">Description / Notes</div>
+                    <div class="modal-value" id="modalNotes" style="margin-top:8px">No description provided</div>
+                </div>
             </div>
         </div>
     </div>
