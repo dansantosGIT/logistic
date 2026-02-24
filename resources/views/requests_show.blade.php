@@ -595,6 +595,57 @@
             setTimeout(function(){ el.classList.remove('show'); }, 4200);
         }
 
+        // Delete confirmation modal (reusable)
+        (function(){
+            const wrapper = document.createElement('div');
+            wrapper.innerHTML = `
+                <div class="approval-backdrop" id="deleteBackdropReq" style="display:none"></div>
+                <div class="approval-modal" id="deleteModalReq" style="display:none">
+                    <div class="approval-header">
+                        <h2 id="deleteTitleReq">Confirm Deletion</h2>
+                        <button class="approval-close" id="deleteCloseReq">&times;</button>
+                    </div>
+                    <div class="approval-body">
+                        <p id="deleteMessageReq">Are you sure you want to delete this item/request?</p>
+                        <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:18px">
+                            <button id="deleteCancelReq" class="btn ghost">Cancel</button>
+                            <button id="deleteConfirmReq" class="btn delete">Delete</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(wrapper);
+
+            const deleteModal = document.getElementById('deleteModalReq');
+            const deleteBackdrop = document.getElementById('deleteBackdropReq');
+            const deleteClose = document.getElementById('deleteCloseReq');
+            const deleteCancel = document.getElementById('deleteCancelReq');
+            const deleteConfirm = document.getElementById('deleteConfirmReq');
+            const deleteMessage = document.getElementById('deleteMessageReq');
+            let pendingHref = null;
+
+            function show(name, ref){
+                deleteMessage.innerHTML = '<strong>' + (name || 'This item') + '</strong> will be permanently deleted. <br><small>Reference: ' + (ref || '') + '</small>';
+                deleteBackdrop.style.display = 'block'; deleteModal.style.display = 'block';
+                setTimeout(()=>{ deleteBackdrop.classList.add('show'); deleteModal.classList.add('show'); }, 10);
+            }
+            function hide(){ deleteModal.classList.remove('show'); deleteBackdrop.classList.remove('show'); setTimeout(()=>{ deleteBackdrop.style.display='none'; deleteModal.style.display='none'; },220); pendingHref=null; }
+
+            document.addEventListener('click', function(e){
+                const a = e.target.closest('a.btn.delete');
+                if(!a) return;
+                e.preventDefault();
+                let name = a.dataset.name || a.getAttribute('data-name') || document.title || null;
+                pendingHref = a.getAttribute('href');
+                show(name, pendingHref);
+            });
+
+            if(deleteClose) deleteClose.addEventListener('click', hide);
+            if(deleteCancel) deleteCancel.addEventListener('click', hide);
+            if(deleteBackdrop) deleteBackdrop.addEventListener('click', hide);
+            if(deleteConfirm) deleteConfirm.addEventListener('click', function(){ if(!pendingHref) return hide(); window.location.href = pendingHref; });
+        })();
+
         function doDetailAction(id, action, btn) {
             btn.disabled = true;
             const notes = document.getElementById('approvalNotes').value;

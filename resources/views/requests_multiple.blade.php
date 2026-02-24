@@ -177,7 +177,7 @@
                                         <select name="items[{{ $i }}][equipment_id]" class="equipment-select">
                                             <option value="">-- Select equipment --</option>
                                             @foreach($equipment as $eq)
-                                                <option value="{{ $eq->id }}" data-qty="{{ $eq->quantity }}" data-type="{{ strtolower($eq->type ?? '') }}" data-location="{{ $eq->location ?? '' }}">{{ $eq->name }} ({{ $eq->quantity }} available)</option>
+                                                <option value="{{ $eq->id }}" data-qty="{{ $eq->quantity }}" data-type="{{ strtolower($eq->type ?? '') }}" data-location="{{ $eq->location ?? '' }}" data-category="{{ strtolower(str_replace(' ', '-', $eq->category ?? '')) }}">{{ $eq->name }} ({{ $eq->quantity }} available)</option>
                                             @endforeach
                                         </select>
                                     </div>
@@ -455,7 +455,7 @@
                                         <select name="items[${idx}][equipment_id]" class="equipment-select">
                                             <option value="">-- Select equipment --</option>
                                             @foreach($equipment as $eq)
-                                                <option value="{{ $eq->id }}" data-qty="{{ $eq->quantity }}" data-type="{{ strtolower($eq->type ?? '') }}" data-location="{{ $eq->location ?? '' }}">{{ addslashes($eq->name) }} ({{ $eq->quantity }} available)</option>
+                                                <option value="{{ $eq->id }}" data-qty="{{ $eq->quantity }}" data-type="{{ strtolower($eq->type ?? '') }}" data-location="{{ $eq->location ?? '' }}" data-category="{{ strtolower(str_replace(' ', '-', $eq->category ?? '')) }}">{{ addslashes($eq->name) }} ({{ $eq->quantity }} available)</option>
                                             @endforeach
                                         </select>
                                     </div>

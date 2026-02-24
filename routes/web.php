@@ -219,6 +219,28 @@ Route::post('/inventory/{id}/update', function (Request $request, $id) {
     return redirect('/inventory/' . $item->id . '/edit')->with('success', 'Equipment updated');
 })->middleware('auth');
 
+// Delete equipment (supports AJAX fetch deletion and form fallback)
+// Accept both POST and DELETE so method-spoofed forms and direct DELETE requests work
+Route::match(['post','delete'], '/inventory/{id}/delete', function (Request $request, $id) {
+    $item = App\Models\Equipment::findOrFail($id);
+    try {
+        if ($item->image_path && \Illuminate\Support\Facades\Storage::disk('public')->exists($item->image_path)) {
+            \Illuminate\Support\Facades\Storage::disk('public')->delete($item->image_path);
+        }
+    } catch (Throwable $__e) {
+        // ignore image deletion errors
+    }
+
+    $item->delete();
+
+    // If client expects JSON (AJAX), return JSON OK so frontend can handle UI updates
+    if ($request->wantsJson() || $request->ajax()) {
+        return response()->json(['ok' => true]);
+    }
+
+    return redirect('/inventory')->with('success', 'Equipment deleted');
+})->middleware('auth');
+
 // Handle request submission (persist to storage/requests.json)
 Route::post('/inventory/{id}/request', function (Request $request, $id) {
     $item = App\Models\Equipment::findOrFail($id);

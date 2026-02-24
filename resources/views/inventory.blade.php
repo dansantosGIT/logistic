@@ -219,6 +219,15 @@
             .sidebar.open{transform:translateX(0)}
             .main{padding:16px}
         }
+        /* Approval / Delete modal styles (shared) */
+        .approval-backdrop{position:fixed;inset:0;background:rgba(0,0,0,0.5);display:none;z-index:999;animation:fadeIn 0.2s ease-out}
+        .approval-backdrop.show{display:block}
+        .approval-modal{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(0.95);background:white;border-radius:16px;box-shadow:0 25px 50px rgba(0,0,0,0.3);width:90%;max-width:540px;max-height:90vh;overflow-y:auto;display:none;z-index:1000;animation:slideUp 0.3s cubic-bezier(0.16,1,0.3,1)}
+        .approval-modal.show{display:block;transform:translate(-50%,-50%) scale(1)}
+        .approval-header{display:flex;justify-content:space-between;align-items:center;padding:18px;border-bottom:1px solid #e5e7eb;position:sticky;top:0;background:linear-gradient(135deg,var(--accent),var(--accent-2));color:white;border-radius:16px 16px 0 0}
+        .approval-header h2{margin:0;font-size:16px;font-weight:700}
+        .approval-close{background:rgba(255,255,255,0.18);border:none;cursor:pointer;font-size:24px;color:white;padding:0;width:40px;height:40px;border-radius:8px}
+        .approval-body{padding:18px}
     </style>
     @include('partials._bg-preload')
 </head>
@@ -297,7 +306,7 @@
                     <div class="tab" data-location="medical">Medical</div>
                     <div class="tab" data-location="office">Office</div>
                     <div class="tab" data-location="vehicle">Vehicle</div>
-                    <div class="tab" data-type="heavy">Heavy Equipments</div>
+                    <div class="tab" data-category="power-tools">Power Tools</div>
                 </div>
 
                 <div class="search-row">
@@ -327,7 +336,7 @@
                                 @php
                                     $rowStatus = ($item->quantity <= 0) ? 'out' : (($item->quantity < 10) ? 'low' : 'instock');
                                 @endphp
-                                <tr data-location="{{ strtolower($item->location ?? '') }}" class="equipment-row {{ $rowStatus }}" onclick="openEquipmentModal(this)" data-equipment='{{json_encode(["id" => $item->id, "name" => $item->name, "category" => $item->category ?? "—", "location" => $item->location ?? "—", "serial" => $item->serial ?? "—", "quantity" => $item->quantity, "type" => $item->type ?? "—", "tag" => $item->tag ?? "—", "notes" => $item->notes ?? "No description provided", "image_path" => $item->image_path, "date_added" => $item->date_added ? $item->date_added->format('M d, Y') : $item->created_at->format('M d, Y'), "created_at" => $item->created_at->format('M d, Y H:i'), "updated_at" => $item->updated_at->format('M d, Y H:i')])}}'>
+                                <tr data-location="{{ strtolower($item->location ?? '') }}" data-category="{{ strtolower(str_replace(' ', '-', $item->category ?? '')) }}" class="equipment-row {{ $rowStatus }}" onclick="openEquipmentModal(this)" data-equipment='{{json_encode(["id" => $item->id, "name" => $item->name, "category" => $item->category ?? "—", "location" => $item->location ?? "—", "serial" => $item->serial ?? "—", "quantity" => $item->quantity, "type" => $item->type ?? "—", "tag" => $item->tag ?? "—", "notes" => $item->notes ?? "No description provided", "image_path" => $item->image_path, "date_added" => $item->date_added ? $item->date_added->format('M d, Y') : $item->created_at->format('M d, Y'), "created_at" => $item->created_at->format('M d, Y H:i'), "updated_at" => $item->updated_at->format('M d, Y H:i')])}}'>
                                     <td>{{ $item->name }}</td>
                                     <td>{{ $item->category }}</td>
                                     <td>{{ $item->location }}</td>
@@ -353,7 +362,7 @@
                                     <td style="display:flex;align-items:center;justify-content:flex-end;gap:8px" onclick="event.stopPropagation()">
                                         <a href="/inventory/{{ $item->id }}/request" class="btn request">Request</a>
                                         <a href="/inventory/{{ $item->id }}/edit" class="btn edit">Edit</a>
-                                        <a href="/inventory/{{ $item->id }}/delete" class="btn delete" onclick="event.stopPropagation(); return confirm('Delete this item?');">Delete</a>
+                                        <a href="/inventory/{{ $item->id }}/delete" class="btn delete">Delete</a>
                                     </td>
                                 </tr>
                             @endforeach
@@ -656,24 +665,33 @@
                 const titleEl = document.getElementById('inventory-title');
                 if(!tabs.length || !titleEl) return;
 
-                function filterRows(loc, type){
+                function filterRows(loc, type, category){
                     const rows = document.querySelectorAll('tbody tr');
                     let anyVisible = false;
                     rows.forEach(r=>{
                         if(r.classList && r.classList.contains('no-results')) return; // skip placeholder
                         const rowLoc = (r.dataset.location || '').toLowerCase();
                         const rowType = (r.dataset.type || '').toLowerCase();
+                        const rowCategory = (r.dataset.category || '').toLowerCase();
                         
                         let isVisible = false;
-                        if(type === 'heavy'){
-                            // Show only heavy equipment rows
-                            isVisible = rowType === 'heavy';
-                        } else if(loc === 'all'){
-                            // Show all non-heavy equipment
-                            isVisible = rowType !== 'heavy';
+                        if(category){
+                            // category-based tabs (e.g., power-tools)
+                            isVisible = rowCategory === (category || '').toLowerCase();
+                        } else if(type){
+                            // preserve any future type-based tabs
+                            isVisible = (rowType === (type || '').toLowerCase());
+                        } else if(loc){
+                            if(loc === 'all'){
+                                // show everything when 'all' is selected
+                                isVisible = true;
+                            } else {
+                                // show rows matching the requested location
+                                isVisible = (rowLoc && rowLoc.indexOf(loc) !== -1);
+                            }
                         } else {
-                            // Show equipment matching location
-                            isVisible = (rowLoc && rowLoc.indexOf(loc) !== -1) && rowType !== 'heavy';
+                            // default: show all
+                            isVisible = true;
                         }
                         
                         if(isVisible){
@@ -695,29 +713,36 @@
                     // Determine title
                     if(txt.toLowerCase().includes('inventory')){
                         titleEl.textContent = txt;
-                    } else if(txt.toLowerCase().includes('heavy')){
+                    } else if(txt.toLowerCase().includes('heavy') || txt.toLowerCase().includes('power')){
                         titleEl.textContent = txt;
                     } else {
                         titleEl.textContent = txt + ' Inventory';
                     }
                     
-                    // Get filter type and value
+                    // Get filter type, location or category value
                     const type = tab.dataset.type || null;
                     const loc = tab.dataset.location || null;
+                    const category = tab.dataset.category || null;
                     
                     try{
                         const url = new URL(window.location);
-                        if(type) {
+                        if(category){
+                            url.searchParams.set('category', category);
+                            url.searchParams.delete('type');
+                            url.searchParams.delete('location');
+                        } else if(type) {
                             url.searchParams.set('type', type);
                             url.searchParams.delete('location');
+                            url.searchParams.delete('category');
                         } else if(loc) {
                             url.searchParams.set('location', loc);
                             url.searchParams.delete('type');
+                            url.searchParams.delete('category');
                         }
                         window.history.replaceState({}, '', url);
                     } catch(e){}
                     
-                    filterRows(loc, type);
+                    filterRows(loc, type, category);
                 }
 
                 tabs.forEach(tab=>{
@@ -731,9 +756,14 @@
                 (function init(){
                     try{
                         const urlParams = new URL(window.location).searchParams;
+                        const category = urlParams.get('category');
                         const type = urlParams.get('type');
                         const loc = urlParams.get('location');
-                        
+
+                        if(category){
+                            const match = Array.from(tabs).find(t=>t.dataset.category===category);
+                            if(match) return setActive(match);
+                        }
                         if(type){
                             const match = Array.from(tabs).find(t=>t.dataset.type===type);
                             if(match) return setActive(match);
@@ -989,6 +1019,131 @@
                     closeEquipmentModal();
                 }
             });
+        </script>
+        <!-- Delete confirmation modal -->
+        <div class="approval-backdrop" id="deleteBackdrop" style="display:none"></div>
+        <div class="approval-modal" id="deleteModal" style="display:none">
+            <div class="approval-header">
+                <h2 id="deleteTitle">Confirm Deletion</h2>
+                <button class="approval-close" id="deleteClose">&times;</button>
+            </div>
+            <div class="approval-body">
+                <p id="deleteMessage" style="margin:0 0 12px 0">Are you sure you want to delete this item?</p>
+                <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:18px">
+                    <button id="deleteCancel" class="btn ghost">Cancel</button>
+                    <button id="deleteConfirm" class="btn delete">Delete</button>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            (function(){
+                const deleteModal = document.getElementById('deleteModal');
+                const deleteBackdrop = document.getElementById('deleteBackdrop');
+                const deleteClose = document.getElementById('deleteClose');
+                const deleteCancel = document.getElementById('deleteCancel');
+                const deleteConfirm = document.getElementById('deleteConfirm');
+                const deleteMessage = document.getElementById('deleteMessage');
+                let pendingHref = null;
+
+                function showDeleteModal(name, ref){
+                    deleteMessage.innerHTML = '<strong>' + (name || 'This item') + '</strong> will be permanently deleted. <br><small>Reference: ' + (ref || '') + '</small>';
+                    deleteBackdrop.style.display = 'block';
+                    deleteModal.style.display = 'block';
+                    setTimeout(()=>{ deleteBackdrop.classList.add('show'); deleteModal.classList.add('show'); }, 10);
+                }
+
+                function hideDeleteModal(){
+                    deleteModal.classList.remove('show');
+                    deleteBackdrop.classList.remove('show');
+                    setTimeout(()=>{ deleteBackdrop.style.display = 'none'; deleteModal.style.display = 'none'; }, 220);
+                    pendingHref = null;
+                }
+
+                // delegate clicks on delete links (use capture so td.stopPropagation() doesn't block it)
+                document.addEventListener('click', function(e){
+                    // find nearest element node from event target and then closest delete anchor
+                    let node = e.target;
+                    while(node && node.nodeType !== 1) node = node.parentElement;
+                    if(!node) return;
+                    const a = node.closest('a.btn.delete');
+                    if(!a) return;
+                    e.preventDefault();
+                    // try to extract name/id from closest row dataset.equipment
+                    const row = a.closest('tr');
+                    let name = null;
+                    let ref = a.getAttribute('href');
+                    if(row && row.dataset && row.dataset.equipment){
+                        try{ const data = JSON.parse(row.dataset.equipment); name = data.name || data.category || ('ID ' + (data.id||'')); }catch(err){}
+                    }
+                    pendingHref = ref;
+                    showDeleteModal(name, ref);
+                }, true);
+
+                if(deleteClose) deleteClose.addEventListener('click', hideDeleteModal);
+                if(deleteCancel) deleteCancel.addEventListener('click', hideDeleteModal);
+                if(deleteBackdrop) deleteBackdrop.addEventListener('click', hideDeleteModal);
+                if(deleteConfirm) deleteConfirm.addEventListener('click', async function(){
+                    if(!pendingHref) return hideDeleteModal();
+                    // attempt CSRF-protected POST (method spoofing to DELETE) so server handles deletion safely
+                    deleteConfirm.disabled = true;
+                    const origText = deleteConfirm.textContent;
+                    deleteConfirm.textContent = 'Deleting...';
+                    const token = document.querySelector('meta[name="csrf-token"]') ? document.querySelector('meta[name="csrf-token"]').getAttribute('content') : '';
+                    try{
+                        const res = await fetch(pendingHref, {
+                            method: 'POST',
+                            credentials: 'same-origin',
+                            headers: {
+                                'Content-Type': 'application/x-www-form-urlencoded',
+                                'X-CSRF-TOKEN': token
+                            },
+                            body: '_method=DELETE'
+                        });
+
+                        if(res.ok){
+                            // remove the row from the DOM if present, then reload to ensure pagination/state
+                            const link = document.querySelector('a.btn.delete[href="' + pendingHref + '"]');
+                            const row = link ? link.closest('tr') : null;
+                            if(row) row.remove();
+                            hideDeleteModal();
+                            // refresh to reflect server-side changes (keeps pagination consistent)
+                            window.location.reload();
+                        } else {
+                            // fallback: submit a POST form (method-spoof DELETE) to ensure server receives POST
+                            const tokenInput = '<input type="hidden" name="_token" value="' + token + '">';
+                            const methodInput = '<input type="hidden" name="_method" value="DELETE">';
+                            const f = document.createElement('form');
+                            f.method = 'POST';
+                            f.action = pendingHref;
+                            f.style.display = 'none';
+                            f.innerHTML = tokenInput + methodInput;
+                            document.body.appendChild(f);
+                            f.submit();
+                        }
+                    }catch(err){
+                        console.error(err);
+                        // last-resort fallback: submit POST form to avoid GET route
+                        try{
+                            const tokenInput = '<input type="hidden" name="_token" value="' + token + '">';
+                            const methodInput = '<input type="hidden" name="_method" value="DELETE">';
+                            const f = document.createElement('form');
+                            f.method = 'POST';
+                            f.action = pendingHref;
+                            f.style.display = 'none';
+                            f.innerHTML = tokenInput + methodInput;
+                            document.body.appendChild(f);
+                            f.submit();
+                        }catch(e){
+                            // if even that fails, navigate as absolute fallback
+                            window.location.href = pendingHref;
+                        }
+                    }finally{
+                        deleteConfirm.disabled = false;
+                        deleteConfirm.textContent = origText;
+                    }
+                });
+            })();
         </script>
 </body>
 </html>
