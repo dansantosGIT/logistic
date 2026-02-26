@@ -173,7 +173,6 @@ Route::post('/inventory/{id}/update', function (Request $request, $id) {
         'type' => 'nullable|string|max:255',
         'location' => 'nullable|string|max:255',
         'quantity' => 'nullable|integer|min:0',
-        'date_added' => 'nullable|date',
         'notes' => 'nullable|string|max:500',
         'image' => 'nullable|file|image|max:5120',
         'existing_image' => 'nullable|string'
@@ -215,8 +214,8 @@ Route::post('/inventory/{id}/update', function (Request $request, $id) {
     $item->fill($data);
     $item->save();
 
-    // Redirect back to edit page so user sees the updated preview
-    return redirect('/inventory/' . $item->id . '/edit')->with('success', 'Equipment updated');
+    // Redirect to all inventory after successful update
+    return redirect('/inventory')->with('success', 'Equipment updated');
 })->middleware('auth');
 
 // Delete equipment (supports AJAX fetch deletion and form fallback)

@@ -257,7 +257,6 @@
                             <option value="Logistics">Logistics</option>
                             <option value="Medical">Medical</option>
                             <option value="Office">Office</option>
-                            <option value="Vehicle">Vehicle</option>
                             </select>
                         </div>
 

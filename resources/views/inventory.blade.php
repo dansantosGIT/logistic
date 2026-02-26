@@ -305,8 +305,8 @@
                     <div class="tab" data-location="logistics">Logistics</div>
                     <div class="tab" data-location="medical">Medical</div>
                     <div class="tab" data-location="office">Office</div>
-                    <div class="tab" data-location="vehicle">Vehicle</div>
                     <div class="tab" data-category="power-tools">Power Tools</div>
+                    <div class="tab" data-category="electronics">Electronics</div>
                 </div>
 
                 <div class="search-row">

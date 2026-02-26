@@ -68,19 +68,26 @@
         .badge.pending{padding:4px 8px;font-weight:700;border-radius:999px}
 
         /* Segment control (right side) */
-        .segment{display:inline-flex;border-radius:999px;overflow:hidden;border:1px solid #e6e9ef;background:#fff;gap:6px}
-        .seg-btn{display:inline-flex;align-items:center;padding:8px 12px;font-size:13px;color:#475569;text-decoration:none;border-left:1px solid transparent;white-space:nowrap}
+        .segment{display:inline-flex;border-radius:999px;overflow:hidden;border:1px solid #e6e9ef;background:#fff;gap:0}
+        .seg-btn{display:inline-flex;align-items:center;padding:8px 12px;font-size:13px;color:#334155;text-decoration:none;border-left:1px solid #e6e9ef;white-space:nowrap;background:#fff;transition:background-color .16s ease,color .16s ease,box-shadow .16s ease}
         .seg-btn:first-child{border-left:none}
-        .seg-btn.active{background:linear-gradient(90deg,var(--accent),var(--accent-2));color:white}
-        .seg-btn.alt{background:#f8fafc;color:#334155}
+        .seg-btn.active{background:linear-gradient(60deg,#808080,#575757);color:#ffffff}
+        .seg-btn.alt{background:#fff;color:#334155}
+        .seg-btn:not(.active):hover{background:#f1f5f9;color:#0f172a}
+        .seg-btn.active:hover{background:linear-gradient(60deg,#6f6f6f,#4b4b4b);color:#ffffff}
 
         /* Use semantic table for reliable alignment */
         .inventory-table{margin-top:8px;width:100%;box-sizing:border-box;overflow-x:auto}
         .inventory-table table{width:100%;border-collapse:separate;border-spacing:0;background:transparent}
-        .inventory-table thead th{background:linear-gradient(90deg,#08306b,#0b3d91);padding:14px 16px;text-align:left;font-size:14px;color:#ffffff;border-bottom:1px solid rgba(14,21,40,0.06)}
-        .inventory-table tbody tr{background:#fff;border-radius:8px;box-shadow:0 6px 18px rgba(2,6,23,0.04);transition:transform .12s ease;display:table-row;cursor:pointer}
-        .inventory-table tbody tr:hover{transform:translateY(-2px)}
-        .inventory-table tbody td{padding:12px 16px;vertical-align:middle;font-size:13px;color:#0f172a;border-bottom:1px solid rgba(14,21,40,0.04)}
+        .inventory-table thead th{background:linear-gradient(60deg,#808080,#575757);padding:14px 16px;text-align:left;font-size:14px;color:#ffffff;border-bottom:1px solid rgba(14,21,40,0.06);transition:background .16s ease,color .16s ease,box-shadow .16s ease}
+        .inventory-table thead th:hover{background:linear-gradient(60deg,#6f6f6f,#4b4b4b);color:#ffffff;box-shadow:inset 0 -2px 0 rgba(255,255,255,0.2)}
+        .inventory-table thead th:first-child{border-top-left-radius:10px}
+        .inventory-table thead th:last-child{border-top-right-radius:10px}
+        .inventory-table tbody tr{background:#fff;border-radius:8px;box-shadow:0 6px 18px rgba(2,6,23,0.04);display:table-row;cursor:pointer}
+        .inventory-table tbody tr:hover{transform:none}
+        .inventory-table tbody tr:hover td{background:#fff7cc}
+        .inventory-table tbody tr:hover .badge.pending{background:#ffffff;color:#92400e;border:1px solid rgba(146,64,14,0.22)}
+        .inventory-table tbody td{padding:12px 16px;vertical-align:middle;font-size:13px;color:#0f172a;border-bottom:1px solid rgba(14,21,40,0.04);transition:background-color .12s ease}
         .inventory-table tbody td.center{text-align:center;color:var(--muted)}
         .inventory-table tbody td.actions{text-align:right;white-space:nowrap;vertical-align:top}
         /* stronger overrides for action alignment when rows grow taller */
@@ -154,8 +161,10 @@
         .toast.error{background:#ef4444}
 
         /* Header sort controls */
-        .th-sort-btn{background:transparent;border:none;cursor:pointer;font-size:13px;padding:4px;border-radius:6px;color:var(--muted-2);display:inline-flex;align-items:center;gap:6px;position:absolute;right:10px;top:50%;transform:translateY(-50%)}
+        .th-sort-btn{background:transparent;border:none;cursor:pointer;font-size:13px;padding:4px;border-radius:6px;color:rgba(255,255,255,0.9);display:inline-flex;align-items:center;gap:6px;position:absolute;right:10px;top:50%;transform:translateY(-50%);transition:background-color .16s ease,color .16s ease}
+        .th-sort-btn:hover{background:rgba(255,255,255,0.16);color:#ffffff}
         .inventory-table thead th{position:relative;padding-right:44px;color:#ffffff}
+        .sort-indicator{position:absolute;right:16px;top:50%;transform:translateY(-50%);width:12px;text-align:center;pointer-events:none;line-height:1;font-size:11px}
         .th-sort-menu{position:absolute;top:calc(100% + 6px);right:6px;display:none;flex-direction:column;background:#fff;border:1px solid #e6e9ef;border-radius:8px;box-shadow:0 8px 24px rgba(2,6,23,0.08);overflow:hidden;z-index:200}
         .th-sort-menu.show{display:flex}
         .th-sort-menu button{padding:8px 12px;border:none;background:transparent;text-align:left;cursor:pointer;font-size:13px;color:#0f172a}
@@ -230,7 +239,7 @@
                         <a href="/requests?tab=pending" class="seg-btn {{ $tab==='pending' ? 'active' : '' }}">Pending</a>
                         <a href="/requests?tab=waiting" class="seg-btn {{ $tab==='waiting' ? 'active' : '' }}">Waiting</a>
                         <a href="/requests?tab=all" class="seg-btn {{ $tab==='all' ? 'active' : '' }}">All</a>
-                        <a href="/requests?tab=history" class="seg-btn {{ $tab==='history' ? 'active alt' : '' }}">History</a>
+                        <a href="/requests?tab=history" class="seg-btn {{ $tab==='history' ? 'active' : '' }}">History</a>
                     </div>
                     <a href="/inventory" class="tab alt back-btn" style="background:#f3f4f6;color:#111;padding:8px 10px;margin-left:12px;white-space:nowrap">Back</a>
                 </div>
@@ -622,7 +631,7 @@
                     th.setAttribute('title', (asc ? 'Sort: Ascending' : 'Sort: Descending') + ' — click to toggle');
 
                     const existing = th.querySelector('[data-sort-indicator]'); if(existing) existing.remove();
-                    const ind = document.createElement('span'); ind.setAttribute('data-sort-indicator','1'); ind.setAttribute('aria-hidden','true'); ind.style.marginLeft = '6px'; ind.textContent = asc ? '▲' : '▼'; th.appendChild(ind);
+                    const ind = document.createElement('span'); ind.setAttribute('data-sort-indicator','1'); ind.setAttribute('aria-hidden','true'); ind.className = 'sort-indicator'; ind.textContent = asc ? '▲' : '▼'; th.appendChild(ind);
 
                     const collator = new Intl.Collator(undefined, {numeric:true, sensitivity:'base'});
                     rows.sort((a,b)=>{

@@ -60,6 +60,7 @@
         .field small{display:block;color:var(--muted-2);font-size:12px;margin-top:6px}
         input[type="text"], input[type="number"], input[type="date"], select, textarea{width:100%;padding:11px 12px;border:1px solid #e6e9ef;border-radius:10px;background:linear-gradient(180deg,#fff,#fbfdff);font-size:14px;color:#0f172a}
         input:focus, select:focus, textarea:focus{outline:none;box-shadow:0 8px 24px rgba(37,99,235,0.12);border-color:rgba(37,99,235,0.28)}
+        input:disabled, select:disabled, textarea:disabled{background:#f1f5f9;color:#64748b;border-color:#d1d5db;cursor:not-allowed}
         textarea{min-height:140px;resize:vertical}
         .file-input{display:flex;gap:8px;align-items:center}
         .helper{font-size:12px;color:var(--muted-2)}
@@ -252,7 +253,7 @@
 
                         <div class="field">
                             <label for="date_added">Date Added</label>
-                            <input id="date_added" name="date_added" type="date" value="{{ $item->date_added ? $item->date_added->format('Y-m-d') : $item->created_at->format('Y-m-d') }}">
+                            <input id="date_added" name="date_added" type="date" value="{{ $item->date_added ? $item->date_added->format('Y-m-d') : $item->created_at->format('Y-m-d') }}" disabled>
                         </div>
 
                         <div class="field">
