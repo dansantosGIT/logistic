@@ -12,7 +12,7 @@ class Equipment extends Model
     protected $table = 'equipment';
 
     protected $fillable = [
-        'name','serial','category','type','quantity','location','tag','date_added','image_path','notes','created_by'
+        'name','serial','category','type','status','quantity','location','tag','date_added','image_path','notes','created_by'
     ];
 
     protected $casts = [

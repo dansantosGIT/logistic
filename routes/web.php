@@ -10,6 +10,8 @@ use Illuminate\Support\Facades\Storage;
 use App\Models\InventoryRequest;
 use Illuminate\Support\Facades\Hash;
 use App\Models\User;
+use App\Models\Vehicle;
+use App\Models\VehicleMaintenance;
 
 Route::get('/', function () {
     // show latest 5 equipment and simple stock analysis on the welcome page
@@ -108,6 +110,159 @@ Route::get('/inventory', function () {
     return view('inventory', compact('equipment'));
 })->middleware('auth');
 
+Route::get('/vehicle', function (Request $request) {
+    $selectedVehicleId = (int) $request->query('vehicle', 0);
+
+    $vehicles = Vehicle::where('status', 'active')->withCount([
+        'maintenances as needed_count' => function ($query) {
+            $query->where('status', 'needed');
+        },
+        'maintenances as done_count' => function ($query) {
+            $query->where('status', 'done');
+        },
+    ])->orderBy('name')->get();
+
+    $selectedVehicle = $selectedVehicleId > 0
+        ? $vehicles->firstWhere('id', $selectedVehicleId)
+        : $vehicles->first();
+
+    $maintenances = collect();
+    if ($selectedVehicle) {
+        $maintenances = VehicleMaintenance::where('vehicle_id', $selectedVehicle->id)
+            ->orderByRaw("case when status = 'needed' then 0 else 1 end")
+            ->orderBy('due_date')
+            ->orderByDesc('created_at')
+            ->get();
+    }
+
+    return view('vehicle', compact('vehicles', 'selectedVehicle', 'maintenances'));
+})->middleware('auth');
+
+Route::get('/vehicle/add', function () {
+    return view('vehicle_add');
+})->middleware('auth');
+
+Route::get('/vehicle/maintenance', function () {
+    $selectedVehicleId = (int) request()->query('vehicle', 0);
+    $vehicles = Vehicle::where('status', 'active')->orderBy('name')->get();
+    $selectedVehicle = $selectedVehicleId > 0
+        ? $vehicles->firstWhere('id', $selectedVehicleId)
+        : $vehicles->first();
+
+    $maintenances = VehicleMaintenance::with('vehicle')
+        ->whereHas('vehicle', function ($q) {
+            $q->where('status', 'active');
+        })
+        ->orderByRaw("case when status = 'needed' then 0 else 1 end")
+        ->orderBy('due_date')
+        ->orderByDesc('created_at')
+        ->get();
+
+    return view('vehicle_maintenance', compact('vehicles', 'selectedVehicle', 'maintenances'));
+})->middleware('auth');
+
+Route::get('/vehicle/{vehicle}/maintenance', function (Vehicle $vehicle) {
+    return redirect('/vehicle/maintenance?vehicle=' . $vehicle->id);
+})->middleware('auth');
+
+Route::post('/vehicle', function (Request $request) {
+    $data = $request->validate([
+        'name' => 'required|string|max:255',
+        'plate_number' => 'nullable|string|max:255',
+        'image' => 'nullable|file|image|max:5120',
+        'type' => 'required|string|max:255',
+        'brand' => 'nullable|string|max:255',
+        'year' => 'nullable|integer|min:1900|max:2100',
+        'is_firetruck' => 'nullable|boolean',
+        'notes' => 'nullable|string|max:500',
+    ]);
+
+    $imagePath = null;
+    if ($request->hasFile('image') && $request->file('image')->isValid()) {
+        $imagePath = $request->file('image')->store('vehicles', 'public');
+    }
+
+    Vehicle::create([
+        'name' => $data['name'],
+        'plate_number' => $data['plate_number'] ?? null,
+        'image_path' => $imagePath,
+        'type' => $data['type'],
+        'brand' => $data['brand'] ?? null,
+        'year' => $data['year'] ?? null,
+        'is_firetruck' => $request->boolean('is_firetruck'),
+        'status' => 'active',
+        'notes' => $data['notes'] ?? null,
+    ]);
+
+    return redirect('/vehicle')->with('success', 'Vehicle added.');
+})->middleware('auth');
+
+Route::post('/vehicle/{vehicle}/maintenance', function (Request $request, Vehicle $vehicle) {
+    $data = $request->validate([
+        'task' => 'required|string|max:255',
+        'due_date' => 'nullable|date',
+        'status' => 'required|in:needed,done',
+        'notes' => 'nullable|string|max:500',
+    ]);
+
+    VehicleMaintenance::create([
+        'vehicle_id' => $vehicle->id,
+        'task' => $data['task'],
+        'due_date' => $data['due_date'] ?? null,
+        'status' => $data['status'],
+        'completed_at' => $data['status'] === 'done' ? now() : null,
+        'notes' => $data['notes'] ?? null,
+    ]);
+
+    return redirect('/vehicle/maintenance?vehicle=' . $vehicle->id)->with('success', 'Maintenance entry saved.');
+})->middleware('auth');
+
+Route::post('/vehicle/maintenance', function (Request $request) {
+    $data = $request->validate([
+        'vehicle_id' => 'required|integer|exists:vehicles,id',
+        'task' => 'required|string|max:255',
+        'due_date' => 'nullable|date',
+        'status' => 'required|in:needed,done',
+        'notes' => 'nullable|string|max:500',
+    ]);
+
+    $vehicle = Vehicle::findOrFail($data['vehicle_id']);
+    abort_if($vehicle->status !== 'active', 422);
+
+    VehicleMaintenance::create([
+        'vehicle_id' => $vehicle->id,
+        'task' => $data['task'],
+        'due_date' => $data['due_date'] ?? null,
+        'status' => $data['status'],
+        'completed_at' => $data['status'] === 'done' ? now() : null,
+        'notes' => $data['notes'] ?? null,
+    ]);
+
+    return redirect('/vehicle/maintenance?vehicle=' . $vehicle->id)->with('success', 'Maintenance entry saved.');
+})->middleware('auth');
+
+Route::post('/vehicle/{vehicle}/maintenance/{maintenance}/mark', function (Request $request, Vehicle $vehicle, VehicleMaintenance $maintenance) {
+    abort_if($maintenance->vehicle_id !== $vehicle->id, 404);
+
+    $data = $request->validate([
+        'status' => 'required|in:needed,done',
+    ]);
+
+    $maintenance->status = $data['status'];
+    $maintenance->completed_at = $data['status'] === 'done' ? now() : null;
+    $maintenance->save();
+
+    return redirect('/vehicle/maintenance?vehicle=' . $vehicle->id)->with('success', 'Maintenance status updated.');
+})->middleware('auth');
+
+Route::post('/vehicle/{vehicle}/maintenance/{maintenance}/delete', function (Vehicle $vehicle, VehicleMaintenance $maintenance) {
+    abort_if($maintenance->vehicle_id !== $vehicle->id, 404);
+
+    $maintenance->delete();
+
+    return redirect('/vehicle/maintenance?vehicle=' . $vehicle->id)->with('success', 'Maintenance entry deleted.');
+})->middleware('auth');
+
 // Inventory search (AJAX): returns rendered table rows for the query
 Route::get('/inventory/search', function (Request $request) {
     $q = trim((string) $request->query('q', ''));
@@ -171,6 +326,7 @@ Route::post('/inventory/{id}/update', function (Request $request, $id) {
         'name' => 'required|string|max:255',
         'category' => 'nullable|string|max:255',
         'type' => 'nullable|string|max:255',
+        'status' => 'nullable|in:available,not_working,missing',
         'location' => 'nullable|string|max:255',
         'quantity' => 'nullable|integer|min:0',
         'notes' => 'nullable|string|max:500',
@@ -209,6 +365,17 @@ Route::post('/inventory/{id}/update', function (Request $request, $id) {
         if (!$item->image_path) {
             $item->image_path = $request->input('existing_image');
         }
+    }
+
+    $effectiveCategory = $data['category'] ?? $item->category ?? '';
+    $categorySlug = strtolower(str_replace(' ', '-', trim((string) $effectiveCategory)));
+    $isSpecialCategory = in_array($categorySlug, ['power-tool', 'power-tools', 'electronics'], true);
+    if ($isSpecialCategory) {
+        if (!array_key_exists('status', $data) || $data['status'] === null || $data['status'] === '') {
+            $data['status'] = $item->status ?: 'available';
+        }
+    } else {
+        $data['status'] = null;
     }
 
     $item->fill($data);

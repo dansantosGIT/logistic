@@ -214,6 +214,7 @@
             <nav class="nav">
                 <a href="/dashboard"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 13h8V3H3v10zM13 21h8V11h-8v10zM13 3v6h8V3h-8zM3 21h8v-6H3v6z" fill="currentColor"/></svg><span class="label">Home</span></a>
                 <a href="/inventory" class="active"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 7a5 5 0 100 10 5 5 0 000-10zM2 12a10 10 0 1120 0A10 10 0 012 12z" fill="currentColor"/></svg><span class="label">Inventory</span></a>
+                <a href="/vehicle"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 13l1.5-4.5A2 2 0 016.4 7h11.2a2 2 0 011.9 1.5L21 13v5a1 1 0 01-1 1h-1a1 1 0 01-1-1v-1H6v1a1 1 0 01-1 1H4a1 1 0 01-1-1v-5zM6 14h12M7.5 10.5h9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="label">Vehicle</span></a>
                 <a href="/requests"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M19 3H5a2 2 0 00-2 2v14l4-2 4 2 4-2 4 2V5a2 2 0 00-2-2z" fill="currentColor"/></svg><span class="label">Request</span></a>
                 <a href="#" class="nav-logout" onclick="event.preventDefault();document.getElementById('logout-form').submit();"><svg width="18" height="18" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M10 17l5-5-5-5v3H3v4h7v3zM19 3h-8v2h8v14h-8v2h8a2 2 0 002-2V5a2 2 0 00-2-2z" fill="currentColor"/></svg><span class="label">Logout</span></a>
             </nav>
@@ -247,6 +248,15 @@
                         <div class="field">
                             <label for="type">Type</label>
                             <select id="type" name="type"><option value="Non-consumable">Non-consumable</option><option value="Consumable">Consumable</option></select>
+                        </div>
+
+                        <div class="field" id="status-field" style="display:none">
+                            <label for="status">Status</label>
+                            <select id="status" name="status">
+                                <option value="available" selected>Available</option>
+                                <option value="not_working">Not working</option>
+                                <option value="missing">Missing</option>
+                            </select>
                         </div>
 
                         <div class="field">
@@ -511,6 +521,29 @@
             const form = document.querySelector('form[action="/inventory/add"]');
             const existing = document.getElementById('existing_category');
             const newcat = document.getElementById('new_category');
+            const statusField = document.getElementById('status-field');
+            const statusInput = document.getElementById('status');
+
+            function normalizeCategory(value){
+                return (value || '').toString().trim().toLowerCase().replace(/\s+/g, '-');
+            }
+
+            function getSelectedCategory(){
+                const customCategory = (newcat && newcat.value ? newcat.value.trim() : '');
+                if(customCategory) return customCategory;
+                return existing && existing.value ? existing.value : '';
+            }
+
+            function toggleStatusField(){
+                if(!statusField || !statusInput) return;
+                const slug = normalizeCategory(getSelectedCategory());
+                const isSpecial = (slug === 'electronics' || slug === 'power-tool' || slug === 'power-tools');
+                statusField.style.display = isSpecial ? '' : 'none';
+                statusInput.disabled = !isSpecial;
+                if(!isSpecial){
+                    statusInput.value = 'available';
+                }
+            }
 
             if(form && existing && newcat){
                 // Provide immediate feedback when typing a new category
@@ -520,7 +553,11 @@
                     } else {
                         existing.required = false; // leave to submit-time check
                     }
+                    toggleStatusField();
                 });
+
+                existing.addEventListener('change', toggleStatusField);
+                toggleStatusField();
 
                 form.addEventListener('submit', function(e){
                     const hasNew = newcat.value && newcat.value.trim().length > 0;

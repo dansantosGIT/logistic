@@ -124,6 +124,7 @@
         /* Stock status badges */
         .badge.instock{background:#10b981}
         .badge.low{background:#f59e0b}
+        .badge.notworking{background:#6b7280}
         .badge.out{background:#FF1F27}
 
         .actions{display:flex;gap:8px;justify-content:flex-end}
@@ -274,6 +275,7 @@
             <nav class="nav">
                 <a href="/dashboard"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 13h8V3H3v10zM13 21h8V11h-8v10zM13 3v6h8V3h-8zM3 21h8v-6H3v6z" fill="currentColor"/></svg><span class="label">Home</span></a>
                 <a href="/inventory" class="active"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 7a5 5 0 100 10 5 5 0 000-10zM2 12a10 10 0 1120 0A10 10 0 012 12z" fill="currentColor"/></svg><span class="label">Inventory</span></a>
+                <a href="/vehicle"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 13l1.5-4.5A2 2 0 016.4 7h11.2a2 2 0 011.9 1.5L21 13v5a1 1 0 01-1 1h-1a1 1 0 01-1-1v-1H6v1a1 1 0 01-1 1H4a1 1 0 01-1-1v-5zM6 14h12M7.5 10.5h9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="label">Vehicle</span></a>
                 <a href="/requests"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M19 3H5a2 2 0 00-2 2v14l4-2 4 2 4-2 4 2V5a2 2 0 00-2-2z" fill="currentColor"/></svg><span class="label">Request</span></a>
                 <a href="#"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 8a4 4 0 100 8 4 4 0 000-8zM3 13h3l1-3 2 2 3-4 2 4 3-2 1 3h3" stroke="currentColor" stroke-width="1" fill="none"/></svg><span class="label">Settings</span></a>
                 <a href="#" class="nav-logout" onclick="event.preventDefault();document.getElementById('logout-form').submit();">
@@ -334,9 +336,38 @@
                         @if(isset($equipment) && $equipment->count())
                             @foreach($equipment as $item)
                                 @php
-                                    $rowStatus = ($item->quantity <= 0) ? 'out' : (($item->quantity < 10) ? 'low' : 'instock');
+                                    $categorySlug = strtolower(str_replace(' ', '-', trim($item->category ?? '')));
+                                    $isPowerTools = in_array($categorySlug, ['power-tool', 'power-tools'], true);
+                                    $isElectronics = ($categorySlug === 'electronics');
+                                    $isSpecialCategory = $isPowerTools || $isElectronics;
+                                    $savedStatus = strtolower(trim((string) ($item->status ?? '')));
+                                    if ($savedStatus === 'not working') {
+                                        $savedStatus = 'not_working';
+                                    }
+
+                                    $statusClass = ($item->quantity <= 0) ? 'out' : (($item->quantity < 10) ? 'low' : 'instock');
+                                    $statusLabel = ($item->quantity <= 0) ? 'Out of stock' : (($item->quantity < 10) ? 'Low stock' : 'In stock');
+
+                                    if ($isSpecialCategory && $savedStatus === 'missing') {
+                                        $statusClass = 'out';
+                                        $statusLabel = 'Missing';
+                                    } elseif ($isSpecialCategory && $savedStatus === 'not_working') {
+                                        $statusClass = 'notworking';
+                                        $statusLabel = 'Not working';
+                                    } elseif ($isSpecialCategory && $savedStatus === 'available') {
+                                        $statusClass = 'instock';
+                                        $statusLabel = 'Available';
+                                    } elseif ($item->quantity > 0 && $item->quantity < 10 && $isSpecialCategory) {
+                                        $statusClass = 'instock';
+                                        $statusLabel = 'Available';
+                                    }
+
+                                    $rowStatus = $statusClass;
+                                    if (($isPowerTools || $isElectronics) && $rowStatus === 'low') {
+                                        $rowStatus = 'instock';
+                                    }
                                 @endphp
-                                <tr data-location="{{ strtolower($item->location ?? '') }}" data-category="{{ strtolower(str_replace(' ', '-', $item->category ?? '')) }}" class="equipment-row {{ $rowStatus }}" onclick="openEquipmentModal(this)" data-equipment='{{json_encode(["id" => $item->id, "name" => $item->name, "category" => $item->category ?? "—", "location" => $item->location ?? "—", "serial" => $item->serial ?? "—", "quantity" => $item->quantity, "type" => $item->type ?? "—", "tag" => $item->tag ?? "—", "notes" => $item->notes ?? "No description provided", "image_path" => $item->image_path, "date_added" => $item->date_added ? $item->date_added->format('M d, Y') : $item->created_at->format('M d, Y'), "created_at" => $item->created_at->format('M d, Y H:i'), "updated_at" => $item->updated_at->format('M d, Y H:i')])}}'>
+                                <tr data-location="{{ strtolower($item->location ?? '') }}" data-category="{{ $categorySlug }}" class="equipment-row {{ $rowStatus }}" onclick="openEquipmentModal(this)" data-equipment='{{json_encode(["id" => $item->id, "name" => $item->name, "category" => $item->category ?? "—", "location" => $item->location ?? "—", "serial" => $item->serial ?? "—", "quantity" => $item->quantity, "type" => $item->type ?? "—", "status" => $item->status ?? null, "tag" => $item->tag ?? "—", "notes" => $item->notes ?? "No description provided", "image_path" => $item->image_path, "date_added" => $item->date_added ? $item->date_added->format('M d, Y') : $item->created_at->format('M d, Y'), "created_at" => $item->created_at->format('M d, Y H:i'), "updated_at" => $item->updated_at->format('M d, Y H:i')])}}'>
                                     <td>{{ $item->name }}</td>
                                     <td>{{ $item->category }}</td>
                                     <td>{{ $item->location }}</td>
@@ -350,13 +381,7 @@
                                         @endif
                                     </td>
                                     <td>
-                                        @if($item->quantity >= 10)
-                                            <span class="badge instock">In stock</span>
-                                        @elseif($item->quantity > 0)
-                                            <span class="badge low">Low stock</span>
-                                        @else
-                                            <span class="badge out">Out of stock</span>
-                                        @endif
+                                        <span class="badge {{ $statusClass }}">{{ $statusLabel }}</span>
                                     </td>
                                     <td>{{ $item->date_added ? $item->date_added->format('Y-m-d') : $item->created_at->format('Y-m-d') }}</td>
                                     <td style="display:flex;align-items:center;justify-content:flex-end;gap:8px" onclick="event.stopPropagation()">

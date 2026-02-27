@@ -16,6 +16,7 @@ class EquipmentController extends Controller
             'existing_category' => 'nullable|string|max:255',
             'new_category' => 'nullable|string|max:255',
             'type' => 'required|string|max:100',
+            'status' => 'nullable|in:available,not_working,missing',
             'quantity' => 'required|integer|min:0',
             'location' => 'nullable|string',
             'tag' => 'nullable|string|max:255',
@@ -29,6 +30,9 @@ class EquipmentController extends Controller
         if (empty($category) && !empty($data['new_category'])) {
             $category = $data['new_category'];
         }
+        $categorySlug = Str::of((string) ($category ?? ''))->lower()->replace(' ', '-')->value();
+        $isSpecialCategory = in_array($categorySlug, ['power-tool', 'power-tools', 'electronics'], true);
+        $statusValue = $isSpecialCategory ? ($data['status'] ?? 'available') : null;
 
         // Generate a unique serial
         do {
@@ -45,6 +49,7 @@ class EquipmentController extends Controller
             'serial' => $serial,
             'category' => $category,
             'type' => $data['type'] ?? null,
+            'status' => $statusValue,
             'quantity' => $data['quantity'] ?? 1,
             'location' => $data['location'] ?? null,
             'tag' => $data['tag'] ?? null,

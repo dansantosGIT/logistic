@@ -185,6 +185,7 @@
             <nav class="nav">
                 <a href="/dashboard"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 13h8V3H3v10zM13 21h8V11h-8v10zM13 3v6h8V3h-8zM3 21h8v-6H3v6z" fill="currentColor"/></svg><span class="label">Home</span></a>
                 <a href="/inventory" class="active"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 7a5 5 0 100 10 5 5 0 000-10zM2 12a10 10 0 1120 0A10 10 0 012 12z" fill="currentColor"/></svg><span class="label">Inventory</span></a>
+                <a href="/vehicle"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 13l1.5-4.5A2 2 0 016.4 7h11.2a2 2 0 011.9 1.5L21 13v5a1 1 0 01-1 1h-1a1 1 0 01-1-1v-1H6v1a1 1 0 01-1 1H4a1 1 0 01-1-1v-5zM6 14h12M7.5 10.5h9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="label">Vehicle</span></a>
                 <a href="/requests"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M19 3H5a2 2 0 00-2 2v14l4-2 4 2 4-2 4 2V5a2 2 0 00-2-2z" fill="currentColor"/></svg><span class="label">Request</span></a>
                 <a href="#"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 8a4 4 0 100 8 4 4 0 000-8zM3 13h3l1-3 2 2 3-4 2 4 3-2 1 3h3" stroke="currentColor" stroke-width="1" fill="none"/></svg><span class="label">Settings</span></a>
                 <a href="#" class="nav-logout" onclick="event.preventDefault();document.getElementById('logout-form').submit();">
@@ -246,6 +247,21 @@
                             </select>
                         </div>
 
+                        @php
+                            $currentStatus = strtolower(trim((string) ($item->status ?? 'available')));
+                            if ($currentStatus === 'not working') {
+                                $currentStatus = 'not_working';
+                            }
+                        @endphp
+                        <div class="field" id="status-field">
+                            <label for="status">Status</label>
+                            <select id="status" name="status">
+                                <option value="available" {{ $currentStatus === 'available' ? 'selected' : '' }}>Available</option>
+                                <option value="not_working" {{ $currentStatus === 'not_working' ? 'selected' : '' }}>Not working</option>
+                                <option value="missing" {{ $currentStatus === 'missing' ? 'selected' : '' }}>Missing</option>
+                            </select>
+                        </div>
+
                         <div class="field">
                             <label for="location">Location</label>
                             <input id="location" name="location" type="text" value="{{ $item->location }}" placeholder="Storage / Office">
@@ -290,6 +306,30 @@
             const incr = document.getElementById('qty-incr');
             const decr = document.getElementById('qty-decr');
             const qty = document.getElementById('quantity');
+            const categoryInput = document.getElementById('category');
+            const statusField = document.getElementById('status-field');
+            const statusInput = document.getElementById('status');
+
+            function normalizeCategory(value){
+                return (value || '').toString().trim().toLowerCase().replace(/\s+/g, '-');
+            }
+
+            function toggleStatusField(){
+                if(!statusField || !statusInput || !categoryInput) return;
+                const slug = normalizeCategory(categoryInput.value);
+                const isSpecial = (slug === 'electronics' || slug === 'power-tool' || slug === 'power-tools');
+                statusField.style.display = isSpecial ? '' : 'none';
+                statusInput.disabled = !isSpecial;
+                if(!isSpecial){
+                    statusInput.value = 'available';
+                }
+            }
+
+            if(categoryInput){
+                categoryInput.addEventListener('input', toggleStatusField);
+                toggleStatusField();
+            }
+
             incr && incr.addEventListener('click', ()=>{ qty.value = Math.max(0, parseInt(qty.value||0)+1) });
             decr && decr.addEventListener('click', ()=>{ qty.value = Math.max(0, parseInt(qty.value||0)-1) });
 

@@ -1,6 +1,38 @@
 @if(isset($equipment) && $equipment->count())
     @foreach($equipment as $item)
-        <tr data-location="{{ strtolower($item->location ?? '') }}" class="equipment-row" onclick="openEquipmentModal(this)" data-equipment='{{json_encode(["id" => $item->id, "name" => $item->name, "category" => $item->category ?? "—", "location" => $item->location ?? "—", "serial" => $item->serial ?? "—", "quantity" => $item->quantity, "type" => $item->type ?? "—", "tag" => $item->tag ?? "—", "notes" => $item->notes ?? "No description provided", "image_path" => $item->image_path, "date_added" => $item->date_added ? $item->date_added->format('M d, Y') : $item->created_at->format('M d, Y'), "created_at" => $item->created_at->format('M d, Y H:i'), "updated_at" => $item->updated_at->format('M d, Y H:i')])}}'>
+        @php
+            $categorySlug = strtolower(str_replace(' ', '-', trim($item->category ?? '')));
+            $isPowerTools = in_array($categorySlug, ['power-tool', 'power-tools'], true);
+            $isElectronics = ($categorySlug === 'electronics');
+            $isSpecialCategory = $isPowerTools || $isElectronics;
+            $savedStatus = strtolower(trim((string) ($item->status ?? '')));
+            if ($savedStatus === 'not working') {
+                $savedStatus = 'not_working';
+            }
+
+            $statusClass = ($item->quantity <= 0) ? 'out' : (($item->quantity < 10) ? 'low' : 'instock');
+            $statusLabel = ($item->quantity <= 0) ? 'Out of stock' : (($item->quantity < 10) ? 'Low stock' : 'In stock');
+
+            if ($isSpecialCategory && $savedStatus === 'missing') {
+                $statusClass = 'out';
+                $statusLabel = 'Missing';
+            } elseif ($isSpecialCategory && $savedStatus === 'not_working') {
+                $statusClass = 'notworking';
+                $statusLabel = 'Not working';
+            } elseif ($isSpecialCategory && $savedStatus === 'available') {
+                $statusClass = 'instock';
+                $statusLabel = 'Available';
+            } elseif ($item->quantity > 0 && $item->quantity < 10 && $isSpecialCategory) {
+                $statusClass = 'instock';
+                $statusLabel = 'Available';
+            }
+
+            $rowStatus = $statusClass;
+            if (($isPowerTools || $isElectronics) && $rowStatus === 'low') {
+                $rowStatus = 'instock';
+            }
+        @endphp
+        <tr data-location="{{ strtolower($item->location ?? '') }}" data-category="{{ $categorySlug }}" class="equipment-row {{ $rowStatus }}" onclick="openEquipmentModal(this)" data-equipment='{{json_encode(["id" => $item->id, "name" => $item->name, "category" => $item->category ?? "—", "location" => $item->location ?? "—", "serial" => $item->serial ?? "—", "quantity" => $item->quantity, "type" => $item->type ?? "—", "status" => $item->status ?? null, "tag" => $item->tag ?? "—", "notes" => $item->notes ?? "No description provided", "image_path" => $item->image_path, "date_added" => $item->date_added ? $item->date_added->format('M d, Y') : $item->created_at->format('M d, Y'), "created_at" => $item->created_at->format('M d, Y H:i'), "updated_at" => $item->updated_at->format('M d, Y H:i')])}}'>
             <td>{{ $item->name }}</td>
             <td>{{ $item->category }}</td>
             <td>{{ $item->location }}</td>
@@ -14,13 +46,7 @@
                 @endif
             </td>
             <td>
-                @if($item->quantity >= 10)
-                    <span class="badge instock">In stock</span>
-                @elseif($item->quantity > 0)
-                    <span class="badge low">Low stock</span>
-                @else
-                    <span class="badge out">Out of stock</span>
-                @endif
+                <span class="badge {{ $statusClass }}">{{ $statusLabel }}</span>
             </td>
             <td>{{ $item->date_added ? $item->date_added->format('Y-m-d') : $item->created_at->format('Y-m-d') }}</td>
             <td style="display:flex;align-items:center;justify-content:flex-end;gap:8px" onclick="event.stopPropagation()">
