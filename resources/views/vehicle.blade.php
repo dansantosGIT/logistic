@@ -4,6 +4,10 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <title>Vehicles — San Juan CDRMMD</title>
+    <!-- Favicon -->
+    <link rel="icon" href="/images/favi.png" type="image/png">
+    <link rel="apple-touch-icon" href="/images/favi.png">
+    <meta name="theme-color" content="#0b1220">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <style>
         :root{--bg:#f6f8fb;--panel:#ffffff;--accent:#2563eb;--accent-2:#7c3aed;--muted:#6b7280;--topbar-height:72px}
@@ -211,6 +215,19 @@
             if(!toast) return;
             toast.classList.add('show');
             setTimeout(()=> toast.classList.remove('show'), 3500);
+        })();
+
+        (function(){
+            const sidebar = document.getElementById('sidebar');
+            const burger = document.getElementById('burger-top');
+            if(!sidebar || !burger) return;
+            function closeOnOutside(e){
+                if(!sidebar.classList.contains('open')) return;
+                if(sidebar.contains(e.target) || burger.contains(e.target)) return;
+                sidebar.classList.remove('open');
+            }
+            document.addEventListener('click', closeOnOutside);
+            document.addEventListener('touchstart', closeOnOutside);
         })();
 
         function openVehicleQuickView(row){
