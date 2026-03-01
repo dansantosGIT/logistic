@@ -577,9 +577,27 @@ Route::post('/notifications/requests/{id}/action', function (Request $request, $
         return response()->json(['error' => 'Invalid action'], 400);
     }
 
+    // Debug: log incoming approval action payload for troubleshooting
+    try {
+        \Log::debug('Approval endpoint payload', [
+            'user_id' => $user->id ?? null,
+            'isAdmin' => $isAdmin,
+            'action' => $action,
+            'request' => $request->all()
+        ]);
+    } catch (Throwable $_logEx) {
+        // ignore logging failures
+    }
+
     $r = InventoryRequest::where('uuid', $id)->first();
     if (!$r) {
         return response()->json(['error' => 'Not found'], 404);
+    }
+
+    try {
+        \Log::debug('Found InventoryRequest', ['id' => $r->id ?? null, 'uuid' => $r->uuid ?? $id, 'items_count' => (isset($r->items) && is_countable($r->items) ? $r->items->count() : 0)]);
+    } catch (Throwable $_logEx) {
+        // ignore
     }
 
     // Support per-item approvals when `request_item_id` is provided.
@@ -599,6 +617,11 @@ Route::post('/notifications/requests/{id}/action', function (Request $request, $
         
         
     
+        try {
+            \Log::debug('Per-item approval incoming', ['request_item_id' => $requestItemId, 'quantity' => $quantity, 'equipment_id' => $equipmentId]);
+        } catch (Throwable $_logEx) {
+        }
+
         $item = \App\Models\InventoryRequestItem::find($requestItemId);
         
         if (!$item || $item->inventory_request_id != $r->id) {
@@ -644,17 +667,72 @@ Route::post('/notifications/requests/{id}/action', function (Request $request, $
 
     // Fallback: act on parent request (legacy single-item behavior)
     if ($action === 'approve') {
-        if ($quantity > 0 && $equipmentId) {
-            $equipment = Equipment::find($equipmentId);
-            if ($equipment) {
-                if ($equipment->quantity < $quantity) {
-                    return response()->json(['error' => 'Insufficient stock'], 400);
+        // If this request contains child items, treat approval as per-item approvals:
+        // set each item's issued_quantity to its requested quantity (or the provided quantity when appropriate),
+        // and decrement the related equipment stock per item.
+        try {
+            if (isset($r->items) && is_countable($r->items) && $r->items->count() > 0) {
+                foreach ($r->items as $item) {
+                    $issueQty = $quantity > 0 ? $quantity : intval($item->quantity ?? 0);
+                    $equipmentForItem = $item->equipment_id ? Equipment::find($item->equipment_id) : (isset($item->equipment) ? $item->equipment : null);
+                    if ($issueQty > 0 && $equipmentForItem) {
+                        if ($equipmentForItem->quantity < $issueQty) {
+                            // cap to available stock rather than failing the whole request
+                            $issueQty = intval($equipmentForItem->quantity);
+                        }
+                        $equipmentForItem->quantity = intval($equipmentForItem->quantity) - $issueQty;
+                        $equipmentForItem->save();
+                        $item->issued_quantity = $issueQty;
+                    } else {
+                        $item->issued_quantity = 0;
+                    }
+                    $item->status = 'approved';
+                    $item->handled_by = $user->id ?? null;
+                    $item->handled_at = now();
+                    $item->save();
                 }
-                $equipment->quantity -= $quantity;
-                $equipment->save();
+                $r->status = 'approved';
+                } else {
+                    if ($quantity > 0 && $equipmentId) {
+                        $equipment = Equipment::find($equipmentId);
+                        if ($equipment) {
+                            if ($equipment->quantity < $quantity) {
+                                return response()->json(['error' => 'Insufficient stock'], 400);
+                            }
+                            $equipment->quantity -= $quantity;
+                            $equipment->save();
+                        }
+                    }
+                    // Record issued quantity for legacy single-item requests by creating a child item
+                    try {
+                        $issueQty = $quantity > 0 ? $quantity : intval($r->quantity ?? 0);
+                        $itemModelClass = '\\App\\Models\\InventoryRequestItem';
+                        if (class_exists($itemModelClass)) {
+                            $child = new $itemModelClass();
+                            $child->inventory_request_id = $r->id;
+                            $child->equipment_id = $equipmentId ?: ($r->item_id ?? null);
+                            $child->quantity = intval($r->quantity ?? $quantity ?? 0);
+                            $child->issued_quantity = $issueQty;
+                            $child->status = 'approved';
+                            $child->handled_by = $user->id ?? null;
+                            $child->handled_at = now();
+                            $child->save();
+                        } else {
+                            \Log::warning('InventoryRequestItem model missing; cannot create child item for legacy request', ['request_id' => $r->id ?? null]);
+                        }
+                    } catch (Throwable $__childEx) {
+                        try { \Log::error('Failed creating child item for legacy approval', ['error' => $__childEx->getMessage()]); } catch (Throwable $_) {}
+                    }
+                    $r->status = 'approved';
             }
+        } catch (Throwable $__e) {
+            try {
+                \Log::error('Error during per-item approval handling', ['message' => $__e->getMessage(), 'trace' => $__e->getTraceAsString()]);
+            } catch (Throwable $_logEx) {
+            }
+            // If anything fails during per-item handling, fall back to approving the parent request
+            $r->status = 'approved';
         }
-        $r->status = 'approved';
     } else {
         $r->status = 'rejected';
     }
@@ -885,6 +963,18 @@ Route::get('/requests/{id}', function (Request $request, $id) {
     $isAdmin = $user && ( ($user->id ?? 0) === 1 || strcasecmp($user->name ?? '', 'admin') === 0 );
     return view('requests_show', ['r' => $r, 'equipment' => $equipment, 'isAdmin' => $isAdmin]);
 })->middleware('auth');
+
+// Printable hard-copy form (A4)
+Route::get('/requests/{id}/print', function (Request $request, $id) {
+    $r = InventoryRequest::where('uuid', $id)->firstOrFail();
+    $equipment = $r->item_id ? Equipment::find($r->item_id) : null;
+    $user = auth()->user();
+    $isAdmin = $user && ( ($user->id ?? 0) === 1 || strcasecmp($user->name ?? '', 'admin') === 0 );
+    return view('requests_print', ['r' => $r, 'equipment' => $equipment, 'isAdmin' => $isAdmin]);
+})->middleware('auth');
+
+// (server-side PDF export removed — print view served by browser)
+
 // Logout
 Route::post('/logout', function (Request $request) {
     Auth::logout();

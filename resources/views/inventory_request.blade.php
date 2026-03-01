@@ -598,5 +598,127 @@
             });
         })();
     </script>
+    <!-- Request submission toast and success modal -->
+    <div id="request-toast" class="toast" role="status" aria-live="polite" style="display:none">
+        <div id="request-toast-msg">Request submitted</div>
+        <button id="request-toast-close" class="close" aria-label="Close toast">✕</button>
+    </div>
+
+    <div id="requestSuccessModal" aria-hidden="true" style="display:none;position:fixed;inset:0;z-index:1200;align-items:center;justify-content:center;background:rgba(0,0,0,0.6);padding:24px;box-sizing:border-box;">
+        <div style="background:white;border-radius:12px;max-width:520px;width:100%;padding:22px;box-shadow:0 12px 40px rgba(2,6,23,0.4);position:relative">
+            <h3 id="requestSuccessTitle" style="margin-top:0">Request Submitted</h3>
+            <p id="requestSuccessBody" style="color:var(--muted-2)">Your request has been submitted successfully.</p>
+            <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:16px">
+                <a href="/requests" class="btn" id="view-requests">View Requests</a>
+                <button id="close-success-modal" class="btn primary">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        (function(){
+            const form = document.getElementById('request-form');
+            if(!form) return;
+
+            const toast = document.getElementById('request-toast');
+            const toastMsg = document.getElementById('request-toast-msg');
+            const toastClose = document.getElementById('request-toast-close');
+            const modal = document.getElementById('requestSuccessModal');
+            const modalBody = document.getElementById('requestSuccessBody');
+            const modalClose = document.getElementById('close-success-modal');
+
+            function csrf(){
+                const m = document.querySelector('meta[name="csrf-token"]');
+                return m ? m.getAttribute('content') : '';
+            }
+
+            function showToast(message, isError){
+                toastMsg.textContent = message || 'Saved';
+                toast.style.display = 'flex';
+                toast.classList.add('show');
+                if(isError){ toast.style.background = '#ef4444'; }
+                setTimeout(()=>{ hideToast(); }, 4000);
+            }
+            function hideToast(){
+                toast.classList.remove('show');
+                setTimeout(()=>{ toast.style.display = 'none'; toast.style.background = ''; }, 220);
+            }
+
+            function showModal(title, body){
+                if(title) document.getElementById('requestSuccessTitle').textContent = title;
+                modalBody.textContent = body || '';
+                modal.style.display = 'flex';
+                modal.setAttribute('aria-hidden','false');
+                document.body.style.overflow = 'hidden';
+            }
+            function hideModal(){
+                modal.style.display = 'none';
+                modal.setAttribute('aria-hidden','true');
+                document.body.style.overflow = '';
+            }
+
+            toastClose && toastClose.addEventListener('click', hideToast);
+            modalClose && modalClose.addEventListener('click', hideModal);
+            modal.addEventListener('click', function(e){ if(e.target === modal) hideModal(); });
+
+            form.addEventListener('submit', async function(e){
+                // attempt AJAX submit so we can show toast/modal on success
+                e.preventDefault();
+                // client-side quantity validation (reuse existing handler if present)
+                const qtyInput = document.getElementById('quantity');
+                const qtyError = document.getElementById('quantity-error');
+                if(qtyInput && qtyError && qtyError.textContent){ qtyInput.focus(); return false; }
+
+                try{
+                    const action = form.getAttribute('action') || window.location.href;
+                    const fd = new FormData(form);
+                    const res = await fetch(action, {
+                        method: 'POST',
+                        credentials: 'same-origin',
+                        headers: {
+                            'X-CSRF-TOKEN': csrf(),
+                            'Accept': 'application/json'
+                        },
+                        body: fd
+                    });
+
+                    // If server returned JSON with success message
+                    const contentType = res.headers.get('content-type') || '';
+                    if(res.ok){
+                        if(contentType.includes('application/json')){
+                            const data = await res.json();
+                            const msg = data.message || 'Request submitted successfully';
+                            showToast(msg);
+                            showModal('Request Submitted', data.detail || msg);
+                            // optionally reset form
+                            try{ form.reset(); }catch(e){}
+                        } else {
+                            // not JSON — treat as success (server may redirect)
+                            showToast('Request submitted successfully');
+                            showModal('Request Submitted', 'Your request was submitted.');
+                            try{ form.reset(); }catch(e){}
+                        }
+                    } else {
+                        // parse error message if available
+                        let errMsg = 'Request failed';
+                        try{
+                            if(contentType.includes('application/json')){
+                                const err = await res.json(); errMsg = err.message || err.error || errMsg;
+                            } else {
+                                const txt = await res.text(); errMsg = txt || errMsg;
+                            }
+                        }catch(err){}
+                        showToast(errMsg, true);
+                    }
+                }catch(err){
+                    console.error(err);
+                    showToast('Network error', true);
+                    // fallback: try normal submit
+                    // form.submit();
+                }
+                return false;
+            });
+        })();
+    </script>
 </body>
 </html>

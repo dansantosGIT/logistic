@@ -12,8 +12,11 @@ class InventoryRequest extends Model
     protected $table = 'inventory_requests';
 
     protected $fillable = [
-        'uuid', 'item_id', 'item_name', 'requester', 'requester_user_id', 'quantity', 'role', 'department', 'reason', 'return_date', 'status', 'handled_by'
+        'uuid', 'item_id', 'item_name', 'requester', 'requester_user_id', 'quantity', 'role', 'department', 'reason', 'return_date', 'status', 'handled_by',
+        // print/sign metadata
+        'printed_pdf_path', 'printed_by', 'printed_at', 'signed_scan_path', 'signed_by', 'signed_at'
     ];
+
 
     protected $casts = [
         'return_date' => 'date',

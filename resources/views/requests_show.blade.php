@@ -261,7 +261,8 @@
                                 @foreach($iterableItems as $it)
                                     @php
                                             $requestedQty = $it->quantity ?? ($it['quantity'] ?? $r->quantity ?? 1);
-                                            $issued = $it->issued ?? $r->issued ?? 0;
+                                            // Prefer per-item issued quantity (set on approval), then legacy fields
+                                            $issued = $it->issued_quantity ?? $it->issued ?? $r->issued ?? 0;
                                             $returnDate = $it->return_date ?? $r->return_date ?? null;
                                             $reasonText = $it->notes ?? $it->reason ?? $r->reason ?? '—';
 
@@ -333,7 +334,12 @@
                                         <td>
                                             <div style="flex:0 0 auto">{{ $it->status ?? $r->status }}</div>
                                             @php $hasChildren = isset($r->items) && is_countable($r->items) && $r->items->count() > 0; @endphp
-                                            {{-- Per-row approve/deny removed: use single approve/deny for the whole request --}}
+                                            @if($isAdmin && ($it->status ?? $r->status) === 'pending')
+                                                <div style="display:flex;gap:8px;margin-top:8px">
+                                                    <button class="btn ok item-approve" data-equipment='@json($equipData)'>Approve</button>
+                                                    <button class="btn rej item-deny" data-equipment='@json($equipData)'>Deny</button>
+                                                </div>
+                                            @endif
                                         </td>
                                     </tr>
                                 @endforeach
@@ -379,6 +385,11 @@
                     @if($isAdmin && $r->status === 'approved' && $hasNonConsumable)
                         <div class="request-actions">
                             <button type="button" class="btn" id="btn-mark-returned" style="background:#6b7280;color:#fff;border:none">Mark returned</button>
+                        </div>
+                    @endif
+                    @if($isAdmin && $r->status === 'approved')
+                        <div class="request-actions">
+                            <a href="/requests/{{ $r->uuid }}/print" target="_blank" class="btn" style="background:#2563eb;color:#fff;border:none">Print Form</a>
                         </div>
                     @endif
                 </div>
@@ -677,7 +688,7 @@
                     if(action === 'approve') showToast('Request approved', 'success');
                     else showToast('Request rejected', 'error');
                     closeApprovalModal();
-                    setTimeout(function(){ window.location = '/requests?tab=pending'; }, 700);
+                    setTimeout(function(){ location.reload(); }, 700);
                 } else {
                     alert('Failed'); btn.disabled=false;
                 }
@@ -887,6 +898,25 @@
                 if(!item) return;
                 const id = item.dataset.uuid || item.getAttribute('data-uuid') || item.getAttribute('data-id');
                 if(id) window.location.href = '/requests/' + id;
+            });
+        })();
+    </script>
+    <script>
+        // Delegate per-item approve/deny buttons to open the approval modal with item data
+        (function(){
+            document.addEventListener('click', function(e){
+                const approve = e.target.closest('.item-approve');
+                const deny = e.target.closest('.item-deny');
+                const btn = approve || deny;
+                if(!btn) return;
+                e.preventDefault();
+                try{
+                    const data = btn.dataset && btn.dataset.equipment ? JSON.parse(btn.dataset.equipment) : null;
+                    if(!data) return alert('Item data missing');
+                    const id = '{{ $r->uuid }}';
+                    const action = approve ? 'approve' : 'reject';
+                    openApprovalModal(action, id, data);
+                }catch(err){ console.error('Failed to parse equipment payload', err); alert('Invalid item data'); }
             });
         })();
     </script>
