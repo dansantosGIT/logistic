@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>Dashboard — San Juan CDRMMD Inventory</title>
+    <title>San Juan CDRRMD Dashboard</title>
     <!-- Favicon -->
     <link rel="icon" href="/images/favi.png" type="image/png">
     <link rel="apple-touch-icon" href="/images/favi.png">
@@ -30,6 +30,7 @@
         .nav a svg, .nav button.action svg{display:block;width:18px;height:18px}
         .nav a:hover, .nav button.action:hover{background:#f1f5f9}
         .nav a.active{background:linear-gradient(90deg,var(--accent),var(--accent-2));color:white}
+        .nav a.sub-link{margin-left:26px;min-height:36px;padding:8px 12px;font-size:13px;justify-content:flex-start;text-align:left}
         .nav svg{flex-shrink:0}
 
         /* Topbar */
@@ -155,7 +156,7 @@
                 <div style="display:flex;flex-direction:column">
                         <a href="/dashboard" class="brand-title" style="text-decoration:none;color:inherit;display:flex;align-items:center;gap:6px">
                             <img src="/images/favi.png" alt="Logo" width="40" height="40" style="display:inline-block" />
-                            <span>San Juan CDRMMD Inventory</span>
+                            <span>San Juan CDRRMD Dashboard</span>
                         </a>
                     <div class="brand-subtitle">Overview of Stocks</div>
                 </div>
@@ -185,7 +186,13 @@
             <nav class="nav">
                 <a href="/dashboard" class="active"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 13h8V3H3v10zM13 21h8V11h-8v10zM13 3v6h8V3h-8zM3 21h8v-6H3v6z" fill="currentColor"/></svg><span class="label">Home</span></a>
                 <a href="/inventory"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 7a5 5 0 100 10 5 5 0 000-10zM2 12a10 10 0 1120 0A10 10 0 012 12z" fill="currentColor"/></svg><span class="label">Inventory</span></a>
-                <a href="/vehicle"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 13l1.5-4.5A2 2 0 016.4 7h11.2a2 2 0 011.9 1.5L21 13v5a1 1 0 01-1 1h-1a1 1 0 01-1-1v-1H6v1a1 1 0 01-1 1H4a1 1 0 01-1-1v-5zM6 14h12M7.5 10.5h9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="label">Vehicle</span></a>
+                <div style="display:flex;align-items:center;gap:6px">
+                    <a href="/vehicle" style="flex:1"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 13l1.5-4.5A2 2 0 016.4 7h11.2a2 2 0 011.9 1.5L21 13v5a1 1 0 01-1 1h-1a1 1 0 01-1-1v-1H6v1a1 1 0 01-1 1H4a1 1 0 01-1-1v-5zM6 14h12M7.5 10.5h9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="label">Vehicle</span></a>
+                    <button id="vehicle-submenu-toggle" type="button" aria-label="Toggle Vehicle menu" title="Toggle Vehicle menu" style="width:28px;height:28px;border:none;background:transparent;color:#475569;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;font-size:12px;line-height:1;padding:0">⌄</button>
+                </div>
+                <div id="vehicle-submenu" style="display:none">
+                    <a href="/vehicle/maintenance" class="sub-link"><span class="label">Maintenance</span></a>
+                </div>
                 <a href="/requests"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M19 3H5a2 2 0 00-2 2v14l4-2 4 2 4-2 4 2V5a2 2 0 00-2-2z" fill="currentColor"/></svg><span class="label">Request</span></a>
                 <a href="#"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 8a4 4 0 100 8 4 4 0 000-8zM3 13h3l1-3 2 2 3-4 2 4 3-2 1 3h3" stroke="currentColor" stroke-width="1" fill="none"/></svg><span class="label">Settings</span></a>
                 <a href="#" class="nav-logout" onclick="event.preventDefault();document.getElementById('logout-form').submit();">
@@ -630,6 +637,19 @@
             fetchNotifs();
             setInterval(fetchNotifs, 8000);
         })();
+    </script>
+    <script>
+        (function(){
+            const submenuToggle = document.getElementById('vehicle-submenu-toggle');
+            const submenu = document.getElementById('vehicle-submenu');
+            if(!submenuToggle || !submenu) return;
+            submenuToggle.addEventListener('click', function(e){
+                e.preventDefault();
+                e.stopPropagation();
+                submenu.style.display = submenu.style.display === 'none' ? '' : 'none';
+            });
+        })();
+
     </script>
     <script>
         const modal = document.getElementById('equipmentModal');

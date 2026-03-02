@@ -13,6 +13,7 @@ class Vehicle extends Model
         'name',
         'plate_number',
         'image_path',
+        'orcr_image_path',
         'type',
         'brand',
         'year',

@@ -3,8 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>Add Vehicle — San Juan CDRMMD</title>
-    <!-- Favicon -->
+    <title>Vehicle OR/CR — San Juan CDRMMD</title>
     <link rel="icon" href="/images/favi.png" type="image/png">
     <link rel="apple-touch-icon" href="/images/favi.png">
     <meta name="theme-color" content="#0b1220">
@@ -16,8 +15,12 @@
         .bg{position:fixed;inset:0;background-image:url('/images/welcome-bg.jpg');background-size:cover;background-position:center;filter:brightness(0.6) saturate(0.95);z-index:-3}
         .overlay{position:fixed;inset:0;background:linear-gradient(180deg,rgba(2,6,23,0.28),rgba(2,6,23,0.4));z-index:-2}
 
-        .topbar{position:fixed;left:0;right:0;top:0;height:72px;background:rgba(255,255,255,0.96);box-shadow:0 6px 24px rgba(2,6,23,0.06);z-index:60}
+        .topbar{position:fixed;left:0;right:0;top:0;height:72px;background:rgba(255,255,255,0.95);backdrop-filter:saturate(1.05) blur(4px);box-shadow:0 6px 24px rgba(2,6,23,0.08);z-index:60}
         .topbar-inner{max-width:none;width:100%;margin:0;padding:12px 12px 12px 0;display:flex;justify-content:space-between;align-items:center}
+        .topbar .brand-title{display:flex;align-items:center;gap:6px;font-weight:700}
+        .topbar .brand-subtitle{font-size:12px;color:var(--muted)}
+        .burger{display:inline-flex;width:44px;height:44px;border-radius:8px;align-items:center;justify-content:center;background:transparent;border:1px solid transparent;cursor:pointer}
+        .burger:hover{background:#eef2ff}
 
         .app{display:flex;min-height:100vh}
         .sidebar{position:fixed;left:0;top:var(--topbar-height);bottom:0;width:240px;background:var(--panel);border-right:1px solid #e6e9ef;padding:20px;transform:translateX(-110%);transition:transform .22s ease;z-index:90}
@@ -36,16 +39,18 @@
         .nav .nav-with-toggle.active .toggle-btn{background:rgba(255,255,255,.18);border-color:rgba(255,255,255,.35);color:#fff}
 
         .main{flex:1;padding:16px;margin-top:var(--topbar-height)}
-        .panel{background:var(--panel);padding:14px;border-radius:12px;box-shadow:0 6px 20px rgba(15,23,42,0.04);width:calc(100% - 24px);margin:10px auto;max-width:920px}
-        .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-        .field{display:flex;flex-direction:column;gap:6px}
-        .field.full{grid-column:1/-1}
-        input,textarea{width:100%;padding:10px;border:1px solid #e6e9ef;border-radius:8px;font:inherit}
-        textarea{min-height:90px;resize:vertical}
-        .btn{padding:8px 12px;border-radius:8px;border:1px solid #e6e9ef;background:#fff;cursor:pointer;text-decoration:none;color:#0f172a}
+        .panel{background:var(--panel);padding:18px;border-radius:12px;box-shadow:0 6px 20px rgba(15,23,42,0.04);max-width:980px;margin:10px auto}
+        .muted{color:var(--muted);font-size:13px}
+        .btn{padding:8px 12px;border-radius:8px;border:1px solid #e6e9ef;background:#fff;cursor:pointer;text-decoration:none;color:#0f172a;display:inline-flex;align-items:center}
         .btn.primary{background:#2563eb;border:none;color:#fff}
-        .actions{display:flex;justify-content:flex-end;gap:10px}
-        @media(max-width:980px){.form-grid{grid-template-columns:1fr}}
+        .btn.light{background:#f3f4f6;border-color:#d1d5db;color:#374151}
+        .actions{display:flex;gap:10px;flex-wrap:wrap}
+        .back-row{display:flex;justify-content:flex-end;margin-bottom:12px}
+        .preview{margin-top:14px}
+        .preview img{max-width:100%;width:auto;max-height:520px;border-radius:10px;border:1px solid #e2e8f0;background:#f8fafc;display:block}
+        .empty{padding:16px;border:1px dashed #cbd5e1;border-radius:10px;background:#f8fafc;color:#64748b}
+        .toast{position:fixed;right:20px;bottom:20px;background:#10b981;color:#fff;padding:12px 16px;border-radius:8px;box-shadow:0 10px 30px rgba(2,6,23,.2);z-index:200;display:none}
+        .toast.show{display:block}
     </style>
     @include('partials._bg-preload')
 </head>
@@ -56,16 +61,19 @@
     <div class="topbar" role="banner">
         <div class="topbar-inner">
             <div style="display:flex;align-items:center;gap:12px">
-                <button id="burger-top" aria-label="Toggle menu" style="display:inline-flex;width:44px;height:44px;border-radius:8px;align-items:center;justify-content:center;background:transparent;border:1px solid transparent;cursor:pointer">
+                <button id="burger-top" class="burger" aria-label="Toggle menu" title="Toggle menu">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 12h18M3 6h18M3 18h18" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
                 </button>
-                <a href="/dashboard" style="display:flex;align-items:center;gap:6px;font-weight:700;text-decoration:none;color:inherit">
-                    <img src="/images/favi.png" alt="Logo" width="40" height="40" />
-                    <span>Add Vehicle</span>
-                </a>
+                <div style="display:flex;flex-direction:column">
+                    <a href="/dashboard" class="brand-title" style="text-decoration:none;color:inherit">
+                        <img src="/images/favi.png" alt="Logo" width="40" height="40" style="display:inline-block" />
+                        <span>San Juan CDRRMD Vehicle Details</span>
+                    </a>
+                    <div class="brand-subtitle">Overview of Stocks</div>
+                </div>
             </div>
             <div style="text-align:right">
-                <div style="font-size:12px;color:var(--muted)">Welcome</div>
+                <div style="font-size:13px;color:var(--muted)">Welcome!</div>
                 <div style="font-weight:700">{{ auth()->user()->name }}</div>
             </div>
         </div>
@@ -94,57 +102,39 @@
 
         <main class="main">
             <div class="panel">
-                <h2 style="margin:0 0 10px 0">Add Vehicle</h2>
-                <form method="POST" action="/vehicle" enctype="multipart/form-data">
+                <h2 style="margin:0 0 6px 0">{{ $vehicle->name }} OR/CR</h2>
+                <p class="muted" style="margin:0 0 14px 0">Plate: {{ $vehicle->plate_number ?: 'No plate' }}</p>
+
+                <form method="POST" action="/vehicle/{{ $vehicle->id }}/orcr" enctype="multipart/form-data" class="actions" style="margin-bottom:12px">
                     @csrf
-                    <div class="form-grid">
-                        <div class="field full">
-                            <label for="vehicle-name">Vehicle Name / Call Sign</label>
-                            <input id="vehicle-name" name="name" required placeholder="e.g., Alpha 01">
-                        </div>
-                        <div class="field">
-                            <label for="vehicle-type">Vehicle Type</label>
-                            <input id="vehicle-type" name="type" required placeholder="e.g., Ambulance">
-                        </div>
-                        <div class="field">
-                            <label for="vehicle-brand">Brand</label>
-                            <input id="vehicle-brand" name="brand" placeholder="e.g., Isuzu">
-                        </div>
-                        <div class="field">
-                            <label for="vehicle-year">Year</label>
-                            <input id="vehicle-year" name="year" type="number" min="1900" max="2100" placeholder="e.g., 2022">
-                        </div>
-                        <div class="field">
-                            <label for="vehicle-plate">Plate Number</label>
-                            <input id="vehicle-plate" name="plate_number" placeholder="e.g., ABC-1234">
-                        </div>
-                        <div class="field full">
-                            <label for="vehicle-image">Vehicle Image</label>
-                            <input id="vehicle-image" name="image" type="file" accept="image/*">
-                        </div>
-                        <div class="field full">
-                            <label for="vehicle-orcr-image">OR/CR Photo</label>
-                            <input id="vehicle-orcr-image" name="orcr_image" type="file" accept="image/*">
-                        </div>
-                        <div class="field full" style="flex-direction:row;align-items:center;gap:10px">
-                            <input id="vehicle-firetruck" name="is_firetruck" type="checkbox" value="1" style="width:auto">
-                            <label for="vehicle-firetruck" style="margin:0">This vehicle is a firetruck</label>
-                        </div>
-                        <div class="field full">
-                            <label for="vehicle-notes">Notes</label>
-                            <textarea id="vehicle-notes" name="notes" placeholder="Optional notes"></textarea>
-                        </div>
-                    </div>
-                    <div class="actions" style="margin-top:12px">
-                        <a href="/vehicle" class="btn">Back to Vehicle List</a>
-                        <button class="btn primary" type="submit">Save Vehicle</button>
-                    </div>
+                    <input name="orcr_image" type="file" accept="image/*" required>
+                    <button class="btn primary" type="submit">{{ $vehicle->orcr_image_path ? 'Replace OR/CR Photo' : 'Upload OR/CR Photo' }}</button>
                 </form>
+
+                <div class="back-row">
+                    <a href="/vehicle" class="btn light">Back to Vehicles</a>
+                </div>
+
+                @if($vehicle->orcr_image_path)
+                    <div class="actions" style="margin-bottom:10px">
+                        <a class="btn" href="{{ asset('storage/' . $vehicle->orcr_image_path) }}" target="_blank" rel="noopener">Open Full Image</a>
+                    </div>
+                    <div class="preview">
+                        <img src="{{ asset('storage/' . $vehicle->orcr_image_path) }}" alt="OR/CR Photo">
+                    </div>
+                @else
+                    <div class="empty">No OR/CR photo uploaded yet.</div>
+                @endif
             </div>
         </main>
     </div>
 
+    @if(session('success'))
+        <div id="success-toast" class="toast">{{ session('success') }}</div>
+    @endif
+
     <form id="logout-form" method="POST" action="/logout" style="display:none">@csrf</form>
+
     <script>
         (function(){
             const sidebar = document.getElementById('sidebar');
@@ -163,20 +153,26 @@
                 submenu.style.display = submenu.style.display === 'none' ? '' : 'none';
             });
         })();
+
+        (function(){
+            const sidebar = document.getElementById('sidebar');
+            const burger = document.getElementById('burger-top');
+            if(!sidebar || !burger) return;
+            function closeOnOutside(e){
+                if(!sidebar.classList.contains('open')) return;
+                if(sidebar.contains(e.target) || burger.contains(e.target)) return;
+                sidebar.classList.remove('open');
+            }
+            document.addEventListener('click', closeOnOutside);
+            document.addEventListener('touchstart', closeOnOutside);
+        })();
+
+        (function(){
+            const toast = document.getElementById('success-toast');
+            if(!toast) return;
+            toast.classList.add('show');
+            setTimeout(()=> toast.classList.remove('show'), 3500);
+        })();
     </script>
-        <script>
-            (function(){
-                const sidebar = document.getElementById('sidebar');
-                const burger = document.getElementById('burger-top');
-                if(!sidebar || !burger) return;
-                function closeOnOutside(e){
-                    if(!sidebar.classList.contains('open')) return;
-                    if(sidebar.contains(e.target) || burger.contains(e.target)) return;
-                    sidebar.classList.remove('open');
-                }
-                document.addEventListener('click', closeOnOutside);
-                document.addEventListener('touchstart', closeOnOutside);
-            })();
-        </script>
 </body>
 </html>

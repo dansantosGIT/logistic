@@ -165,11 +165,16 @@ Route::get('/vehicle/{vehicle}/maintenance', function (Vehicle $vehicle) {
     return redirect('/vehicle/maintenance?vehicle=' . $vehicle->id);
 })->middleware('auth');
 
+Route::get('/vehicle/{vehicle}/orcr', function (Vehicle $vehicle) {
+    return view('vehicle_orcr', compact('vehicle'));
+})->middleware('auth');
+
 Route::post('/vehicle', function (Request $request) {
     $data = $request->validate([
         'name' => 'required|string|max:255',
         'plate_number' => 'nullable|string|max:255',
         'image' => 'nullable|file|image|max:5120',
+        'orcr_image' => 'nullable|file|image|max:5120',
         'type' => 'required|string|max:255',
         'brand' => 'nullable|string|max:255',
         'year' => 'nullable|integer|min:1900|max:2100',
@@ -182,10 +187,16 @@ Route::post('/vehicle', function (Request $request) {
         $imagePath = $request->file('image')->store('vehicles', 'public');
     }
 
+    $orcrImagePath = null;
+    if ($request->hasFile('orcr_image') && $request->file('orcr_image')->isValid()) {
+        $orcrImagePath = $request->file('orcr_image')->store('vehicles/orcr', 'public');
+    }
+
     Vehicle::create([
         'name' => $data['name'],
         'plate_number' => $data['plate_number'] ?? null,
         'image_path' => $imagePath,
+        'orcr_image_path' => $orcrImagePath,
         'type' => $data['type'],
         'brand' => $data['brand'] ?? null,
         'year' => $data['year'] ?? null,
@@ -195,6 +206,22 @@ Route::post('/vehicle', function (Request $request) {
     ]);
 
     return redirect('/vehicle')->with('success', 'Vehicle added.');
+})->middleware('auth');
+
+Route::post('/vehicle/{vehicle}/orcr', function (Request $request, Vehicle $vehicle) {
+    $data = $request->validate([
+        'orcr_image' => 'required|file|image|max:5120',
+    ]);
+
+    if ($vehicle->orcr_image_path && Storage::disk('public')->exists($vehicle->orcr_image_path)) {
+        Storage::disk('public')->delete($vehicle->orcr_image_path);
+    }
+
+    $orcrImagePath = $request->file('orcr_image')->store('vehicles/orcr', 'public');
+    $vehicle->orcr_image_path = $orcrImagePath;
+    $vehicle->save();
+
+    return redirect('/vehicle')->with('success', 'OR/CR photo uploaded.');
 })->middleware('auth');
 
 Route::post('/vehicle/{vehicle}/maintenance', function (Request $request, Vehicle $vehicle) {
