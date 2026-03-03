@@ -244,8 +244,8 @@
                         <div class="meta-row"><div class="k">Requested by</div><div class="v">{{ $r->requester }}</div></div>
                         <div class="meta-row"><div class="k">Role</div><div class="v">{{ $r->role ?? '—' }}</div></div>
                         <div class="meta-row"><div class="k">Department</div><div class="v">{{ $r->department ?? '—' }}</div></div>
-                        <div class="meta-row"><div class="k">Status</div><div class="v"><span class="badge {{ $r->status }}">{{ ucfirst(strtolower($r->status)) }}</span></div></div>
-                        <div class="meta-row"><div class="k">Submitted</div><div class="v">{{ $r->created_at->format('F j, Y, g:i A') }}</div></div>
+                        <div class="meta-row"><div class="k">Status</div><div class="v"><span class="badge {{ strtolower($r->status) }}">{{ ucfirst(strtolower($r->status)) }}</span></div></div>
+                        <div class="meta-row"><div class="k">Submitted</div><div class="v"><span class="local-datetime" data-datetime="{{ $r->created_at->toIso8601String() }}">{{ $r->created_at->format('F j, Y, g:i A') }}</span></div></div>
                     </div>
 
                     <div class="items-heading">Items</div>
@@ -339,14 +339,9 @@
                                         <td>{{ !empty($returnDate) ? ((($returnDate instanceof \DateTimeInterface) ? $returnDate->format('F j, Y') : \Carbon\Carbon::parse($returnDate)->format('F j, Y'))) : 'Consumable — N/A' }}</td>
                                         <td>{{ $reasonText }}</td>
                                         <td>
-                                            <div style="flex:0 0 auto">{{ $it->status ?? $r->status }}</div>
+                                            <span class="badge {{ strtolower($it->status ?? $r->status) }}">{{ ucfirst(strtolower($it->status ?? $r->status)) }}</span>
                                             @php $hasChildren = isset($r->items) && is_countable($r->items) && $r->items->count() > 0; @endphp
-                                            @if($isAdmin && ($it->status ?? $r->status) === 'pending')
-                                                <div style="display:flex;gap:8px;margin-top:8px">
-                                                    <button class="btn ok item-approve" data-equipment='@json($equipData)'>Approve</button>
-                                                    <button class="btn rej item-deny" data-equipment='@json($equipData)'>Deny</button>
-                                                </div>
-                                            @endif
+                                            {{-- Per-item approve/deny buttons removed — use page-level controls below --}}
                                         </td>
                                     </tr>
                                 @endforeach
@@ -466,6 +461,32 @@
     <form id="logout-form" method="POST" action="/logout" style="display:none">@csrf</form>
 
     <script>
+        // Convert server timestamps (ISO8601) to user's local timezone in 12-hour format
+        (function(){
+            function formatLocalISO(iso){
+                try{
+                    const d = new Date(iso);
+                    if (isNaN(d)) return iso;
+                    return new Intl.DateTimeFormat(undefined, {
+                        year: 'numeric', month: 'long', day: 'numeric',
+                        hour: 'numeric', minute: '2-digit', hour12: true
+                    }).format(d);
+                }catch(e){return iso}
+            }
+            function applyLocalTimes(){
+                const els = document.querySelectorAll('[data-datetime]');
+                els.forEach(el=>{
+                    const iso = el.getAttribute('data-datetime');
+                    if(!iso) return;
+                    const txt = formatLocalISO(iso);
+                    el.textContent = txt;
+                });
+            }
+            if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', applyLocalTimes);
+            else applyLocalTimes();
+            // also handle dynamically fetched notification items if any later
+            window.formatLocalISO = formatLocalISO;
+        })();
         (function(){
             const bell = document.getElementById('notif-bell');
             const toggle = document.getElementById('notif-toggle');

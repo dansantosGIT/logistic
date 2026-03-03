@@ -553,7 +553,7 @@ Route::get('/notifications/requests', function (Request $request) {
                 'requester' => $r->requester,
                 'department' => $r->department ?? null,
                 'status' => $r->status,
-                'created_at' => $r->created_at->toDateTimeString(),
+                'created_at' => $r->created_at->toIso8601String(),
             ];
         })->toArray(),
     ]);

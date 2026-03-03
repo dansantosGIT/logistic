@@ -374,7 +374,7 @@
                                         $rowStatus = 'instock';
                                     }
                                 @endphp
-                                <tr data-location="{{ strtolower($item->location ?? '') }}" data-category="{{ $categorySlug }}" class="equipment-row {{ $rowStatus }}" onclick="openEquipmentModal(this)" data-equipment='{{json_encode(["id" => $item->id, "name" => $item->name, "category" => $item->category ?? "—", "location" => $item->location ?? "—", "serial" => $item->serial ?? "—", "quantity" => $item->quantity, "type" => $item->type ?? "—", "status" => $item->status ?? null, "tag" => $item->tag ?? "—", "notes" => $item->notes ?? "No description provided", "image_path" => $item->image_path, "date_added" => $item->date_added ? $item->date_added->format('M d, Y') : $item->created_at->format('M d, Y'), "created_at" => $item->created_at->format('M d, Y H:i'), "updated_at" => $item->updated_at->format('M d, Y H:i')])}}'>
+                                <tr data-location="{{ strtolower($item->location ?? '') }}" data-category="{{ $categorySlug }}" class="equipment-row {{ $rowStatus }}" onclick="openEquipmentModal(this)" data-equipment='{{json_encode(["id" => $item->id, "name" => $item->name, "category" => $item->category ?? "—", "location" => $item->location ?? "—", "serial" => $item->serial ?? "—", "quantity" => $item->quantity, "type" => $item->type ?? "—", "status" => $item->status ?? null, "tag" => $item->tag ?? "—", "notes" => $item->notes ?? "No description provided", "image_path" => $item->image_path, "date_added" => $item->date_added ? $item->date_added->format('M d, Y') : $item->created_at->format('M d, Y'), "date_added_iso" => $item->date_added ? $item->date_added->toIso8601String() : $item->created_at->toIso8601String(), "created_at" => $item->created_at->format('M d, Y H:i'), "created_at_iso" => $item->created_at->toIso8601String(), "updated_at" => $item->updated_at->format('M d, Y H:i'), "updated_at_iso" => $item->updated_at->toIso8601String()])}}'>
                                     <td>{{ $item->name }}</td>
                                     <td>{{ $item->category }}</td>
                                     <td>{{ $item->location }}</td>
@@ -1015,6 +1015,15 @@
             function openEquipmentModal(row) {
                 const data = JSON.parse(row.dataset.equipment);
                 
+                function formatLocalISO(iso, fallback) {
+                    try{
+                        if(!iso) return fallback || '';
+                        const d = new Date(iso);
+                        if(isNaN(d)) return fallback || iso;
+                        return new Intl.DateTimeFormat(undefined, { year: 'numeric', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true }).format(d);
+                    }catch(e){ return fallback || (iso || ''); }
+                }
+
                 document.getElementById('modalName').textContent = data.name;
                 document.getElementById('modalCategory').textContent = data.category;
                 document.getElementById('modalLocation').textContent = data.location;
@@ -1023,9 +1032,9 @@
                 document.getElementById('modalSerial').textContent = data.serial;
                 document.getElementById('modalTag').textContent = data.tag;
                 document.getElementById('modalNotes').textContent = data.notes;
-                document.getElementById('modalDateAdded').textContent = data.date_added;
-                document.getElementById('modalCreated').textContent = data.created_at;
-                document.getElementById('modalUpdated').textContent = data.updated_at;
+                document.getElementById('modalDateAdded').textContent = formatLocalISO(data.date_added_iso, data.date_added);
+                document.getElementById('modalCreated').textContent = formatLocalISO(data.created_at_iso, data.created_at);
+                document.getElementById('modalUpdated').textContent = formatLocalISO(data.updated_at_iso, data.updated_at);
 
                 const imageEl = document.getElementById('modalImage');
                 const noImageEl = document.getElementById('noImage');

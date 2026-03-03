@@ -268,7 +268,7 @@
                         <tbody>
                             @forelse($items as $r)
                                     <tr data-uuid="{{ $r->uuid }}">
-                                    <td>{{ $r->created_at->format('F j, Y, g:i A') }}</td>
+                                    <td><span class="local-datetime" data-datetime="{{ $r->created_at->toIso8601String() }}">{{ $r->created_at->format('F j, Y, g:i A') }}</span></td>
                                     @php
                                         $isGroup = isset($r->items) && $r->items->count();
                                     @endphp
@@ -360,6 +360,18 @@
                 return m ? m.getAttribute('content') : '';
             }
 
+            // Format ISO datetime to user's local 12-hour format
+            function formatLocalISO(iso){
+                try{
+                    const d = new Date(iso);
+                    if (isNaN(d)) return iso;
+                    return new Intl.DateTimeFormat(undefined, {
+                        year: 'numeric', month: 'long', day: 'numeric',
+                        hour: 'numeric', minute: '2-digit', hour12: true
+                    }).format(d);
+                }catch(e){return iso}
+            }
+
             function renderItems(items, isAdmin){
                 if(!items || !items.length){
                     dropdown.innerHTML = '<div class="item"><div style="padding:12px;color:var(--muted)">No notifications</div></div>';
@@ -367,7 +379,7 @@
                 }
                 dropdown.innerHTML = items.map(it=>{
                     const avatar = (it.item_name||'R').trim().charAt(0).toUpperCase();
-                    const meta = `<div class=\"meta\"><div class=\"title\">${it.item_name} <span class=\"time\">${it.created_at}</span></div><div class=\"sub\">Requested by ${it.requester}</div></div>`;
+                    const meta = `<div class=\"meta\"><div class=\"title\">${it.item_name} <span class=\"time\">${formatLocalISO(it.created_at)}</span></div><div class=\"sub\">Requested by ${it.requester}</div></div>`;
                     const actions = isAdmin ? `<div class=\"actions\"><button data-id=\"${it.id}\" data-action=\"approve\" class=\"btn\" title=\"Approve\">✓</button><button data-id=\"${it.id}\" data-action=\"reject\" class=\"btn delete\" title=\"Reject\">✕</button></div>` : '';
                     return `<div class=\"item\" data-id=\"${it.id}\"><div class=\"left\"><div class=\"avatar\">${avatar}</div></div>${meta}${actions}</div>`;
                 }).join('');
@@ -665,6 +677,26 @@
                 e.stopPropagation();
                 submenu.style.display = submenu.style.display === 'none' ? '' : 'none';
             });
+        })();
+    </script>
+    <script>
+        // Convert any server ISO datetimes to user's local 12-hour format
+        (function(){
+            function formatLocalISO(iso){
+                try{ const d = new Date(iso); if(isNaN(d)) return iso; return new Intl.DateTimeFormat(undefined, { year:'numeric', month:'long', day:'numeric', hour:'numeric', minute:'2-digit', hour12:true }).format(d); }catch(e){ return iso }
+            }
+            function applyLocalTimes(){
+                const els = document.querySelectorAll('.local-datetime');
+                els.forEach(el=>{
+                    const iso = el.getAttribute('data-datetime');
+                    if(!iso) return;
+                    el.textContent = formatLocalISO(iso);
+                });
+            }
+            if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', applyLocalTimes);
+            else applyLocalTimes();
+            // expose for other scripts (notifications already use formatLocalISO earlier)
+            window.formatLocalISO = formatLocalISO;
         })();
     </script>
 </body>
