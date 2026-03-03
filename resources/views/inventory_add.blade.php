@@ -181,6 +181,7 @@
     </style>
 </head>
     @include('partials._bg-preload')
+    @include('partials._formatters')
 <body>
     <div class="bg" aria-hidden="true"></div>
     <div class="overlay" aria-hidden="true"></div>

@@ -650,6 +650,7 @@ Route::post('/notifications/requests/{id}/action', function (Request $request, $
         $total = $r->items()->count();
         $approved = $r->items()->where('status', 'approved')->count();
         $rejected = $r->items()->where('status', 'rejected')->count();
+        $pending = max(0, $total - $approved - $rejected);
 
         if ($total > 0) {
             // If any approved item is non-consumable, the request is waiting for return
@@ -661,12 +662,22 @@ Route::post('/notifications/requests/{id}/action', function (Request $request, $
 
             if ($waitingCount > 0) {
                 $r->status = 'waiting';
-            } elseif ($approved === $total) {
-                $r->status = 'approved';
-            } elseif ($rejected === $total) {
-                $r->status = 'rejected';
-            } else {
+            } elseif ($pending > 0) {
+                // there are still undecided child items
                 $r->status = 'partial';
+            } else {
+                // all child items decided and no waiting: finalize parent
+                if ($approved === $total) {
+                    $r->status = 'approved';
+                } elseif ($rejected === $total) {
+                    $r->status = 'rejected';
+                } elseif ($approved > 0) {
+                    // mixed approve/reject (or other combinations) -> mark done
+                    $r->status = 'done';
+                } else {
+                    // fallback to done for safety
+                    $r->status = 'done';
+                }
             }
         }
         $r->handled_by = $user->id ?? null;
@@ -702,16 +713,32 @@ Route::post('/notifications/requests/{id}/action', function (Request $request, $
                     $item->handled_at = now();
                     $item->save();
                 }
-                // After approving child items, set parent status to 'waiting' if any approved non-consumable exists
+                // After approving child items, recompute parent status
+                $total = $r->items()->count();
+                $approved = $r->items()->where('status', 'approved')->count();
+                $rejected = $r->items()->where('status', 'rejected')->count();
+                $pending = max(0, $total - $approved - $rejected);
+
                 $waitingCount = $r->items()
                     ->where('status', 'approved')
                     ->whereHas('equipment', function($q){
                         $q->whereRaw('LOWER(COALESCE(`type`, "")) <> ?', ['consumable']);
                     })->count();
+
                 if ($waitingCount > 0) {
                     $r->status = 'waiting';
+                } elseif ($pending > 0) {
+                    $r->status = 'partial';
                 } else {
-                    $r->status = 'approved';
+                    if ($approved === $total) {
+                        $r->status = 'approved';
+                    } elseif ($rejected === $total) {
+                        $r->status = 'rejected';
+                    } elseif ($approved > 0) {
+                        $r->status = 'done';
+                    } else {
+                        $r->status = 'done';
+                    }
                 }
                 } else {
                     if ($quantity > 0 && $equipmentId) {
@@ -858,8 +885,8 @@ Route::get('/requests', function (Request $request) {
               });
           });
     } elseif ($tab === 'history') {
-        // History includes rejected, returned, and approved (if desired)
-        $q->whereIn('status', ['approved','rejected','returned']);
+        // History includes rejected, returned, approved, and done
+        $q->whereIn('status', ['approved','rejected','returned','done']);
     }
 
     $items = $q->orderBy('created_at', 'desc')->get();

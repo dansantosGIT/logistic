@@ -59,6 +59,7 @@
         @media(max-width:900px){.sidebar{position:fixed;left:0;top:0;bottom:0;z-index:90;height:100vh}.main{padding:16px}}
     </style>
     @include('partials._bg-preload')
+    @include('partials._formatters')
 </head>
 <body>
     <div class="bg" aria-hidden="true"></div>

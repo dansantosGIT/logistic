@@ -232,6 +232,7 @@
         .approval-body{padding:18px}
     </style>
     @include('partials._bg-preload')
+    @include('partials._formatters')
 </head>
 <body>
     <div class="bg" aria-hidden="true"></div>
@@ -623,9 +624,9 @@
                 }
                 dropdown.innerHTML = items.map(it=>{
                     const avatar = (it.item_name||'R').trim().charAt(0).toUpperCase();
-                    const meta = `<div class=\"meta\"><div class=\"title\">${it.item_name} <span class=\"time\">${it.created_at}</span></div><div class=\"sub\">Requested by ${it.requester}</div></div>`;
-                    const actions = isAdmin ? `<div class=\"actions\"><button data-id=\"${it.id}\" data-action=\"approve\" class=\"btn\" title=\"Approve\">✓</button><button data-id=\"${it.id}\" data-action=\"reject\" class=\"btn delete\" title=\"Reject\">✕</button></div>` : '';
-                    return `<div class=\"item\" data-id=\"${it.id}\"><div class=\"left\"><div class=\"avatar\">${avatar}</div></div>${meta}${actions}</div>`;
+                    const meta = `<div class="meta"><div class="title">${it.item_name} <span class="time">${formatLocalISO(it.created_at)}</span></div><div class="sub">Requested by ${it.requester}</div></div>`;
+                    const actions = isAdmin ? `<div class="actions"><button data-id="${it.id}" data-action="approve" class="btn" title="Approve">✓</button><button data-id="${it.id}" data-action="reject" class="btn delete" title="Reject">✕</button></div>` : '';
+                    return `<div class="item" data-id="${it.id}"><div class="left"><div class="avatar">${avatar}</div></div>${meta}${actions}</div>`;
                 }).join('');
             }
 
@@ -1015,14 +1016,7 @@
             function openEquipmentModal(row) {
                 const data = JSON.parse(row.dataset.equipment);
                 
-                function formatLocalISO(iso, fallback) {
-                    try{
-                        if(!iso) return fallback || '';
-                        const d = new Date(iso);
-                        if(isNaN(d)) return fallback || iso;
-                        return new Intl.DateTimeFormat(undefined, { year: 'numeric', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true }).format(d);
-                    }catch(e){ return fallback || (iso || ''); }
-                }
+                // use shared formatLocalISO(iso, fallback) from partial include
 
                 document.getElementById('modalName').textContent = data.name;
                 document.getElementById('modalCategory').textContent = data.category;

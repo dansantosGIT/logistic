@@ -101,6 +101,7 @@
         .badge{display:inline-flex;align-items:center;justify-content:center;padding:6px 10px;border-radius:999px;font-weight:700}
         .badge.pending{background:#ffebc2;color:#92400e}
         .badge.approved{background:#dcfce7;color:#065f46}
+        .badge.done{background:#dcfce7;color:#065f46}
         .badge.rejected{background:#fee2e2;color:#991b1b}
         .actions{display:flex;gap:12px;justify-content:flex-end;margin-top:18px}
         .btn{padding:10px 14px;border-radius:10px;border:1px solid #e6e9ef;background:white;cursor:pointer;font-weight:600}
@@ -181,6 +182,7 @@
         .batch-note-toggle{padding:6px 8px;border-radius:6px;border:1px solid #e6e9ef;background:#fff;font-size:12px;cursor:pointer}
     </style>
     @include('partials._bg-preload')
+    @include('partials._formatters')
 </head>
 <body>
     <div class="bg" aria-hidden="true"></div>
@@ -414,7 +416,19 @@
                     @else
                         <script>window.returnableItems = [];</script>
                     @endif
-                    @if($isAdmin && $r->status === 'approved')
+                    @php
+                        // Show print button when any child item is approved (multi-item requests)
+                        $hasApprovedItem = false;
+                        if (isset($r->items) && is_countable($r->items) && $r->items->count() > 0) {
+                            foreach ($r->items as $it) {
+                                $status = strtolower($it->status ?? ($it['status'] ?? ''));
+                                if ($status === 'approved') { $hasApprovedItem = true; break; }
+                            }
+                        } else {
+                            $hasApprovedItem = (strtolower($r->status ?? '') === 'approved');
+                        }
+                    @endphp
+                    @if($isAdmin && ($r->status === 'approved' || !empty($hasApprovedItem)))
                         <div class="request-actions">
                             <a href="/requests/{{ $r->uuid }}/print" target="_blank" class="btn" style="background:#2563eb;color:#fff;border:none">Print Form</a>
                         </div>
@@ -495,31 +509,18 @@
     <form id="logout-form" method="POST" action="/logout" style="display:none">@csrf</form>
 
     <script>
-        // Convert server timestamps (ISO8601) to user's local timezone in 12-hour format
+        // Apply shared formatLocalISO to elements with data-datetime
         (function(){
-            function formatLocalISO(iso){
-                try{
-                    const d = new Date(iso);
-                    if (isNaN(d)) return iso;
-                    return new Intl.DateTimeFormat(undefined, {
-                        year: 'numeric', month: 'long', day: 'numeric',
-                        hour: 'numeric', minute: '2-digit', hour12: true
-                    }).format(d);
-                }catch(e){return iso}
-            }
             function applyLocalTimes(){
                 const els = document.querySelectorAll('[data-datetime]');
                 els.forEach(el=>{
                     const iso = el.getAttribute('data-datetime');
                     if(!iso) return;
-                    const txt = formatLocalISO(iso);
-                    el.textContent = txt;
+                    try{ el.textContent = formatLocalISO(iso); }catch(e){ el.textContent = iso }
                 });
             }
             if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', applyLocalTimes);
             else applyLocalTimes();
-            // also handle dynamically fetched notification items if any later
-            window.formatLocalISO = formatLocalISO;
         })();
         (function(){
             const bell = document.getElementById('notif-bell');
