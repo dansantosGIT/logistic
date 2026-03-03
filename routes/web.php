@@ -527,39 +527,10 @@ Route::post('/inventory/{id}/request', function (Request $request, $id) {
 Route::get('/notifications/requests', function (Request $request) {
     $user = auth()->user();
 
-    // If DB table empty but legacy JSON exists, import it once
-    try {
-        $dbCount = InventoryRequest::count();
-    } catch (\Throwable $e) {
-        $dbCount = 0;
-    }
-    $path = 'requests.json';
-    if ($dbCount === 0 && Storage::exists($path)) {
-        try {
-            $list = json_decode(Storage::get($path), true) ?: [];
-            foreach ($list as $l) {
-                InventoryRequest::firstOrCreate(
-                    ['uuid' => $l['id'] ?? (string) uniqid('r', true)],
-                    [
-                        'item_id' => $l['item_id'] ?? null,
-                        'item_name' => $l['item_name'] ?? null,
-                        'requester' => $l['requester'] ?? null,
-                        'requester_user_id' => $l['requester_user_id'] ?? null,
-                        'quantity' => $l['quantity'] ?? 1,
-                        'role' => $l['role'] ?? null,
-                        'department' => $l['department'] ?? null,
-                        'reason' => $l['reason'] ?? null,
-                        'return_date' => $l['return_date'] ?? null,
-                        'status' => $l['status'] ?? 'pending',
-                        'created_at' => $l['created_at'] ?? now()->toDateTimeString(),
-                        'updated_at' => $l['updated_at'] ?? now()->toDateTimeString(),
-                    ]
-                );
-            }
-        } catch (\Throwable $e) {
-            // ignore import failures
-        }
-    }
+    // Legacy JSON import disabled to avoid accidental re-population of requests.
+    // Previously the app auto-imported `requests.json` into the DB when the
+    // `inventory_requests` table was empty. That behavior has been disabled
+    // to prevent legacy files from recreating test/request data.
 
     // build query from DB
     // consider user id 1 or name 'admin' as admin for now
