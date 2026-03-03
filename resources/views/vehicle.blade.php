@@ -28,10 +28,11 @@
         .sidebar.open{transform:translateX(0)}
         .brand{font-weight:800;color:var(--accent);margin-bottom:18px;display:flex;align-items:center;gap:10px}
         .nav{display:flex;flex-direction:column;gap:6px;margin-top:6px}
-        .nav a{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:8px;color:#0f172a;text-decoration:none;min-height:44px}
+        .nav a, .nav button.action{display:flex;align-items:center;gap:12px;padding:10px;border-radius:8px;color:#0f172a;text-decoration:none;background:transparent;border:none;cursor:pointer;font-size:14px;min-height:44px}
+        .nav a svg, .nav button.action svg{display:block;width:18px;height:18px}
         .nav a:hover{background:#f1f5f9}
         .nav a.active{background:linear-gradient(90deg,var(--accent),var(--accent-2));color:#fff}
-        .nav a.sub-link{margin-left:34px;min-height:34px;padding:6px 12px;font-size:13px;color:#64748b;justify-content:flex-start;text-align:left}
+        .nav a.sub-link{margin-left:26px;min-height:36px;padding:8px 12px;font-size:13px;color:#64748b;justify-content:flex-start;text-align:left}
         .nav a.sub-link:hover{background:transparent;color:#334155}
         .nav .nav-with-toggle{position:relative;display:flex;align-items:center;border-radius:8px;min-height:44px}
         .nav .nav-with-toggle.active{background:linear-gradient(90deg,var(--accent),var(--accent-2));color:#fff}
@@ -52,6 +53,11 @@
         textarea{min-height:90px;resize:vertical}
         .btn{padding:8px 12px;border-radius:8px;border:1px solid #e6e9ef;background:#fff;cursor:pointer;text-decoration:none;color:#0f172a}
         .btn.primary{background:#2563eb;border:none;color:#fff}
+        .btn.add-vehicle{background:#6b7280;border:none;color:#fff;display:inline-flex;align-items:center;gap:6px}
+        .btn.add-vehicle:hover{background:#4b5563}
+        .btn.quick-maintenance{background:#fff;color:#0f172a;border:1px solid #e6e9ef;display:inline-flex;align-items:center;gap:6px}
+        .btn.quick-maintenance:hover{background:#f8fafc}
+        .top-section{margin-top:16px;padding-bottom:14px;margin-bottom:16px;border-bottom:3px solid #e5e7eb}
         .btn.success{background:#10b981;border:none;color:#fff}
         .btn.warn{background:#f59e0b;border:none;color:#fff}
         .btn.danger{background:#ef4444;border:none;color:#fff}
@@ -71,23 +77,28 @@
         .toast.show{display:block}
         .modal-backdrop{position:fixed;inset:0;background:rgba(2,6,23,.55);display:none;z-index:210}
         .modal-backdrop.show{display:block}
-        .quick-modal{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);width:min(820px,94vw);background:#fff;border-radius:14px;box-shadow:0 24px 60px rgba(2,6,23,.25);display:none;z-index:220;overflow:hidden}
+        .quick-modal{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);width:min(980px,95vw);max-height:90vh;background:linear-gradient(180deg,#ffffff,#f8fafc);border-radius:16px;box-shadow:0 30px 70px rgba(2,6,23,.28);display:none;z-index:220;overflow:auto}
         .quick-modal.show{display:block}
-        .quick-head{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;background:linear-gradient(90deg,var(--accent),var(--accent-2));color:#fff}
+        .quick-head{display:flex;justify-content:space-between;align-items:center;padding:18px 22px;background:linear-gradient(90deg,var(--accent),var(--accent-2));color:#fff}
         .quick-close{border:none;background:rgba(255,255,255,.2);color:#fff;width:34px;height:34px;border-radius:8px;cursor:pointer}
-        .quick-body{display:grid;grid-template-columns:280px 1fr;gap:16px;padding:14px}
-        .quick-img{width:100%;height:220px;object-fit:cover;border-radius:10px;border:1px solid #e6e9ef;background:#f1f5f9}
-        .quick-noimg{width:100%;height:220px;border-radius:10px;border:1px dashed #cbd5e1;display:flex;align-items:center;justify-content:center;color:#64748b;background:#f8fafc}
+        .quick-body{display:grid;grid-template-columns:340px 1fr;gap:20px;padding:20px}
+        .quick-img{width:100%;height:260px;object-fit:cover;border-radius:12px;border:1px solid #dbe2ea;background:#f1f5f9}
+        .quick-noimg{width:100%;height:260px;border-radius:12px;border:1px dashed #cbd5e1;display:flex;align-items:center;justify-content:center;color:#64748b;background:#f8fafc}
         .quick-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-        .quick-card{background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:10px}
+        .quick-card{background:#ffffff;border:1px solid #e2e8f0;border-radius:10px;padding:12px;box-shadow:0 4px 12px rgba(15,23,42,.04)}
         .quick-label{font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:.4px}
         .quick-value{font-weight:700;color:#0f172a;font-size:14px;margin-top:4px}
+        .quick-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:14px;flex-wrap:wrap}
+        .quick-action{display:inline-flex;align-items:center;justify-content:center;min-height:40px;padding:0 14px;border-radius:10px;border:1px solid #d7dde7;background:#fff;color:#0f172a;text-decoration:none;font-weight:600}
+        .quick-action:hover{background:#f8fafc}
+        .quick-action.primary{background:#2563eb;border:none;color:#fff}
+        .quick-action.primary:hover{background:#1e4fd8}
         tbody tr.vehicle-row{cursor:pointer}
 
         @media(max-width:980px){
             .grid{grid-template-columns:1fr}
         }
-        @media(max-width:760px){.quick-body{grid-template-columns:1fr}}
+        @media(max-width:760px){.quick-body{grid-template-columns:1fr}.quick-actions{justify-content:stretch}.quick-action{flex:1}}
     </style>
     @include('partials._bg-preload')
 </head>
@@ -133,18 +144,26 @@
                     <a href="/vehicle/maintenance" class="sub-link"><span class="label">Maintenance</span></a>
                 </div>
                 <a href="/requests"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M19 3H5a2 2 0 00-2 2v14l4-2 4 2 4-2 4 2V5a2 2 0 00-2-2z" fill="currentColor"/></svg><span class="label">Request</span></a>
+                <a href="#"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 8a4 4 0 100 8 4 4 0 000-8zM3 13h3l1-3 2 2 3-4 2 4 3-2 1 3h3" stroke="currentColor" stroke-width="1" fill="none"/></svg><span class="label">Settings</span></a>
                 <a href="#" class="nav-logout" onclick="event.preventDefault();document.getElementById('logout-form').submit();"><svg width="18" height="18" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M10 17l5-5-5-5v3H3v4h7v3zM19 3h-8v2h8v14h-8v2h8a2 2 0 002-2V5a2 2 0 00-2-2z" fill="currentColor"/></svg><span class="label">Logout</span></a>
             </nav>
         </aside>
 
         <main class="main">
             <div class="panel">
-                <h2 style="margin:0 0 12px 0">Vehicle Monitoring</h2>
-                <p class="muted" style="margin-top:0">View all available vehicles and monitor maintenance items as Needed or Done.</p>
+                <div class="top-section">
+                    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:4px">
+                        <h2 style="margin:0">Vehicle Monitoring</h2>
+                        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+                            <a href="/vehicle/maintenance" class="btn quick-maintenance" title="Go to maintenance page">Maintenance</a>
+                            <a href="/vehicle/add" class="btn add-vehicle"><span aria-hidden="true">+</span><span>Add Vehicle</span></a>
+                        </div>
+                    </div>
+                    <p class="muted" style="margin-top:0;margin-bottom:0">View all available vehicles and monitor maintenance items as Needed or Done.</p>
+                </div>
                 <section>
                     <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px">
                         <h3 style="margin:0">Available Vehicle List</h3>
-                        <a href="/vehicle/add" class="btn primary">Add Vehicle</a>
                     </div>
                         <table>
                             <thead>
@@ -158,7 +177,7 @@
                             </thead>
                             <tbody>
                                 @forelse($vehicles as $vehicle)
-                                    <tr class="vehicle-row" onclick="openVehicleQuickView(this)" data-vehicle='{{ json_encode(["name" => $vehicle->name, "plate_number" => $vehicle->plate_number, "image_path" => $vehicle->image_path, "orcr_image_path" => $vehicle->orcr_image_path, "type" => $vehicle->type, "brand" => $vehicle->brand, "year" => $vehicle->year, "is_firetruck" => $vehicle->is_firetruck, "status" => $vehicle->status, "needed_count" => $vehicle->needed_count ?? 0, "done_count" => $vehicle->done_count ?? 0]) }}'>
+                                    <tr class="vehicle-row" onclick="openVehicleQuickView(this)" data-vehicle='{{ json_encode(["id" => $vehicle->id, "name" => $vehicle->name, "plate_number" => $vehicle->plate_number, "image_path" => $vehicle->image_path, "orcr_image_path" => $vehicle->orcr_image_path, "type" => $vehicle->type, "brand" => $vehicle->brand, "year" => $vehicle->year, "is_firetruck" => $vehicle->is_firetruck, "status" => $vehicle->status, "needed_count" => $vehicle->needed_count ?? 0, "done_count" => $vehicle->done_count ?? 0]) }}'>
                                         <td>
                                             <div style="font-weight:700">{{ $vehicle->name }}</div>
                                             <div class="muted">{{ $vehicle->plate_number ?: 'No plate' }}</div>
@@ -172,7 +191,6 @@
                                         <td>
                                             <div class="actions" onclick="event.stopPropagation()">
                                                 <a class="btn warn" href="/vehicle/{{ $vehicle->id }}/orcr" onclick="event.stopPropagation()">OR/CR</a>
-                                                <a class="btn" href="/vehicle/maintenance?vehicle={{ $vehicle->id }}" onclick="event.stopPropagation()">Maintenance</a>
                                             </div>
                                         </td>
                                     </tr>
@@ -197,13 +215,19 @@
                 <img id="quick-image" class="quick-img" style="display:none" alt="Vehicle image">
                 <div id="quick-no-image" class="quick-noimg">No vehicle image</div>
             </div>
-            <div class="quick-grid">
-                <div class="quick-card"><div class="quick-label">Plate Number</div><div id="quick-plate" class="quick-value">—</div></div>
-                <div class="quick-card"><div class="quick-label">Type</div><div id="quick-type" class="quick-value">—</div></div>
-                <div class="quick-card"><div class="quick-label">Brand</div><div id="quick-brand" class="quick-value">—</div></div>
-                <div class="quick-card"><div class="quick-label">Year</div><div id="quick-year" class="quick-value">—</div></div>
-                <div class="quick-card"><div class="quick-label">Vehicle Class</div><div id="quick-class" class="quick-value">—</div></div>
-                <div class="quick-card"><div class="quick-label">Maintenance</div><div id="quick-maint" class="quick-value">—</div></div>
+            <div>
+                <div class="quick-grid">
+                    <div class="quick-card"><div class="quick-label">Plate Number</div><div id="quick-plate" class="quick-value">—</div></div>
+                    <div class="quick-card"><div class="quick-label">Type</div><div id="quick-type" class="quick-value">—</div></div>
+                    <div class="quick-card"><div class="quick-label">Brand</div><div id="quick-brand" class="quick-value">—</div></div>
+                    <div class="quick-card"><div class="quick-label">Year</div><div id="quick-year" class="quick-value">—</div></div>
+                    <div class="quick-card"><div class="quick-label">Vehicle Class</div><div id="quick-class" class="quick-value">—</div></div>
+                    <div class="quick-card"><div class="quick-label">Maintenance</div><div id="quick-maint" class="quick-value">—</div></div>
+                </div>
+                <div class="quick-actions">
+                    <a id="quick-edit-link" class="quick-action" href="/vehicle/add">Edit Details</a>
+                    <a id="quick-maintenance-link" class="quick-action primary" href="/vehicle/maintenance">Maintenance</a>
+                </div>
             </div>
         </div>
     </div>
@@ -272,6 +296,8 @@
 
             const image = document.getElementById('quick-image');
             const noImage = document.getElementById('quick-no-image');
+            const maintenanceLink = document.getElementById('quick-maintenance-link');
+            const editLink = document.getElementById('quick-edit-link');
             if(data.image_path){
                 image.src = '/storage/' + data.image_path;
                 image.style.display = 'block';
@@ -279,6 +305,13 @@
             } else {
                 image.style.display = 'none';
                 noImage.style.display = 'flex';
+            }
+
+            if(maintenanceLink){
+                maintenanceLink.href = data.id ? ('/vehicle/maintenance?vehicle=' + encodeURIComponent(data.id)) : '/vehicle/maintenance';
+            }
+            if(editLink){
+                editLink.href = data.id ? ('/vehicle/' + encodeURIComponent(data.id) + '/edit') : '/vehicle/add';
             }
 
             document.getElementById('vehicle-quick-backdrop').classList.add('show');

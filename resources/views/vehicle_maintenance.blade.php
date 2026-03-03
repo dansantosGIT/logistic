@@ -20,14 +20,16 @@
         .topbar-inner{max-width:none;width:100%;margin:0;padding:12px 12px 12px 0;display:flex;justify-content:space-between;align-items:center}
 
         .app{display:flex;min-height:100vh}
-        .sidebar{position:fixed;left:0;top:var(--topbar-height);bottom:0;width:240px;background:var(--panel);border-right:1px solid #e6e9ef;padding:20px;transform:translateX(-110%);transition:transform .22s ease;z-index:90}
-        .sidebar.open{transform:translateX(0)}
+        .sidebar{position:fixed;left:0;top:var(--topbar-height);bottom:0;width:240px;background:var(--panel);border-right:1px solid #e6e9ef;padding:20px;transition:width .22s ease,transform .22s ease;z-index:50;height:calc(100vh - var(--topbar-height))}
+        .sidebar.collapsed{width:64px}
         .brand{font-weight:800;color:var(--accent);margin-bottom:18px;display:flex;align-items:center;gap:10px}
         .nav{display:flex;flex-direction:column;gap:6px;margin-top:6px}
-        .nav a{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:8px;color:#0f172a;text-decoration:none;min-height:44px}
-        .nav a:hover{background:#f1f5f9}
+        .nav a, .nav button.action{display:flex;align-items:center;gap:12px;padding:10px;border-radius:8px;color:#0f172a;text-decoration:none;background:transparent;border:none;cursor:pointer;font-size:14px;min-height:44px}
+        .nav a svg, .nav button.action svg{display:block;width:18px;height:18px}
+        .nav a:hover, .nav button.action:hover{background:#f1f5f9}
         .nav a.active{background:linear-gradient(90deg,var(--accent),var(--accent-2));color:#fff}
         .nav a.sub-link{margin-left:26px;min-height:36px;padding:8px 12px;font-size:13px;justify-content:flex-start;text-align:left}
+        .nav svg{flex-shrink:0}
         .nav .nav-with-toggle{display:flex;align-items:center;gap:6px;padding:10px 12px;border-radius:8px;min-height:44px}
         .nav .nav-with-toggle.active{background:linear-gradient(90deg,var(--accent),var(--accent-2));color:#fff}
         .nav .nav-with-toggle:not(.active):hover{background:#f1f5f9}
@@ -36,6 +38,9 @@
         .nav .nav-with-toggle.active .toggle-btn{background:rgba(255,255,255,.18);border-color:rgba(255,255,255,.35);color:#fff}
 
         .main{flex:1;padding:16px;margin-top:var(--topbar-height)}
+        .sidebar{transform:translateX(-110%);transition:transform .22s ease,width .22s ease}
+        .sidebar.open{transform:translateX(0);z-index:90}
+        .sidebar.collapsed{width:64px;transform:translateX(0)}
         .panel{background:var(--panel);padding:14px;border-radius:12px;box-shadow:0 6px 20px rgba(15,23,42,0.04);width:calc(100% - 24px);margin:10px auto}
         .form-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
         .field{display:flex;flex-direction:column;gap:6px}
@@ -57,7 +62,22 @@
         .muted{color:var(--muted);font-size:13px}
         .toast{position:fixed;right:20px;bottom:20px;background:#10b981;color:#fff;padding:12px 16px;border-radius:8px;box-shadow:0 10px 30px rgba(2,6,23,.2);z-index:200;display:none}
         .toast.show{display:block}
+        .sidebar.collapsed .brand .text,
+        .sidebar.collapsed .nav a span.label,
+        .sidebar.collapsed .nav button.action span.label{display:none}
+        .sidebar.collapsed .nav a,
+        .sidebar.collapsed .nav button.action{justify-content:center}
+        .sidebar.collapsed .nav a svg,
+        .sidebar.collapsed .nav button.action svg{margin:0 auto}
+        .sidebar.collapsed .brand{justify-content:center}
+        .nav-overlay{position:fixed;left:0;right:0;top:var(--topbar-height);bottom:0;background:rgba(2,6,23,0.45);opacity:0;visibility:hidden;transition:opacity .18s ease;z-index:80}
+        .nav-overlay.show{opacity:1;visibility:visible}
         @media(max-width:980px){.form-grid{grid-template-columns:1fr}}
+        @media(max-width:900px){
+            .sidebar{position:fixed;left:0;top:0;bottom:0;z-index:80;transform:translateX(-110%);height:100vh}
+            .sidebar.open{transform:translateX(0)}
+            .main{padding:16px}
+        }
     </style>
     @include('partials._bg-preload')
 </head>
@@ -100,6 +120,7 @@
                     <a href="/vehicle/maintenance" class="sub-link active"><span class="label">Maintenance</span></a>
                 </div>
                 <a href="/requests"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M19 3H5a2 2 0 00-2 2v14l4-2 4 2 4-2 4 2V5a2 2 0 00-2-2z" fill="currentColor"/></svg><span class="label">Request</span></a>
+                <a href="#"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 8a4 4 0 100 8 4 4 0 000-8zM3 13h3l1-3 2 2 3-4 2 4 3-2 1 3h3" stroke="currentColor" stroke-width="1" fill="none"/></svg><span class="label">Settings</span></a>
                 <a href="#" class="nav-logout" onclick="event.preventDefault();document.getElementById('logout-form').submit();"><svg width="18" height="18" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M10 17l5-5-5-5v3H3v4h7v3zM19 3h-8v2h8v14h-8v2h8a2 2 0 002-2V5a2 2 0 00-2-2z" fill="currentColor"/></svg><span class="label">Logout</span></a>
             </nav>
         </aside>
@@ -221,8 +242,43 @@
         (function(){
             const sidebar = document.getElementById('sidebar');
             const burger = document.getElementById('burger-top');
-            if(!sidebar || !burger) return;
-            burger.addEventListener('click', function(){ sidebar.classList.toggle('open'); });
+            const topbar = document.querySelector('.topbar');
+            let navOverlay = document.getElementById('nav-overlay');
+            if(!navOverlay){
+                navOverlay = document.createElement('div');
+                navOverlay.id = 'nav-overlay';
+                navOverlay.className = 'nav-overlay';
+                document.body.appendChild(navOverlay);
+            }
+
+            if(!burger || !sidebar) return;
+
+            function setOverlay(show){
+                navOverlay.classList.toggle('show', !!show);
+                document.body.style.overflow = show ? 'hidden' : '';
+            }
+
+            burger.addEventListener('click', function(e){
+                e.stopPropagation();
+                const willOpen = !sidebar.classList.contains('open');
+                sidebar.classList.toggle('open');
+                sidebar.classList.remove('collapsed');
+                setOverlay(willOpen);
+            });
+
+            document.addEventListener('click', function(e){
+                if(sidebar.classList.contains('open')){
+                    if(!sidebar.contains(e.target) && !burger.contains(e.target) && !topbar.contains(e.target)){
+                        sidebar.classList.remove('open');
+                        setOverlay(false);
+                    }
+                }
+            });
+
+            navOverlay.addEventListener('click', function(){
+                sidebar.classList.remove('open');
+                setOverlay(false);
+            });
         })();
 
         (function(){
@@ -243,19 +299,6 @@
             setTimeout(()=> toast.classList.remove('show'), 3500);
         })();
     </script>
-    <script>
-        (function(){
-            const sidebar = document.getElementById('sidebar');
-            const burger = document.getElementById('burger-top');
-            if(!sidebar || !burger) return;
-            function closeOnOutside(e){
-                if(!sidebar.classList.contains('open')) return;
-                if(sidebar.contains(e.target) || burger.contains(e.target)) return;
-                sidebar.classList.remove('open');
-            }
-            document.addEventListener('click', closeOnOutside);
-            document.addEventListener('touchstart', closeOnOutside);
-        })();
     </script>
 </body>
 </html>

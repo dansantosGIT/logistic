@@ -20,14 +20,16 @@
         .topbar-inner{max-width:none;width:100%;margin:0;padding:12px 12px 12px 0;display:flex;justify-content:space-between;align-items:center}
 
         .app{display:flex;min-height:100vh}
-        .sidebar{position:fixed;left:0;top:var(--topbar-height);bottom:0;width:240px;background:var(--panel);border-right:1px solid #e6e9ef;padding:20px;transform:translateX(-110%);transition:transform .22s ease;z-index:90}
-        .sidebar.open{transform:translateX(0)}
+        .sidebar{position:fixed;left:0;top:var(--topbar-height);bottom:0;width:240px;background:var(--panel);border-right:1px solid #e6e9ef;padding:20px;transition:width .22s ease,transform .22s ease;z-index:50;height:calc(100vh - var(--topbar-height))}
+        .sidebar.collapsed{width:64px}
         .brand{font-weight:800;color:var(--accent);margin-bottom:18px;display:flex;align-items:center;gap:10px}
         .nav{display:flex;flex-direction:column;gap:6px;margin-top:6px}
-        .nav a{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:8px;color:#0f172a;text-decoration:none;min-height:44px}
-        .nav a:hover{background:#f1f5f9}
+        .nav a, .nav button.action{display:flex;align-items:center;gap:12px;padding:10px;border-radius:8px;color:#0f172a;text-decoration:none;background:transparent;border:none;cursor:pointer;font-size:14px;min-height:44px}
+        .nav a svg, .nav button.action svg{display:block;width:18px;height:18px}
+        .nav a:hover, .nav button.action:hover{background:#f1f5f9}
         .nav a.active{background:linear-gradient(90deg,var(--accent),var(--accent-2));color:#fff}
         .nav a.sub-link{margin-left:26px;min-height:36px;padding:8px 12px;font-size:13px;justify-content:flex-start;text-align:left}
+        .nav svg{flex-shrink:0}
         .nav .nav-with-toggle{display:flex;align-items:center;gap:6px;padding:10px 12px;border-radius:8px;min-height:44px}
         .nav .nav-with-toggle.active{background:linear-gradient(90deg,var(--accent),var(--accent-2));color:#fff}
         .nav .nav-with-toggle:not(.active):hover{background:#f1f5f9}
@@ -36,6 +38,9 @@
         .nav .nav-with-toggle.active .toggle-btn{background:rgba(255,255,255,.18);border-color:rgba(255,255,255,.35);color:#fff}
 
         .main{flex:1;padding:16px;margin-top:var(--topbar-height)}
+        .sidebar{transform:translateX(-110%);transition:transform .22s ease,width .22s ease}
+        .sidebar.open{transform:translateX(0);z-index:90}
+        .sidebar.collapsed{width:64px;transform:translateX(0)}
         .panel{background:var(--panel);padding:14px;border-radius:12px;box-shadow:0 6px 20px rgba(15,23,42,0.04);width:calc(100% - 24px);margin:10px auto;max-width:920px}
         .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
         .field{display:flex;flex-direction:column;gap:6px}
@@ -45,11 +50,27 @@
         .btn{padding:8px 12px;border-radius:8px;border:1px solid #e6e9ef;background:#fff;cursor:pointer;text-decoration:none;color:#0f172a}
         .btn.primary{background:#2563eb;border:none;color:#fff}
         .actions{display:flex;justify-content:flex-end;gap:10px}
+        .sidebar.collapsed .brand .text,
+        .sidebar.collapsed .nav a span.label,
+        .sidebar.collapsed .nav button.action span.label{display:none}
+        .sidebar.collapsed .nav a,
+        .sidebar.collapsed .nav button.action{justify-content:center}
+        .sidebar.collapsed .nav a svg,
+        .sidebar.collapsed .nav button.action svg{margin:0 auto}
+        .sidebar.collapsed .brand{justify-content:center}
         @media(max-width:980px){.form-grid{grid-template-columns:1fr}}
+        @media(max-width:900px){
+            .sidebar{position:fixed;left:0;top:0;bottom:0;z-index:80;transform:translateX(-110%);height:100vh}
+            .sidebar.open{transform:translateX(0)}
+            .main{padding:16px}
+        }
     </style>
     @include('partials._bg-preload')
 </head>
 <body>
+    @php
+        $isEdit = isset($vehicle) && !empty($vehicle->id);
+    @endphp
     <div class="bg" aria-hidden="true"></div>
     <div class="overlay" aria-hidden="true"></div>
 
@@ -61,7 +82,7 @@
                 </button>
                 <a href="/dashboard" style="display:flex;align-items:center;gap:6px;font-weight:700;text-decoration:none;color:inherit">
                     <img src="/images/favi.png" alt="Logo" width="40" height="40" />
-                    <span>Add Vehicle</span>
+                    <span>{{ $isEdit ? 'Edit Vehicle' : 'Add Vehicle' }}</span>
                 </a>
             </div>
             <div style="text-align:right">
@@ -88,35 +109,36 @@
                     <a href="/vehicle/maintenance" class="sub-link"><span class="label">Maintenance</span></a>
                 </div>
                 <a href="/requests"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M19 3H5a2 2 0 00-2 2v14l4-2 4 2 4-2 4 2V5a2 2 0 00-2-2z" fill="currentColor"/></svg><span class="label">Request</span></a>
+                <a href="#"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 8a4 4 0 100 8 4 4 0 000-8zM3 13h3l1-3 2 2 3-4 2 4 3-2 1 3h3" stroke="currentColor" stroke-width="1" fill="none"/></svg><span class="label">Settings</span></a>
                 <a href="#" class="nav-logout" onclick="event.preventDefault();document.getElementById('logout-form').submit();"><svg width="18" height="18" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M10 17l5-5-5-5v3H3v4h7v3zM19 3h-8v2h8v14h-8v2h8a2 2 0 002-2V5a2 2 0 00-2-2z" fill="currentColor"/></svg><span class="label">Logout</span></a>
             </nav>
         </aside>
 
         <main class="main">
             <div class="panel">
-                <h2 style="margin:0 0 10px 0">Add Vehicle</h2>
-                <form method="POST" action="/vehicle" enctype="multipart/form-data">
+                <h2 style="margin:0 0 10px 0">{{ $isEdit ? 'Edit Vehicle' : 'Add Vehicle' }}</h2>
+                <form method="POST" action="{{ $isEdit ? '/vehicle/' . $vehicle->id . '/update' : '/vehicle' }}" enctype="multipart/form-data">
                     @csrf
                     <div class="form-grid">
                         <div class="field full">
                             <label for="vehicle-name">Vehicle Name / Call Sign</label>
-                            <input id="vehicle-name" name="name" required placeholder="e.g., Alpha 01">
+                            <input id="vehicle-name" name="name" required placeholder="e.g., Alpha 01" value="{{ old('name', $vehicle->name ?? '') }}">
                         </div>
                         <div class="field">
                             <label for="vehicle-type">Vehicle Type</label>
-                            <input id="vehicle-type" name="type" required placeholder="e.g., Ambulance">
+                            <input id="vehicle-type" name="type" required placeholder="e.g., Ambulance" value="{{ old('type', $vehicle->type ?? '') }}">
                         </div>
                         <div class="field">
                             <label for="vehicle-brand">Brand</label>
-                            <input id="vehicle-brand" name="brand" placeholder="e.g., Isuzu">
+                            <input id="vehicle-brand" name="brand" placeholder="e.g., Isuzu" value="{{ old('brand', $vehicle->brand ?? '') }}">
                         </div>
                         <div class="field">
                             <label for="vehicle-year">Year</label>
-                            <input id="vehicle-year" name="year" type="number" min="1900" max="2100" placeholder="e.g., 2022">
+                            <input id="vehicle-year" name="year" type="number" min="1900" max="2100" placeholder="e.g., 2022" value="{{ old('year', $vehicle->year ?? '') }}">
                         </div>
                         <div class="field">
                             <label for="vehicle-plate">Plate Number</label>
-                            <input id="vehicle-plate" name="plate_number" placeholder="e.g., ABC-1234">
+                            <input id="vehicle-plate" name="plate_number" placeholder="e.g., ABC-1234" value="{{ old('plate_number', $vehicle->plate_number ?? '') }}">
                         </div>
                         <div class="field full">
                             <label for="vehicle-image">Vehicle Image</label>
@@ -126,18 +148,14 @@
                             <label for="vehicle-orcr-image">OR/CR Photo</label>
                             <input id="vehicle-orcr-image" name="orcr_image" type="file" accept="image/*">
                         </div>
-                        <div class="field full" style="flex-direction:row;align-items:center;gap:10px">
-                            <input id="vehicle-firetruck" name="is_firetruck" type="checkbox" value="1" style="width:auto">
-                            <label for="vehicle-firetruck" style="margin:0">This vehicle is a firetruck</label>
-                        </div>
                         <div class="field full">
                             <label for="vehicle-notes">Notes</label>
-                            <textarea id="vehicle-notes" name="notes" placeholder="Optional notes"></textarea>
+                            <textarea id="vehicle-notes" name="notes" placeholder="Optional notes">{{ old('notes', $vehicle->notes ?? '') }}</textarea>
                         </div>
                     </div>
                     <div class="actions" style="margin-top:12px">
                         <a href="/vehicle" class="btn">Back to Vehicle List</a>
-                        <button class="btn primary" type="submit">Save Vehicle</button>
+                        <button class="btn primary" type="submit">{{ $isEdit ? 'Update Vehicle' : 'Save Vehicle' }}</button>
                     </div>
                 </form>
             </div>

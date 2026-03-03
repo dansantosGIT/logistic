@@ -694,16 +694,12 @@
                     if(res.ok){
                         if(contentType.includes('application/json')){
                             const data = await res.json();
-                            const msg = data.message || 'Request submitted successfully';
-                            showToast(msg);
-                            showModal('Request Submitted', data.detail || msg);
-                            // optionally reset form
-                            try{ form.reset(); }catch(e){}
+                            window.location.href = '/inventory';
+                            return;
                         } else {
-                            // not JSON — treat as success (server may redirect)
-                            showToast('Request submitted successfully');
-                            showModal('Request Submitted', 'Your request was submitted.');
-                            try{ form.reset(); }catch(e){}
+                            // not JSON — still redirect to inventory after successful submit
+                            window.location.href = '/inventory';
+                            return;
                         }
                     } else {
                         // parse error message if available

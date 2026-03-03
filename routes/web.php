@@ -142,6 +142,10 @@ Route::get('/vehicle/add', function () {
     return view('vehicle_add');
 })->middleware('auth');
 
+Route::get('/vehicle/{vehicle}/edit', function (Vehicle $vehicle) {
+    return view('vehicle_edit', compact('vehicle'));
+})->middleware('auth');
+
 Route::get('/vehicle/maintenance', function () {
     $selectedVehicleId = (int) request()->query('vehicle', 0);
     $vehicles = Vehicle::where('status', 'active')->orderBy('name')->get();
@@ -206,6 +210,45 @@ Route::post('/vehicle', function (Request $request) {
     ]);
 
     return redirect('/vehicle')->with('success', 'Vehicle added.');
+})->middleware('auth');
+
+Route::post('/vehicle/{vehicle}/update', function (Request $request, Vehicle $vehicle) {
+    $data = $request->validate([
+        'name' => 'required|string|max:255',
+        'plate_number' => 'nullable|string|max:255',
+        'image' => 'nullable|file|image|max:5120',
+        'orcr_image' => 'nullable|file|image|max:5120',
+        'type' => 'required|string|max:255',
+        'brand' => 'nullable|string|max:255',
+        'year' => 'nullable|integer|min:1900|max:2100',
+        'is_firetruck' => 'nullable|boolean',
+        'notes' => 'nullable|string|max:500',
+    ]);
+
+    if ($request->hasFile('image') && $request->file('image')->isValid()) {
+        if ($vehicle->image_path && Storage::disk('public')->exists($vehicle->image_path)) {
+            Storage::disk('public')->delete($vehicle->image_path);
+        }
+        $vehicle->image_path = $request->file('image')->store('vehicles', 'public');
+    }
+
+    if ($request->hasFile('orcr_image') && $request->file('orcr_image')->isValid()) {
+        if ($vehicle->orcr_image_path && Storage::disk('public')->exists($vehicle->orcr_image_path)) {
+            Storage::disk('public')->delete($vehicle->orcr_image_path);
+        }
+        $vehicle->orcr_image_path = $request->file('orcr_image')->store('vehicles/orcr', 'public');
+    }
+
+    $vehicle->name = $data['name'];
+    $vehicle->plate_number = $data['plate_number'] ?? null;
+    $vehicle->type = $data['type'];
+    $vehicle->brand = $data['brand'] ?? null;
+    $vehicle->year = $data['year'] ?? null;
+    $vehicle->is_firetruck = $request->boolean('is_firetruck');
+    $vehicle->notes = $data['notes'] ?? null;
+    $vehicle->save();
+
+    return redirect('/vehicle')->with('success', 'Vehicle details updated.');
 })->middleware('auth');
 
 Route::post('/vehicle/{vehicle}/orcr', function (Request $request, Vehicle $vehicle) {
