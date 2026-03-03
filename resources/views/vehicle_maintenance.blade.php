@@ -10,7 +10,7 @@
     <meta name="theme-color" content="#0b1220">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <style>
-        :root{--bg:#f6f8fb;--panel:#ffffff;--accent:#2563eb;--accent-2:#7c3aed;--muted:#6b7280;--topbar-height:72px}
+        :root{--bg:#f6f8fb;--panel:#ffffff;--accent:#2563eb;--accent-2:#7c3aed;--muted:#6b7280;--muted-2:#94a3b8;--topbar-height:72px}
         *{box-sizing:border-box}
         body{margin:0;font-family:Inter,system-ui,Arial,Helvetica;background:var(--bg);color:#0f172a}
         .bg{position:fixed;inset:0;background-image:url('/images/welcome-bg.jpg');background-size:cover;background-position:center;filter:brightness(0.6) saturate(0.95);z-index:-3}
@@ -18,6 +18,10 @@
 
         .topbar{position:fixed;left:0;right:0;top:0;height:72px;background:rgba(255,255,255,0.96);box-shadow:0 6px 24px rgba(2,6,23,0.06);z-index:60}
         .topbar-inner{max-width:none;width:100%;margin:0;padding:12px 12px 12px 0;display:flex;justify-content:space-between;align-items:center}
+        .topbar .brand-title{display:flex;align-items:center;gap:6px;font-weight:700}
+        .topbar .brand-subtitle{font-size:12px;color:var(--muted)}
+        .burger{display:inline-flex;width:44px;height:44px;border-radius:8px;align-items:center;justify-content:center;background:transparent;border:1px solid transparent;cursor:pointer}
+        .burger:hover{background:#eef2ff}
 
         .app{display:flex;min-height:100vh}
         .sidebar{position:fixed;left:0;top:var(--topbar-height);bottom:0;width:240px;background:var(--panel);border-right:1px solid #e6e9ef;padding:20px;transition:width .22s ease,transform .22s ease;z-index:50;height:calc(100vh - var(--topbar-height))}
@@ -30,12 +34,18 @@
         .nav a.active{background:linear-gradient(90deg,var(--accent),var(--accent-2));color:#fff}
         .nav a.sub-link{margin-left:26px;min-height:36px;padding:8px 12px;font-size:13px;justify-content:flex-start;text-align:left}
         .nav svg{flex-shrink:0}
-        .nav .nav-with-toggle{display:flex;align-items:center;gap:6px;padding:10px 12px;border-radius:8px;min-height:44px}
+        .nav .nav-with-toggle{position:relative;display:flex;align-items:center;border-radius:8px;min-height:44px}
         .nav .nav-with-toggle.active{background:linear-gradient(90deg,var(--accent),var(--accent-2));color:#fff}
         .nav .nav-with-toggle:not(.active):hover{background:#f1f5f9}
-        .nav .nav-with-toggle .vehicle-link{display:flex;align-items:center;gap:12px;flex:1;color:inherit;text-decoration:none}
-        .nav .nav-with-toggle .toggle-btn{width:28px;height:28px;border:1px solid #d1d5db;border-radius:6px;background:#fff;color:#475569;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;font-size:12px;line-height:1}
-        .nav .nav-with-toggle.active .toggle-btn{background:rgba(255,255,255,.18);border-color:rgba(255,255,255,.35);color:#fff}
+        .nav .nav-with-toggle .vehicle-link{display:flex;align-items:center;gap:12px;flex:1;color:inherit;text-decoration:none;padding:10px 36px 10px 12px;border-radius:8px}
+        .nav .nav-with-toggle .toggle-btn{position:absolute;right:8px;top:50%;transform:translateY(-50%);border:none;background:transparent;color:#475569;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;font-size:12px;line-height:1;padding:2px 4px;opacity:1}
+        .nav .nav-with-toggle:hover .toggle-btn{color:#334155}
+        .nav .nav-with-toggle.active .toggle-btn{color:#fff}
+        .nav .nav-with-toggle.open .toggle-btn{transform:translateY(-50%) rotate(180deg)}
+
+        /* Match dashboard hover behaviour for the vehicle link */
+        .nav .nav-with-toggle:not(.active) .vehicle-link:hover{background:#f1f5f9;color:inherit}
+        .nav .nav-with-toggle.active .vehicle-link:hover{background:linear-gradient(90deg,var(--accent),var(--accent-2));color:#fff}
 
         .main{flex:1;padding:16px;margin-top:var(--topbar-height)}
         .sidebar{transform:translateX(-110%);transition:transform .22s ease,width .22s ease}
@@ -70,6 +80,24 @@
         .sidebar.collapsed .nav a svg,
         .sidebar.collapsed .nav button.action svg{margin:0 auto}
         .sidebar.collapsed .brand{justify-content:center}
+
+        /* Notification bell styles (copied from dashboard for consistent topbar) */
+        .notif-bell{position:relative;display:inline-flex;align-items:center;gap:8px;margin-right:12px}
+        .notif-bell button{background:transparent;border:none;cursor:pointer;padding:8px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center}
+        .notif-count{position:absolute;top:-6px;right:-6px;z-index:70;background:#ef4444;color:#fff;font-size:12px;padding:3px 6px;border-radius:999px;min-width:20px;text-align:center;box-shadow:0 6px 18px rgba(2,6,23,0.12)}
+        .notif-dropdown{position:absolute;right:0;top:44px;width:360px;max-height:420px;background:linear-gradient(180deg,#ffffff,#fbfdff);border-radius:12px;box-shadow:0 18px 50px rgba(2,6,23,0.16);overflow:auto;display:none;z-index:120;padding:8px}
+        .notif-dropdown.show{display:block}
+        .notif-dropdown .item{display:flex;align-items:center;gap:12px;padding:10px;border-radius:8px;transition:background .12s ease,transform .12s ease;cursor:pointer}
+        .notif-dropdown .item:hover{background:linear-gradient(90deg,rgba(37,99,235,0.04),rgba(124,58,237,0.02));transform:translateY(-2px)}
+        .notif-dropdown .left{flex:0 0 44px;display:flex;align-items:center;justify-content:center}
+        .notif-dropdown .avatar{width:44px;height:44px;border-radius:50%;display:inline-grid;place-items:center;background:linear-gradient(135deg,var(--accent),var(--accent-2));color:#fff;font-weight:700;box-shadow:0 8px 22px rgba(15,23,42,0.06)}
+        .notif-dropdown .meta{flex:1;min-width:0}
+        .notif-dropdown .meta .title{font-weight:700;color:#0f172a;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center;gap:8px}
+        .notif-dropdown .meta .sub{font-size:12px;color:#94a3b8;margin-top:4px}
+        .notif-dropdown .time{font-size:11px;color:#94a3b8;margin-left:6px}
+        .notif-dropdown .actions{display:flex;gap:6px;flex-shrink:0}
+        .notif-dropdown .empty{padding:12px;color:var(--muted);text-align:center}
+
         .nav-overlay{position:fixed;left:0;right:0;top:var(--topbar-height);bottom:0;background:rgba(2,6,23,0.45);opacity:0;visibility:hidden;transition:opacity .18s ease;z-index:80}
         .nav-overlay.show{opacity:1;visibility:visible}
         @media(max-width:980px){.form-grid{grid-template-columns:1fr}}
@@ -95,19 +123,13 @@
                 <div style="display:flex;flex-direction:column">
                         <a href="/dashboard" class="brand-title" style="text-decoration:none;color:inherit;display:flex;align-items:center;gap:6px">
                             <img src="/images/favi.png" alt="Logo" width="40" height="40" style="display:inline-block" />
-                            <span>San Juan CDRRMD Dashboard</span>
+                            <span style="font-weight:700">San Juan CDRRMD Vehicle Maintenance</span>
                         </a>
-                    <div class="brand-subtitle">Overview of Stocks</div>
+                    <div class="brand-subtitle">Overview of Vehicle Maintenance</div>
                 </div>
             </div>
             <div style="text-align:right;display:flex;align-items:center;gap:12px;justify-content:flex-end">
-                <div class="notif-bell" id="notif-bell">
-                    <button id="notif-toggle" aria-haspopup="true" aria-expanded="false" title="Notifications">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 10-12 0v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1h6z" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                    </button>
-                    <div class="notif-count" id="notif-count" style="display:none">0</div>
-                    <div class="notif-dropdown" id="notif-dropdown" aria-hidden="true"></div>
-                </div>
+                @include('partials._notifications')
                 <div style="text-align:right">
                     <div style="font-size:13px;color:var(--muted-2)">Welcome!</div>
                     <div style="font-weight:700">{{ auth()->user()->name }}</div>
@@ -125,11 +147,11 @@
             <nav class="nav">
                 <a href="/dashboard"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 13h8V3H3v10zM13 21h8V11h-8v10zM13 3v6h8V3h-8zM3 21h8v-6H3v6z" fill="currentColor"/></svg><span class="label">Home</span></a>
                 <a href="/inventory"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 7a5 5 0 100 10 5 5 0 000-10zM2 12a10 10 0 1120 0A10 10 0 012 12z" fill="currentColor"/></svg><span class="label">Inventory</span></a>
-                <div class="nav-with-toggle active">
+                <div id="vehicle-nav-group" class="nav-with-toggle active">
                     <a href="/vehicle" id="vehicle-nav-link" class="vehicle-link"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 13l1.5-4.5A2 2 0 016.4 7h11.2a2 2 0 011.9 1.5L21 13v5a1 1 0 01-1 1h-1a1 1 0 01-1-1v-1H6v1a1 1 0 01-1 1H4a1 1 0 01-1-1v-5zM6 14h12M7.5 10.5h9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="label">Vehicle</span></a>
                     <button id="vehicle-submenu-toggle" class="toggle-btn" type="button" aria-label="Toggle Maintenance menu" title="Toggle Maintenance menu">▾</button>
                 </div>
-                <div id="vehicle-submenu" style="display:block">
+                <div id="vehicle-submenu" style="display:none">
                     <a href="/vehicle/maintenance" class="sub-link active"><span class="label">Maintenance</span></a>
                 </div>
                 <a href="/requests"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M19 3H5a2 2 0 00-2 2v14l4-2 4 2 4-2 4 2V5a2 2 0 00-2-2z" fill="currentColor"/></svg><span class="label">Request</span></a>
@@ -312,6 +334,19 @@
             setTimeout(()=> toast.classList.remove('show'), 3500);
         })();
     </script>
+
+    <script>
+        (function(){
+            const dd = document.querySelector('.notif-dropdown');
+            if(!dd) return;
+            dd.addEventListener('click', function(e){
+                if(e.target.closest('.actions')) return; // ignore action button clicks
+                const item = e.target.closest('.item');
+                if(!item) return;
+                const id = item.dataset.uuid || item.getAttribute('data-uuid') || item.getAttribute('data-id');
+                if(id) window.location.href = '/requests/' + id;
+            });
+        })();
     </script>
 </body>
 </html>

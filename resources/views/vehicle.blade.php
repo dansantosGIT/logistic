@@ -10,7 +10,7 @@
     <meta name="theme-color" content="#0b1220">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <style>
-        :root{--bg:#f6f8fb;--panel:#ffffff;--accent:#2563eb;--accent-2:#7c3aed;--muted:#6b7280;--topbar-height:72px}
+        :root{--bg:#f6f8fb;--panel:#ffffff;--accent:#2563eb;--accent-2:#7c3aed;--muted:#6b7280;--muted-2:#94a3b8;--topbar-height:72px}
         *{box-sizing:border-box}
         body{margin:0;font-family:Inter,system-ui,Arial,Helvetica;background:var(--bg);color:#0f172a}
         .bg{position:fixed;inset:0;background-image:url('/images/welcome-bg.jpg');background-size:cover;background-position:center;filter:brightness(0.6) saturate(0.95);z-index:-3}
@@ -24,8 +24,9 @@
         .burger:hover{background:#eef2ff}
 
         .app{display:flex;min-height:100vh}
-        .sidebar{position:fixed;left:0;top:var(--topbar-height);bottom:0;width:240px;background:var(--panel);border-right:1px solid #e6e9ef;padding:20px;transform:translateX(-110%);transition:transform .22s ease;z-index:90}
-        .sidebar.open{transform:translateX(0)}
+        .sidebar{position:fixed;left:0;top:var(--topbar-height);bottom:0;width:240px;background:var(--panel);border-right:1px solid #e6e9ef;padding:20px;transform:translateX(-110%);transition:width .22s ease,transform .22s ease;z-index:50;height:calc(100vh - var(--topbar-height))}
+        .sidebar.collapsed{width:64px}
+        .sidebar.open{transform:translateX(0);z-index:90}
         .brand{font-weight:800;color:var(--accent);margin-bottom:18px;display:flex;align-items:center;gap:10px}
         .nav{display:flex;flex-direction:column;gap:6px;margin-top:6px}
         .nav a, .nav button.action{display:flex;align-items:center;gap:12px;padding:10px;border-radius:8px;color:#0f172a;text-decoration:none;background:transparent;border:none;cursor:pointer;font-size:14px;min-height:44px}
@@ -42,6 +43,10 @@
         .nav .nav-with-toggle:hover .toggle-btn{color:#334155}
         .nav .nav-with-toggle.active .toggle-btn{color:#fff}
         .nav .nav-with-toggle.open .toggle-btn{transform:translateY(-50%) rotate(180deg)}
+
+        /* Match dashboard hover behaviour for the vehicle link */
+        .nav .nav-with-toggle:not(.active) .vehicle-link:hover{background:#f1f5f9;color:inherit}
+        .nav .nav-with-toggle.active .vehicle-link:hover{background:linear-gradient(90deg,var(--accent),var(--accent-2));color:#fff}
 
         .main{flex:1;padding:16px;margin-top:var(--topbar-height)}
         .panel{background:var(--panel);padding:14px;border-radius:12px;box-shadow:0 6px 20px rgba(15,23,42,0.04);width:calc(100% - 24px);margin:10px auto}
@@ -99,6 +104,22 @@
             .grid{grid-template-columns:1fr}
         }
         @media(max-width:760px){.quick-body{grid-template-columns:1fr}.quick-actions{justify-content:stretch}.quick-action{flex:1}}
+        /* Notification bell styles (copied from dashboard for consistent topbar) */
+        .notif-bell{position:relative;display:inline-flex;align-items:center;gap:8px;margin-right:12px}
+        .notif-bell button{background:transparent;border:none;cursor:pointer;padding:8px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center}
+        .notif-count{position:absolute;top:-6px;right:-6px;z-index:70;background:#ef4444;color:#fff;font-size:12px;padding:3px 6px;border-radius:999px;min-width:20px;text-align:center;box-shadow:0 6px 18px rgba(2,6,23,0.12)}
+        .notif-dropdown{position:absolute;right:0;top:44px;width:360px;max-height:420px;background:linear-gradient(180deg,#ffffff,#fbfdff);border-radius:12px;box-shadow:0 18px 50px rgba(2,6,23,0.16);overflow:auto;display:none;z-index:120;padding:8px}
+        .notif-dropdown.show{display:block}
+        .notif-dropdown .item{display:flex;align-items:center;gap:12px;padding:10px;border-radius:8px;transition:background .12s ease,transform .12s ease;cursor:pointer}
+        .notif-dropdown .item:hover{background:linear-gradient(90deg,rgba(37,99,235,0.04),rgba(124,58,237,0.02));transform:translateY(-2px)}
+        .notif-dropdown .left{flex:0 0 44px;display:flex;align-items:center;justify-content:center}
+        .notif-dropdown .avatar{width:44px;height:44px;border-radius:50%;display:inline-grid;place-items:center;background:linear-gradient(135deg,var(--accent),var(--accent-2));color:#fff;font-weight:700;box-shadow:0 8px 22px rgba(15,23,42,0.06)}
+        .notif-dropdown .meta{flex:1;min-width:0}
+        .notif-dropdown .meta .title{font-weight:700;color:#0f172a;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center;gap:8px}
+        .notif-dropdown .meta .sub{font-size:12px;color:#94a3b8;margin-top:4px}
+        .notif-dropdown .time{font-size:11px;color:#94a3b8;margin-left:6px}
+        .notif-dropdown .actions{display:flex;gap:6px;flex-shrink:0}
+        .notif-dropdown .empty{padding:12px;color:var(--muted);text-align:center}
     </style>
     @include('partials._bg-preload')
     @include('partials._formatters')
@@ -122,13 +143,7 @@
                 </div>
             </div>
             <div style="text-align:right;display:flex;align-items:center;gap:12px;justify-content:flex-end">
-                <div class="notif-bell" id="notif-bell">
-                    <button id="notif-toggle" aria-haspopup="true" aria-expanded="false" title="Notifications">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 10-12 0v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1h6z" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                    </button>
-                    <div class="notif-count" id="notif-count" style="display:none">0</div>
-                    <div class="notif-dropdown" id="notif-dropdown" aria-hidden="true"></div>
-                </div>
+                @include('partials._notifications')
                 <div style="text-align:right">
                     <div style="font-size:13px;color:var(--muted-2)">Welcome!</div>
                     <div style="font-weight:700">{{ auth()->user()->name }}</div>
@@ -252,8 +267,43 @@
         (function(){
             const sidebar = document.getElementById('sidebar');
             const burger = document.getElementById('burger-top');
-            if(!sidebar || !burger) return;
-            burger.addEventListener('click', function(){ sidebar.classList.toggle('open'); });
+            const topbar = document.querySelector('.topbar');
+            let navOverlay = document.getElementById('nav-overlay');
+            if(!navOverlay){
+                navOverlay = document.createElement('div');
+                navOverlay.id = 'nav-overlay';
+                navOverlay.className = 'nav-overlay';
+                document.body.appendChild(navOverlay);
+            }
+
+            if(!burger || !sidebar) return;
+
+            function setOverlay(show){
+                navOverlay.classList.toggle('show', !!show);
+                document.body.style.overflow = show ? 'hidden' : '';
+            }
+
+            burger.addEventListener('click', function(e){
+                e.stopPropagation();
+                const willOpen = !sidebar.classList.contains('open');
+                sidebar.classList.toggle('open');
+                sidebar.classList.remove('collapsed');
+                setOverlay(willOpen);
+            });
+
+            document.addEventListener('click', function(e){
+                if(sidebar.classList.contains('open')){
+                    if(!sidebar.contains(e.target) && !burger.contains(e.target) && !topbar.contains(e.target)){
+                        sidebar.classList.remove('open');
+                        setOverlay(false);
+                    }
+                }
+            });
+
+            navOverlay.addEventListener('click', function(){
+                sidebar.classList.remove('open');
+                setOverlay(false);
+            });
         })();
 
         (function(){
@@ -342,6 +392,19 @@
             backdrop && backdrop.addEventListener('click', closeQuick);
             document.addEventListener('keydown', function(e){
                 if(e.key === 'Escape' && modal.classList.contains('show')) closeQuick();
+            });
+        })();
+    </script>
+    <script>
+        (function(){
+            const dd = document.querySelector('.notif-dropdown');
+            if(!dd) return;
+            dd.addEventListener('click', function(e){
+                if(e.target.closest('.actions')) return; // ignore action button clicks
+                const item = e.target.closest('.item');
+                if(!item) return;
+                const id = item.dataset.uuid || item.getAttribute('data-uuid') || item.getAttribute('data-id');
+                if(id) window.location.href = '/requests/' + id;
             });
         })();
     </script>
