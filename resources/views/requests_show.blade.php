@@ -172,6 +172,13 @@
         .toast.show{opacity:1;transform:translateY(0)}
         .toast .close{cursor:pointer;padding:6px;border-radius:6px;background:rgba(255,255,255,0.12);color:rgba(255,255,255,0.9)}
         .toast.error{background:#ef4444}
+        /* Batch approval table styles */
+        .batch-table{width:100%;border-collapse:collapse;margin:6px 0;font-size:14px}
+        .batch-table thead th{background:#f8fafc;padding:10px 12px;text-align:left;border-bottom:1px solid #eef2ff;font-weight:700}
+        .batch-table tbody td{padding:10px 12px;border-bottom:1px solid #f1f5f9;vertical-align:middle}
+        .batch-table .small-muted{font-size:12px;color:var(--muted)}
+        .batch-note{margin-top:6px}
+        .batch-note-toggle{padding:6px 8px;border-radius:6px;border:1px solid #e6e9ef;background:#fff;font-size:12px;cursor:pointer}
     </style>
     @include('partials._bg-preload')
 </head>
@@ -323,12 +330,14 @@
                                             @php
                                                 $payload = [
                                                     'id' => $equipData['id'] ?? null,
+                                                    'request_item_id' => $equipData['request_item_id'] ?? null,
                                                     'name' => $equipData['name'] ?? null,
                                                     'category' => $equipData['category'] ?? null,
                                                     'type' => $equipData['type'] ?? null,
                                                     'serial' => $equipData['serial'] ?? null,
                                                     'location' => $equipData['location'] ?? null,
                                                     'quantity' => $equipData['quantity'] ?? 0,
+                                                    'requested_quantity' => $equipData['requested_quantity'] ?? $requestedQty,
                                                     'image_path' => $equipModel?->image_path ?? $equipModel?->photo ?? null,
                                                 ];
                                             @endphp
@@ -358,8 +367,14 @@
 
                     @php
                         $hasNonConsumable = false;
+                        $returnableItems = [];
                         if(!empty($equipment) && strtolower(trim($equipment->type ?? '')) !== 'consumable') {
                             $hasNonConsumable = true;
+                            $returnableItems[] = [
+                                'name' => $equipment->name ?? ($r->item_name ?? 'Item'),
+                                'request_item_id' => $r->id ?? null,
+                                'equipment_id' => $equipment->id ?? null,
+                            ];
                         } elseif(isset($r->items) && is_countable($r->items) && $r->items->count() > 0) {
                             foreach($r->items as $it) {
                                 try {
@@ -375,7 +390,11 @@
                                     }
                                     if (!empty($type) && strtolower(trim($type)) !== 'consumable') {
                                         $hasNonConsumable = true;
-                                        break;
+                                        $returnableItems[] = [
+                                            'name' => $it->item_name ?? ($it->equipment->name ?? 'Item'),
+                                            'request_item_id' => $it->id ?? null,
+                                            'equipment_id' => is_object($it) ? ($it->equipment_id ?? null) : ($it['equipment_id'] ?? null),
+                                        ];
                                     }
                                 } catch (\Throwable $_) {
                                     // ignore
@@ -384,10 +403,16 @@
                         }
                     @endphp
 
-                    @if($isAdmin && $r->status === 'approved' && $hasNonConsumable)
+                    @if($isAdmin && in_array($r->status, ['approved','waiting']) && $hasNonConsumable)
                         <div class="request-actions">
                             <button type="button" class="btn" id="btn-mark-returned" style="background:#6b7280;color:#fff;border:none">Mark returned</button>
                         </div>
+                    @endif
+
+                    @if(!empty($returnableItems))
+                        <script>window.returnableItems = {!! json_encode($returnableItems) !!};</script>
+                    @else
+                        <script>window.returnableItems = [];</script>
                     @endif
                     @if($isAdmin && $r->status === 'approved')
                         <div class="request-actions">
@@ -406,6 +431,7 @@
                 <button class="approval-close" id="approvalCloseBtn">&times;</button>
             </div>
             <div class="approval-body">
+                <div id="approvalItemsContainer" style="display:none;margin-bottom:12px"></div>
                 <div class="approval-item-header">
                     <div class="approval-item-title" id="approvalItemName">Equipment Name</div>
                     <div class="approval-item-category" id="approvalItemCategoryHighlight">Category</div>
@@ -434,17 +460,6 @@
 
                 <form id="approvalForm">
                     <div class="approval-form-group">
-                        <label class="approval-label">Quantity to Issue</label>
-                        <input type="number" class="approval-input" id="approvalQuantity" placeholder="0" min="0" required>
-                        <div id="approvalQuantityNote" style="font-size:12px;color:var(--muted);margin-top:4px"></div>
-                    </div>
-
-                    <div class="approval-form-group">
-                        <label class="approval-label">Requested Quantity</label>
-                        <input type="text" class="approval-input" id="approvalRequestedQuantity" placeholder="0" disabled style="background:#f0fdf4;color:#065f46">
-                    </div>
-
-                    <div class="approval-form-group">
                         <label class="approval-label">Admin Notes</label>
                         <textarea class="approval-textarea" id="approvalNotes" placeholder="Add any notes or comments about this approval/denial (optional)"></textarea>
                     </div>
@@ -454,6 +469,25 @@
                     <button type="button" class="approval-btn approval-btn-approve" id="approvalConfirmBtn">Approve</button>
                     <button type="button" class="approval-btn approval-btn-deny" id="approvalDenyBtn">Deny</button>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mark Returned Modal -->
+    <div class="approval-backdrop" id="returnBackdrop" style="display:none"></div>
+    <div class="approval-modal" id="returnModal" style="display:none;max-width:640px">
+        <div class="approval-header" style="background:linear-gradient(135deg,#6b7280,#4b5563);">
+            <h2 id="returnTitle">Mark Returned</h2>
+            <button class="approval-close" id="returnClose">&times;</button>
+        </div>
+        <div class="approval-body">
+            <p style="margin:0 0 12px">This will mark the following non-consumable item(s) as <strong>returned</strong> and restore inventory for the issued quantities. Are you sure you want to continue?</p>
+            <div style="max-height:220px;overflow:auto;border:1px solid #eef2ff;padding:10px;border-radius:8px;margin-bottom:12px;background:#fbfdff">
+                <ul id="return-item-list" style="margin:0;padding-left:16px"></ul>
+            </div>
+            <div style="display:flex;gap:8px;justify-content:flex-end">
+                <button id="returnCancel" class="btn" style="background:#f3f4f6;color:#111">Cancel</button>
+                <button id="returnConfirm" class="btn ok" style="background:#6b7280;border:none">Confirm Return</button>
             </div>
         </div>
     </div>
@@ -686,15 +720,16 @@
             if(deleteConfirm) deleteConfirm.addEventListener('click', function(){ if(!pendingHref) return hide(); window.location.href = pendingHref; });
         })();
 
-        function doDetailAction(id, action, btn) {
-            btn.disabled = true;
-            const notes = document.getElementById('approvalNotes').value;
-            const quantity = action === 'approve' ? document.getElementById('approvalQuantity').value : null;
-            // prefer dataset, but fall back to the currentEquipmentData populated when modal opened
-            const equipmentId = (btn && btn.dataset && btn.dataset.equipmentId) ? btn.dataset.equipmentId : (currentEquipmentData ? currentEquipmentData.id : null);
-            const requestItemId = (btn && btn.dataset && btn.dataset.requestItemId) ? btn.dataset.requestItemId : (currentEquipmentData ? currentEquipmentData.request_item_id : null);
+            function doDetailAction(id, action, btn) {
+                btn.disabled = true;
+                const notes = document.getElementById('approvalNotes').value;
+                // prefer dataset, but fall back to the currentEquipmentData populated when modal opened
+                const equipmentId = (btn && btn.dataset && btn.dataset.equipmentId) ? btn.dataset.equipmentId : (currentEquipmentData ? currentEquipmentData.id : null);
+                const requestItemId = (btn && btn.dataset && btn.dataset.requestItemId) ? btn.dataset.requestItemId : (currentEquipmentData ? currentEquipmentData.request_item_id : null);
+                // determine quantity: for single-item approvals use the request's requested_quantity (no modal input)
+                const quantity = (action === 'approve') ? ((currentEquipmentData && currentEquipmentData.requested_quantity !== undefined) ? currentEquipmentData.requested_quantity : null) : null;
 
-            const payload = { action: action, notes: notes, quantity: quantity, equipment_id: equipmentId, request_item_id: requestItemId };
+                const payload = { action: action, notes: notes, quantity: quantity, equipment_id: equipmentId, request_item_id: requestItemId };
             // safety: if modal was opened for a specific item but request_item_id is missing, abort to avoid parent-level fallback
             if (currentIsItem && !requestItemId) {
                 console.error('Per-item action aborted: missing request_item_id', payload);
@@ -734,96 +769,210 @@
             currentRequestId = requestId;
             currentEquipmentData = equipmentData;
             currentIsItem = !!(equipmentData && equipmentData.request_item_id);
-            
             const modal = document.getElementById('approvalModal');
             const backdrop = document.getElementById('approvalBackdrop');
             const title = document.getElementById('approvalTitle');
             const confirmBtn = document.getElementById('approvalConfirmBtn');
             const denyBtn = document.getElementById('approvalDenyBtn');
-            const quantityInput = document.getElementById('approvalQuantity');
-            const requestedQuantity = document.getElementById('approvalRequestedQuantity');
+            const itemsContainer = document.getElementById('approvalItemsContainer');
             const stockWarning = document.getElementById('approvalStockWarning');
             const stockAvailable = document.getElementById('approvalStockAvailable');
             const quantityNote = document.getElementById('approvalQuantityNote');
-            
-            if (!equipmentData) {
-                // Allow opening the modal for a parent-level action (multiple items)
-                equipmentData = {
-                    name: 'Multiple Items',
-                    category: '—',
-                    type: '—',
-                    serial: '—',
-                    location: '—',
-                    quantity: 0,
-                    requested_quantity: 0,
-                    request_item_id: null,
-                    id: null
-                };
+
+            // If no equipmentData provided, prepare a placeholder
+            if (!equipmentData) equipmentData = { name: 'Multiple Items', category: '—', type: '—', serial: '—', location: '—', quantity: 0, requested_quantity: 0, request_item_id: null, id: null };
+
+            // detect multi-item: either provided by caller, or infer from the table rows on this page
+            let isBatch = Array.isArray(equipmentData.items) && equipmentData.items.length > 0;
+            if (!isBatch) {
+                const rows = Array.from(document.querySelectorAll('.items-table tbody tr'));
+                if (rows.length > 1) {
+                    const items = [];
+                    rows.forEach(row => {
+                        const a = row.querySelector('.item-link');
+                        if (!a) return;
+                        try {
+                            const d = a.dataset && a.dataset.equipment ? JSON.parse(a.dataset.equipment) : null;
+                            if (!d) return;
+                            const requested = parseInt(row.children[1].textContent.trim()) || (d.requested_quantity || 1);
+                            d.requested_quantity = requested;
+                            items.push(d);
+                        } catch (err) { /* ignore */ }
+                    });
+                    if (items.length) { equipmentData.items = items; isBatch = true; }
+                }
             }
 
-            // Populate equipment details with highlights
-            document.getElementById('approvalItemName').textContent = equipmentData.name;
-            document.getElementById('approvalItemCategoryHighlight').innerHTML = '<span style="color:#7c3aed;font-weight:800">' + (equipmentData.category || '—') + '</span>';
-            document.getElementById('approvalItemType').textContent = equipmentData.type || '—';
-            document.getElementById('approvalItemSerial').textContent = equipmentData.serial || '—';
-            document.getElementById('approvalItemLocation').textContent = equipmentData.location || '—';
-            document.getElementById('approvalItemQuantity').textContent = equipmentData.quantity + ' unit(s)';
-            
-            const availableQty = parseInt(equipmentData.quantity) || 0;
-            const requestedQty = parseInt(equipmentData.requested_quantity) || 1;
+            // If batch request, render items list and hide single-item header
+            if (isBatch) {
+                currentIsItem = false;
+                currentEquipmentData = equipmentData; // keep items there
+                document.querySelector('.approval-item-header').style.display = 'none';
+                // build a compact table for batch approvals
+                itemsContainer.innerHTML = '';
+                let html = '<div style="overflow:auto"><table class="batch-table"><thead><tr><th style="width:36px"></th><th>Item</th><th>Details</th><th>Requested</th><th>Available</th><th style="width:120px">Issue Qty</th><th style="width:110px">Note</th></tr></thead><tbody>';
+                equipmentData.items.forEach((it, idx) => {
+                    const avail = parseInt(it.quantity) || 0;
+                    const req = parseInt(it.requested_quantity) || 1;
+                    const max = Math.max(0, avail);
+                    const initial = Math.min(req, max);
+                    html += `<tr data-idx="${idx}">` +
+                        `<td><input type="checkbox" class="batch-include" data-idx="${idx}" checked></td>` +
+                        `<td><div style="font-weight:800">${escapeHtml(it.name || '—')}</div></td>` +
+                        `<td class="small-muted">${escapeHtml(it.type || '—')} · ${escapeHtml(it.serial || '—')} · ${escapeHtml(it.location || '—')}</td>` +
+                        `<td><strong>${req}</strong></td>` +
+                        `<td><strong>${avail}</strong></td>` +
+                        `<td style="text-align:right"><input data-idx="${idx}" class="approval-input batch-qty" type="number" min="0" max="${max}" value="${initial}" style="width:90px"></td>` +
+                        `<td style="text-align:right"><button type="button" class="batch-note-toggle" data-idx="${idx}">Note</button><div class="batch-note" id="batch-note-${idx}" style="display:none"><textarea class="approval-textarea batch-note-text" data-idx="${idx}" placeholder="Optional note" style="min-height:64px;margin-top:8px"></textarea></div></td>` +
+                    `</tr>`;
+                });
+                html += '</tbody></table></div>';
+                itemsContainer.innerHTML = html;
+                itemsContainer.style.display = 'block';
 
-            // Show requested quantity
-            requestedQuantity.value = requestedQty;
+                // show summary stock warnings for batch if any low/zero items
+                stockWarning.style.display = 'none';
+                stockAvailable.style.display = 'none';
 
-            // Check stock availability
-            stockWarning.style.display = 'none';
-            stockAvailable.style.display = 'none';
-            
-            if (availableQty <= 0) {
-                stockWarning.innerHTML = '<strong>⚠️ Out of Stock!</strong> No units available for issue. You can deny this request or add a note about restocking.';
-                stockWarning.style.display = 'block';
-                quantityInput.max = 0;
-                quantityInput.disabled = true;
-            } else if (availableQty < requestedQty) {
-                stockWarning.innerHTML = '<strong>⚠️ Limited Stock!</strong> Only ' + availableQty + ' unit(s) available, but ' + requestedQty + ' were requested.';
-                stockWarning.style.display = 'block';
-                stockAvailable.innerHTML = '✓ You can issue up to <strong>' + availableQty + ' units</strong> from available inventory';
-                stockAvailable.style.display = 'block';
-                quantityInput.max = availableQty;
-                quantityNote.textContent = 'Max available: ' + availableQty + ' units';
+                title.textContent = (action === 'approve') ? 'Approve Multiple Items' : 'Deny Multiple Items';
+                confirmBtn.style.display = (action === 'approve') ? 'block' : 'none';
+                denyBtn.style.display = (action === 'approve') ? 'none' : 'block';
+
             } else {
-                stockAvailable.innerHTML = '✓ Full stock available - All ' + requestedQty + ' unit(s) can be issued';
-                stockAvailable.style.display = 'block';
-                quantityInput.max = availableQty;
-                quantityNote.textContent = 'Max available: ' + availableQty + ' units';
+                // Single item flow (existing behaviour)
+                document.querySelector('.approval-item-header').style.display = 'block';
+                itemsContainer.style.display = 'none';
+
+                // Populate equipment details with highlights
+                document.getElementById('approvalItemName').textContent = equipmentData.name;
+                document.getElementById('approvalItemCategoryHighlight').innerHTML = '<span style="color:#7c3aed;font-weight:800">' + (equipmentData.category || '—') + '</span>';
+                document.getElementById('approvalItemType').textContent = equipmentData.type || '—';
+                document.getElementById('approvalItemSerial').textContent = equipmentData.serial || '—';
+                document.getElementById('approvalItemLocation').textContent = equipmentData.location || '—';
+                document.getElementById('approvalItemQuantity').textContent = equipmentData.quantity + ' unit(s)';
+
+                const availableQty = parseInt(equipmentData.quantity) || 0;
+                const requestedQty = parseInt(equipmentData.requested_quantity) || 1;
+
+                // Check stock availability
+                stockWarning.style.display = 'none';
+                stockAvailable.style.display = 'none';
+
+                if (availableQty <= 0) {
+                    stockWarning.innerHTML = '<strong>⚠️ Out of Stock!</strong> No units available for issue. You can deny this request or add a note about restocking.';
+                    stockWarning.style.display = 'block';
+                    // no per-modal quantity input; single-item approvals will use the request's requested quantity
+                } else if (availableQty < requestedQty) {
+                    stockWarning.innerHTML = '<strong>⚠️ Limited Stock!</strong> Only ' + availableQty + ' unit(s) available, but ' + requestedQty + ' were requested.';
+                    stockWarning.style.display = 'block';
+                    stockAvailable.innerHTML = '✓ You can issue up to <strong>' + availableQty + ' units</strong> from available inventory';
+                    stockAvailable.style.display = 'block';
+                    if (quantityNote) quantityNote.textContent = 'Max available: ' + availableQty + ' units';
+                } else {
+                    stockAvailable.innerHTML = '✓ Full stock available - All ' + requestedQty + ' unit(s) can be issued';
+                    stockAvailable.style.display = 'block';
+                    if (quantityNote) quantityNote.textContent = 'Max available: ' + availableQty + ' units';
+                }
+
+                if (action === 'approve') {
+                    title.textContent = 'Approve Request';
+                    confirmBtn.style.display = 'block';
+                    denyBtn.style.display = 'none';
+                } else {
+                    title.textContent = 'Deny Request';
+                    confirmBtn.style.display = 'none';
+                    denyBtn.style.display = 'block';
+                }
+
+                // Set equipment ID on buttons
+                confirmBtn.dataset.equipmentId = equipmentData.id;
+                denyBtn.dataset.equipmentId = equipmentData.id;
+                confirmBtn.dataset.requestItemId = equipmentData.request_item_id ?? '';
+                denyBtn.dataset.requestItemId = equipmentData.request_item_id ?? '';
             }
 
-            if (action === 'approve') {
-                title.textContent = 'Approve Request';
-                confirmBtn.style.display = 'block';
-                denyBtn.style.display = 'none';
-                quantityInput.style.display = 'block';
-                quantityInput.disabled = availableQty <= 0;
-                quantityInput.value = Math.min(requestedQty, availableQty);
-            } else {
-                title.textContent = 'Deny Request';
-                confirmBtn.style.display = 'none';
-                denyBtn.style.display = 'block';
-                quantityInput.style.display = 'none';
-            }
-            
-            // Reset form
+            // Reset admin notes
             document.getElementById('approvalNotes').value = '';
-            
-            // Set equipment ID on buttons
-            confirmBtn.dataset.equipmentId = equipmentData.id;
-            denyBtn.dataset.equipmentId = equipmentData.id;
-            confirmBtn.dataset.requestItemId = equipmentData.request_item_id ?? '';
-            denyBtn.dataset.requestItemId = equipmentData.request_item_id ?? '';
-            
+
             modal.classList.add('show');
             backdrop.classList.add('show');
             document.body.style.overflow = 'hidden';
+        }
+
+        // helper to escape HTML for insertion into templates
+        function escapeHtml(str){
+            if(!str) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        // Send batch approve/reject. If itemsPayload includes per-item `decision`, send per-item requests
+        async function sendBatchAction(requestId, action, itemsPayload, btn){
+            if (!itemsPayload || !itemsPayload.length) return alert('No items selected');
+            btn.disabled = true;
+            const notes = document.getElementById('approvalNotes').value;
+
+            // If items include per-item decisions (mixed approve/reject), send each item as its own request
+            const hasDecision = itemsPayload.some(i => i.decision);
+            if (hasDecision) {
+                try {
+                    const results = await Promise.all(itemsPayload.map(async (it) => {
+                        const itemAction = it.decision || action;
+                        const payload = {
+                            action: itemAction,
+                            notes: notes,
+                            quantity: (itemAction === 'approve') ? (it.issue_quantity || 0) : 0,
+                            equipment_id: it.equipment_id,
+                            request_item_id: it.request_item_id
+                        };
+                        try {
+                            const res = await fetch('/notifications/requests/'+encodeURIComponent(requestId)+'/action', {
+                                method: 'POST',
+                                headers: { 'Content-Type':'application/json','X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content },
+                                credentials: 'same-origin',
+                                body: JSON.stringify(payload)
+                            });
+                            const j = await res.json().catch(()=>({ok:false}));
+                            return j;
+                        } catch(e) { return { ok: false }; }
+                    }));
+
+                    const anyOk = results.some(r => r && r.ok);
+                    if (anyOk) {
+                        showToast('Request updated', 'success');
+                        closeApprovalModal();
+                        setTimeout(()=> location.reload(), 700);
+                        return;
+                    } else {
+                        alert('Failed to update items'); btn.disabled = false; return;
+                    }
+                } catch(e) {
+                    alert('Error updating items'); btn.disabled = false; return;
+                }
+            }
+
+            // Fallback: send a single batch payload (legacy)
+            const payload = { action: action, notes: notes, items: itemsPayload };
+            try{
+                const res = await fetch('/notifications/requests/'+encodeURIComponent(requestId)+'/action', {
+                    method: 'POST',
+                    headers: { 'Content-Type':'application/json','X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content },
+                    credentials: 'same-origin',
+                    body: JSON.stringify(payload)
+                });
+                const j = await res.json();
+                if (j && j.ok) {
+                    if(action === 'approve') showToast('Request approved', 'success'); else showToast('Request rejected', 'error');
+                    closeApprovalModal();
+                    setTimeout(()=> location.reload(), 700);
+                } else {
+                    alert('Failed'); btn.disabled = false;
+                }
+            } catch(e){ alert('Error'); btn.disabled = false; }
         }
 
         function closeApprovalModal() {
@@ -840,33 +989,53 @@
             const backdrop = document.getElementById('approvalBackdrop');
             const confirmBtn = document.getElementById('approvalConfirmBtn');
             const denyBtn = document.getElementById('approvalDenyBtn');
-            const quantityInput = document.getElementById('approvalQuantity');
 
             if (!closeBtn || !backdrop) return;
 
             closeBtn.addEventListener('click', closeApprovalModal);
             backdrop.addEventListener('click', closeApprovalModal);
 
-            // Validate quantity input
-            quantityInput.addEventListener('change', function() {
-                const max = parseInt(this.max) || 0;
-                const val = parseInt(this.value) || 0;
-                if (val > max) {
-                    this.value = max;
-                }
-            });
+            // no modal quantity input to validate; batch inputs are handled on submit
 
             confirmBtn.addEventListener('click', function() {
-                if (!currentEquipmentData) {
-                    alert('Equipment data not found');
+                // if batch view is shown, collect per-item quantities and submit batch
+                const itemsContainer = document.getElementById('approvalItemsContainer');
+                if (itemsContainer && itemsContainer.style.display !== 'none') {
+                    const baseItems = (currentEquipmentData && Array.isArray(currentEquipmentData.items)) ? currentEquipmentData.items : [];
+                    const rows = Array.from(itemsContainer.querySelectorAll('tbody tr'));
+                    const itemsPayload = [];
+                    rows.forEach(row => {
+                        const idx = parseInt(row.getAttribute('data-idx')) || 0;
+                        const includeEl = row.querySelector('.batch-include');
+                        const qtyEl = row.querySelector('.batch-qty');
+                        const noteEl = row.querySelector('.batch-note-text');
+                        const val = qtyEl ? (parseInt(qtyEl.value) || 0) : 0;
+                        const note = noteEl ? noteEl.value.trim() : null;
+                        const base = baseItems[idx];
+                        if(!base) return;
+                        const decided = (includeEl && includeEl.checked) ? 'approve' : 'reject';
+                        itemsPayload.push({
+                            request_item_id: base.request_item_id ?? null,
+                            equipment_id: base.id ?? null,
+                            issue_quantity: (decided === 'approve') ? val : 0,
+                            requested_quantity: base.requested_quantity ?? 1,
+                            note: note,
+                            decision: decided
+                        });
+                    });
+                    // ensure at least one item is being approved with a positive issue quantity
+                    const totalApproved = itemsPayload.reduce((s,i)=>s+((i.decision === 'approve') ? (i.issue_quantity||0) : 0),0);
+                    if (totalApproved <= 0) { alert('Please select and enter quantity for at least one item to approve'); return; }
+                    confirmBtn.disabled = true;
+                    sendBatchAction(currentRequestId, 'approve', itemsPayload, confirmBtn);
                     return;
                 }
-                const qty = parseInt(document.getElementById('approvalQuantity').value) || 0;
-                if (qty <= 0) {
-                    alert('Please enter a valid quantity');
-                    return;
-                }
+                // single-item flow: use the request's requested_quantity
+                if (!currentEquipmentData) { alert('Equipment data not found'); return; }
+                const qty = parseInt(currentEquipmentData.requested_quantity) || 0;
+                if (qty <= 0) { alert('Requested quantity missing or zero'); return; }
                 confirmBtn.disabled = true;
+                // doDetailAction will read quantity from currentEquipmentData
                 doDetailAction(currentRequestId, 'approve', confirmBtn);
             });
 
@@ -949,31 +1118,69 @@
         })();
     </script>
     <script>
-        // Mark returned action
+        // Mark returned modal flow
         (function(){
             const btn = document.getElementById('btn-mark-returned');
-            if(!btn) return;
-            btn.addEventListener('click', async function(){
-                if(!confirm('Confirm mark this request as returned?')) return;
-                btn.disabled = true;
-                try{
-                    const res = await fetch('/requests/{{ $r->uuid }}/return', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-                        },
-                        credentials: 'same-origin',
-                        body: JSON.stringify({})
+            const backdrop = document.getElementById('returnBackdrop');
+            const modal = document.getElementById('returnModal');
+            const closeBtn = document.getElementById('returnClose');
+            const cancelBtn = document.getElementById('returnCancel');
+            const confirmBtn = document.getElementById('returnConfirm');
+            const listEl = document.getElementById('return-item-list');
+
+            function openReturnModal(items){
+                listEl.innerHTML = '';
+                if(!items || !items.length){
+                    listEl.innerHTML = '<li>No non-consumable items found.</li>';
+                } else {
+                    items.forEach(it=>{
+                        const li = document.createElement('li');
+                        li.textContent = it.name || 'Unnamed item';
+                        listEl.appendChild(li);
                     });
-                    if(res.ok){
-                        location.reload();
-                    } else {
-                        alert('Failed to mark returned');
-                        btn.disabled = false;
-                    }
-                }catch(err){alert('Error');btn.disabled=false}
-            });
+                }
+                backdrop.style.display = 'block'; modal.style.display = 'block';
+                setTimeout(()=>{ backdrop.classList.add('show'); modal.classList.add('show'); }, 10);
+                document.body.style.overflow = 'hidden';
+            }
+
+            function closeReturnModal(){
+                modal.classList.remove('show'); backdrop.classList.remove('show');
+                setTimeout(()=>{ backdrop.style.display='none'; modal.style.display='none'; },220);
+                document.body.style.overflow = '';
+            }
+
+            if(closeBtn) closeBtn.addEventListener('click', closeReturnModal);
+            if(cancelBtn) cancelBtn.addEventListener('click', closeReturnModal);
+
+            if(btn){
+                btn.addEventListener('click', function(e){
+                    e.preventDefault();
+                    openReturnModal(window.returnableItems || []);
+                });
+            }
+
+            if(confirmBtn){
+                confirmBtn.addEventListener('click', async function(){
+                    confirmBtn.disabled = true;
+                    try{
+                        const res = await fetch('/requests/{{ $r->uuid }}/return', {
+                            method: 'POST',
+                            headers: { 'Content-Type':'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content },
+                            credentials: 'same-origin',
+                            body: JSON.stringify({})
+                        });
+                        if(res.ok){
+                            showToast('Request marked returned', 'success');
+                            closeReturnModal();
+                            setTimeout(()=> location.reload(), 700);
+                        } else {
+                            showToast('Failed to mark returned', 'error');
+                            confirmBtn.disabled = false;
+                        }
+                    }catch(err){ showToast('Error marking returned','error'); confirmBtn.disabled = false }
+                });
+            }
         })();
     </script>
 

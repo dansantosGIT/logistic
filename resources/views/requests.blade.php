@@ -58,6 +58,10 @@
         tbody tr td{padding:10px;border-bottom:none}
         .badge{display:inline-flex;align-items:center;justify-content:center;min-height:24px;padding:4px 8px;border-radius:999px;font-size:12px;color:white}
         .badge.pending{background:#ffebc2;color:#92400e}
+        .badge.approved{background:#10b981;color:#ffffff}
+        .badge.rejected{background:#ef4444;color:#ffffff}
+        .badge.partial{background:#ffebc2;color:#92400e}
+        .badge.waiting{background:#ffebc2;color:#92400e}
 
         .small{font-size:12px;color:var(--muted-2)}
         .actions{display:flex;gap:6px;align-items:flex-start}
@@ -87,7 +91,7 @@
         .inventory-table tbody tr{background:#fff;border-radius:8px;box-shadow:0 6px 18px rgba(2,6,23,0.04);display:table-row;cursor:pointer}
         .inventory-table tbody tr:hover{transform:none}
         .inventory-table tbody tr:hover td{background:#fff7cc}
-        .inventory-table tbody tr:hover .badge.pending{background:#ffffff;color:#92400e;border:1px solid rgba(146,64,14,0.22)}
+        .inventory-table tbody tr:hover .badge.pending, .inventory-table tbody tr:hover .badge.returned, .inventory-table tbody tr:hover .badge.partial, .inventory-table tbody tr:hover .badge.waiting{background:#ffffff;color:#92400e;border:1px solid rgba(146,64,14,0.22)}
         .inventory-table tbody td{padding:12px 16px;vertical-align:middle;font-size:13px;color:#0f172a;border-bottom:1px solid rgba(14,21,40,0.04);transition:background-color .12s ease}
         .inventory-table tbody td.center{text-align:center;color:var(--muted)}
         .inventory-table tbody td.actions{text-align:right;white-space:nowrap;vertical-align:top}
@@ -105,6 +109,9 @@
             .inventory-table tbody tr td.actions .actions{position:static;height:auto;transform:none;justify-content:flex-start}
         }
         .badge.pending{display:inline-block;padding:6px 10px;border-radius:999px;background:#ffebc2;color:#92400e;font-weight:700}
+        .badge.returned{display:inline-block;padding:6px 10px;border-radius:999px;background:#ffebc2;color:#92400e;font-weight:700}
+        .badge.partial{display:inline-block;padding:6px 10px;border-radius:999px;background:#ffebc2;color:#92400e;font-weight:700}
+        .badge.waiting{display:inline-block;padding:6px 10px;border-radius:999px;background:#ffebc2;color:#92400e;font-weight:700}
         .btn{padding:6px 10px;font-size:13px;border-radius:8px;border:1px solid #e6e9ef;background:white;cursor:pointer;display:inline-flex;align-items:center;justify-content:center}
         .btn.view{background:#fff;border:1px solid #e6eef9}
         .btn.ok{background:#10b981;color:#fff;border:none}
@@ -270,7 +277,7 @@
                                     <tr data-uuid="{{ $r->uuid }}">
                                     <td><span class="local-datetime" data-datetime="{{ $r->created_at->toIso8601String() }}">{{ $r->created_at->format('F j, Y, g:i A') }}</span></td>
                                     @php
-                                        $isGroup = isset($r->items) && $r->items->count();
+                                        $isGroup = isset($r->items) && $r->items->count() > 1;
                                     @endphp
                                     <td>
                                         @if($isGroup)
@@ -300,7 +307,7 @@
                                     </td>
                                     <td class="actions">
                                         <div class="actions">
-                                            <span class="badge pending">{{ ucfirst($r->status) }}</span>
+                                            <span class="badge {{ strtolower($r->status) }}">{{ ucfirst($r->status) }}</span>
                                             <button class="icon-btn view" title="View request" aria-label="View request" onclick="viewRequest('{{ $r->uuid }}')">
                                                 <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.6"/></svg>
                                             </button>

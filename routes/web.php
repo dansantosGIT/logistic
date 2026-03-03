@@ -652,9 +652,22 @@ Route::post('/notifications/requests/{id}/action', function (Request $request, $
         $rejected = $r->items()->where('status', 'rejected')->count();
 
         if ($total > 0) {
-            if ($approved === $total) $r->status = 'approved';
-            elseif ($rejected === $total) $r->status = 'rejected';
-            else $r->status = 'partial';
+            // If any approved item is non-consumable, the request is waiting for return
+            $waitingCount = $r->items()
+                ->where('status', 'approved')
+                ->whereHas('equipment', function($q){
+                    $q->whereRaw('LOWER(COALESCE(`type`, "")) <> ?', ['consumable']);
+                })->count();
+
+            if ($waitingCount > 0) {
+                $r->status = 'waiting';
+            } elseif ($approved === $total) {
+                $r->status = 'approved';
+            } elseif ($rejected === $total) {
+                $r->status = 'rejected';
+            } else {
+                $r->status = 'partial';
+            }
         }
         $r->handled_by = $user->id ?? null;
         $r->updated_at = now();
@@ -689,7 +702,17 @@ Route::post('/notifications/requests/{id}/action', function (Request $request, $
                     $item->handled_at = now();
                     $item->save();
                 }
-                $r->status = 'approved';
+                // After approving child items, set parent status to 'waiting' if any approved non-consumable exists
+                $waitingCount = $r->items()
+                    ->where('status', 'approved')
+                    ->whereHas('equipment', function($q){
+                        $q->whereRaw('LOWER(COALESCE(`type`, "")) <> ?', ['consumable']);
+                    })->count();
+                if ($waitingCount > 0) {
+                    $r->status = 'waiting';
+                } else {
+                    $r->status = 'approved';
+                }
                 } else {
                     if ($quantity > 0 && $equipmentId) {
                         $equipment = Equipment::find($equipmentId);
@@ -752,9 +775,9 @@ Route::post('/requests/{id}/return', function (Request $request, $id) {
 
     $r = InventoryRequest::where('uuid', $id)->firstOrFail();
 
-    // Only approved, non-consumable requests may be marked returned
-    if ($r->status !== 'approved') {
-        return back()->withErrors(['status' => 'Only approved requests can be marked returned.']);
+    // Only approved/waiting, non-consumable requests may be marked returned
+    if (!in_array($r->status, ['approved','waiting'])) {
+        return back()->withErrors(['status' => 'Only approved or waiting requests can be marked returned.']);
     }
 
     $equipment = $r->item_id ? Equipment::find($r->item_id) : null;
@@ -773,20 +796,31 @@ Route::post('/requests/{id}/return', function (Request $request, $id) {
         if (isset($r->items) && is_countable($r->items) && $r->items->count() > 0) {
             foreach ($r->items as $it) {
                 try {
+                    // Only mark non-consumable, previously-approved items as returned and restore stock
                     $equip = $it->equipment_id ? Equipment::find($it->equipment_id) : null;
-                    // determine quantity to restore: prefer issued_quantity, fall back to requested quantity
-                    $restoreQty = intval($it->issued_quantity ?? $it->quantity ?? 0);
-                    if ($equip && $restoreQty > 0) {
-                        $equip->quantity = intval($equip->quantity ?? 0) + $restoreQty;
-                        $equip->save();
+                    $type = $equip ? strtolower(trim($equip->type ?? '')) : '';
+                    if ($it->status === 'approved' && $type !== 'consumable') {
+                        // determine quantity to restore: prefer issued_quantity, fall back to requested quantity
+                        $restoreQty = intval($it->issued_quantity ?? $it->quantity ?? 0);
+                        if ($equip && $restoreQty > 0) {
+                            $equip->quantity = intval($equip->quantity ?? 0) + $restoreQty;
+                            $equip->save();
+                        }
+                        $it->status = 'returned';
+                        $it->handled_by = $user->id ?? null;
+                        $it->handled_at = now();
+                        $it->save();
                     }
-                    $it->status = 'returned';
-                    $it->handled_by = $user->id ?? null;
-                    $it->handled_at = now();
-                    $it->save();
                 } catch (Throwable $_) {
                     // continue with other items even if one fails
                 }
+            }
+            // Recompute request-level status: if no approved items remain, mark returned, else keep waiting
+            $remainingApproved = $r->items()->where('status', 'approved')->count();
+            if ($remainingApproved === 0) {
+                $r->status = 'returned';
+            } else {
+                $r->status = 'waiting';
             }
         } else {
             // single-item (legacy) behavior: restore stock for parent equipment if present
@@ -812,8 +846,8 @@ Route::get('/requests', function (Request $request) {
     if ($tab === 'pending') {
         $q->where('status', 'pending');
     } elseif ($tab === 'waiting') {
-        // Only show approved requests for non-consumable items (waiting for return)
-        $q->where('status', 'approved')
+        // Show approved or waiting requests that include non-consumable items (waiting for return)
+        $q->whereIn('status', ['approved','waiting'])
           ->where(function($sub){
               $sub->whereHas('equipment', function($qq){
                   $qq->whereRaw('LOWER(COALESCE(`type`, "")) <> ?', ['consumable']);
