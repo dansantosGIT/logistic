@@ -116,9 +116,9 @@
                 <div style="display:flex;flex-direction:column">
                         <a href="/dashboard" class="brand-title" style="text-decoration:none;color:inherit;display:flex;align-items:center;gap:6px">
                             <img src="/images/favi.png" alt="Logo" width="40" height="40" style="display:inline-block" />
-                            <span>San Juan CDRRMD Dashboard</span>
+                            <span>San Juan CDRRMD Vehicles</span>
                         </a>
-                    <div class="brand-subtitle">Overview of Stocks</div>
+                    <div class="brand-subtitle">Overview of Vehicles</div>
                 </div>
             </div>
             <div style="text-align:right;display:flex;align-items:center;gap:12px;justify-content:flex-end">
@@ -130,7 +130,7 @@
                     <div class="notif-dropdown" id="notif-dropdown" aria-hidden="true"></div>
                 </div>
                 <div style="text-align:right">
-                    <div style="font-size:13px;color:var(--muted-2)">Welcome</div>
+                    <div style="font-size:13px;color:var(--muted-2)">Welcome!</div>
                     <div style="font-weight:700">{{ auth()->user()->name }}</div>
                 </div>
             </div>
