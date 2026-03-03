@@ -142,6 +142,7 @@
         }
     </style>
     @include('partials._bg-preload')
+    @include('partials._formatters')
 </head>
 <body>
     <div class="bg" aria-hidden="true"></div>
@@ -570,11 +571,14 @@
                     dropdown.innerHTML = '<div class="item"><div style="padding:12px;color:var(--muted)">No notifications</div></div>';
                     return;
                 }
+
+                // uses shared formatLocalISO included via partial
+
                 dropdown.innerHTML = items.map(it=>{
                     const avatar = (it.item_name||'R').trim().charAt(0).toUpperCase();
-                    const meta = `<div class=\"meta\"><div class=\"title\">${it.item_name} <span class=\"time\">${it.created_at}</span></div><div class=\"sub\">Requested by ${it.requester}</div></div>`;
-                    const actions = isAdmin ? `<div class=\"actions\"><button data-id=\"${it.id}\" data-action=\"approve\" class=\"btn\" title=\"Approve\">✓</button><button data-id=\"${it.id}\" data-action=\"reject\" class=\"btn delete\" title=\"Reject\">✕</button></div>` : '';
-                    return `<div class=\"item\" data-id=\"${it.id}\"><div class=\"left\"><div class=\"avatar\">${avatar}</div></div>${meta}${actions}</div>`;
+                    const meta = `<div class="meta"><div class="title">${it.item_name} <span class="time">${formatLocalISO(it.created_at)}</span></div><div class="sub">Requested by ${it.requester}</div></div>`;
+                    const actions = isAdmin ? `<div class="actions"><button data-id="${it.id}" data-action="approve" class="btn" title="Approve">✓</button><button data-id="${it.id}" data-action="reject" class="btn delete" title="Reject">✕</button></div>` : '';
+                    return `<div class="item" data-id="${it.id}"><div class="left"><div class="avatar">${avatar}</div></div>${meta}${actions}</div>`;
                 }).join('');
             }
 

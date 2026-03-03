@@ -58,9 +58,15 @@
         tbody tr td{padding:10px;border-bottom:none}
         .badge{display:inline-flex;align-items:center;justify-content:center;min-height:24px;padding:4px 8px;border-radius:999px;font-size:12px;color:white}
         .badge.pending{background:#ffebc2;color:#92400e}
+        .badge.approved{background:#10b981;color:#ffffff}
+        .badge.done{background:#10b981;color:#ffffff}
+        .badge.rejected{background:#ef4444;color:#ffffff}
+        .badge.partial{background:#ffebc2;color:#92400e}
+        .badge.waiting{background:#ffebc2;color:#92400e}
 
         .small{font-size:12px;color:var(--muted-2)}
-        .actions{display:flex;gap:6px;align-items:flex-start}
+        /* Ensure action groups are vertically centered by default */
+        .actions{display:flex;gap:6px;align-items:center}
         .rc-actions{display:flex;gap:8px;align-items:center;margin-left:auto}
         .btn{padding:4px 6px;font-size:12px;border-radius:6px;border:1px solid #e6e9ef;background:white;cursor:pointer;min-width:32px;display:inline-flex;align-items:center;justify-content:center}
         .btn.view{background:#fff;border:1px solid #e6eef9;padding:4px 6px;border-radius:6px}
@@ -87,7 +93,7 @@
         .inventory-table tbody tr{background:#fff;border-radius:8px;box-shadow:0 6px 18px rgba(2,6,23,0.04);display:table-row;cursor:pointer}
         .inventory-table tbody tr:hover{transform:none}
         .inventory-table tbody tr:hover td{background:#fff7cc}
-        .inventory-table tbody tr:hover .badge.pending{background:#ffffff;color:#92400e;border:1px solid rgba(146,64,14,0.22)}
+        .inventory-table tbody tr:hover .badge.pending, .inventory-table tbody tr:hover .badge.returned, .inventory-table tbody tr:hover .badge.partial, .inventory-table tbody tr:hover .badge.waiting{background:#ffffff;color:#92400e;border:1px solid rgba(146,64,14,0.22)}
         .inventory-table tbody td{padding:12px 16px;vertical-align:middle;font-size:13px;color:#0f172a;border-bottom:1px solid rgba(14,21,40,0.04);transition:background-color .12s ease}
         .inventory-table tbody td.center{text-align:center;color:var(--muted)}
         .inventory-table tbody td.actions{text-align:right;white-space:nowrap;vertical-align:top}
@@ -96,8 +102,24 @@
               regardless of surrounding cell height. Use a responsive fallback for narrow screens. */
         /* Make the actions container fill the action cell and center its buttons vertically.
            This avoids absolute positioning and keeps layout consistent for very tall rows. */
-        .inventory-table tbody tr td.actions{vertical-align:middle !important;padding-right:18px}
-        .inventory-table tbody tr td.actions .actions{position:static;height:100%;display:flex;align-items:center;justify-content:flex-end;gap:6px}
+          /* Make the actions cell behave as a flex container so its contents
+              are vertically centered even when the row grows taller (multiple items) */
+             /* Keep the cell as a table-cell to preserve table layout; make the inner
+                 .actions div stretch to the cell height and center its buttons. */
+             .inventory-table tbody tr td.actions{vertical-align:middle !important;padding-right:18px;min-width:160px;display:table-cell}
+             .inventory-table tbody tr td.actions .actions{position:static;height:100%;display:flex;align-items:center;justify-content:flex-end;gap:6px}
+
+        /* Stabilize badge sizing to avoid reflow when label length changes */
+        .inventory-table tbody td .badge{white-space:nowrap;min-width:72px;display:inline-flex;justify-content:center;padding:6px 10px;box-sizing:border-box}
+
+        /* Ensure icon buttons remain visually centered */
+        .inventory-table tbody td .icon-btn{width:36px;height:36px;flex:0 0 36px;align-items:center;justify-content:center}
+
+        /* Smaller action column on very small screens */
+        @media(max-width:560px){
+            .inventory-table tbody tr td.actions{min-width:0;padding-right:8px}
+            .inventory-table tbody td .badge{min-width:56px;padding:4px 8px}
+        }
 
         /* Responsive: on very small screens keep normal document flow so actions don't overlap */
         @media(max-width:560px){
@@ -105,6 +127,9 @@
             .inventory-table tbody tr td.actions .actions{position:static;height:auto;transform:none;justify-content:flex-start}
         }
         .badge.pending{display:inline-block;padding:6px 10px;border-radius:999px;background:#ffebc2;color:#92400e;font-weight:700}
+        .badge.returned{display:inline-block;padding:6px 10px;border-radius:999px;background:#ffebc2;color:#92400e;font-weight:700}
+        .badge.partial{display:inline-block;padding:6px 10px;border-radius:999px;background:#ffebc2;color:#92400e;font-weight:700}
+        .badge.waiting{display:inline-block;padding:6px 10px;border-radius:999px;background:#ffebc2;color:#92400e;font-weight:700}
         .btn{padding:6px 10px;font-size:13px;border-radius:8px;border:1px solid #e6e9ef;background:white;cursor:pointer;display:inline-flex;align-items:center;justify-content:center}
         .btn.view{background:#fff;border:1px solid #e6eef9}
         .btn.ok{background:#10b981;color:#fff;border:none}
@@ -112,10 +137,18 @@
         /* icon-only action buttons */
         .icon-btn{width:36px;height:36px;padding:0;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;border:1px solid transparent;background:transparent;color:inherit;transition:transform .14s ease,box-shadow .14s ease;will-change:transform}
         .icon-btn svg{width:18px;height:18px}
-        .icon-btn.view{border:1px solid #e6eef9;background:#fff}
+        .icon-btn.view{border:1px solid rgba(230,238,249,0.8);background:transparent;color:inherit}
         .icon-btn.ok{background:#10b981;color:#fff;border:none}
         .icon-btn.rej{background:#ef4444;color:#fff;border:none}
+        .icon-btn.delete{border:1px solid #ef4444;color:#ef4444;background:transparent}
         .icon-btn:hover{transform:translateY(-4px);box-shadow:0 10px 24px rgba(2,6,23,0.12);z-index:220}
+
+        /* Make action buttons visually blend with row hover (no white gap) */
+        .inventory-table tbody tr:hover td .icon-btn{background:transparent}
+        .inventory-table tbody tr:hover td.actions .icon-btn{border-color:rgba(0,0,0,0.08)}
+        .inventory-table tbody tr:hover td.actions .icon-btn.delete{background:transparent !important;border-color:rgba(239,68,68,0.18) !important}
+        /* ensure the actions cell shows the same hover background as other cells */
+        .inventory-table tbody tr:hover td.actions{background:#fff7cc}
         .icon-btn:active{transform:translateY(-1px)}
         .icon-btn:focus{outline:none;box-shadow:0 0 0 4px rgba(37,99,235,0.12)}
 
@@ -174,6 +207,7 @@
         @media(max-width:900px){.sidebar{position:fixed;left:0;top:0;bottom:0;z-index:90;height:100vh}.sidebar.open{transform:translateX(0)}.main{padding:16px}}
     </style>
     @include('partials._bg-preload')
+    @include('partials._formatters')
 </head>
 <body>
     <div class="bg" aria-hidden="true"></div>
@@ -268,9 +302,9 @@
                         <tbody>
                             @forelse($items as $r)
                                     <tr data-uuid="{{ $r->uuid }}">
-                                    <td>{{ $r->created_at->format('F j, Y, g:i A') }}</td>
+                                    <td><span class="local-datetime" data-datetime="{{ $r->created_at->toIso8601String() }}">{{ $r->created_at->format('F j, Y, g:i A') }}</span></td>
                                     @php
-                                        $isGroup = isset($r->items) && $r->items->count();
+                                        $isGroup = isset($r->items) && $r->items->count() > 1;
                                     @endphp
                                     <td>
                                         @if($isGroup)
@@ -300,7 +334,7 @@
                                     </td>
                                     <td class="actions">
                                         <div class="actions">
-                                            <span class="badge pending">{{ ucfirst($r->status) }}</span>
+                                            <span class="badge {{ strtolower($r->status) }}">{{ ucfirst($r->status) }}</span>
                                             <button class="icon-btn view" title="View request" aria-label="View request" onclick="viewRequest('{{ $r->uuid }}')">
                                                 <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.6"/></svg>
                                             </button>
@@ -310,6 +344,11 @@
                                                 </button>
                                                 <button class="icon-btn rej" title="Reject request" aria-label="Reject request" onclick="actionRequest('{{ $r->uuid }}','reject', this)">
                                                     <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                                                </button>
+                                            @endif
+                                            @if($tab === 'history' && in_array($r->status, ['done','approved','rejected','returned']))
+                                                <button class="icon-btn delete" title="Delete request" aria-label="Delete request" onclick="deleteRequest('{{ $r->uuid }}', this)" style="border:1px solid #ef4444;color:#ef4444;background:transparent">
+                                                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 6h18M8 6v12a2 2 0 002 2h4a2 2 0 002-2V6M10 6V4a2 2 0 012-2h0a2 2 0 012 2v2" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
                                                 </button>
                                             @endif
                                         </div>
@@ -360,6 +399,8 @@
                 return m ? m.getAttribute('content') : '';
             }
 
+            // Use shared formatLocalISO defined in partial; it handles common ISO variants
+
             function renderItems(items, isAdmin){
                 if(!items || !items.length){
                     dropdown.innerHTML = '<div class="item"><div style="padding:12px;color:var(--muted)">No notifications</div></div>';
@@ -367,7 +408,7 @@
                 }
                 dropdown.innerHTML = items.map(it=>{
                     const avatar = (it.item_name||'R').trim().charAt(0).toUpperCase();
-                    const meta = `<div class=\"meta\"><div class=\"title\">${it.item_name} <span class=\"time\">${it.created_at}</span></div><div class=\"sub\">Requested by ${it.requester}</div></div>`;
+                    const meta = `<div class=\"meta\"><div class=\"title\">${it.item_name} <span class=\"time\">${formatLocalISO(it.created_at)}</span></div><div class=\"sub\">Requested by ${it.requester}</div></div>`;
                     const actions = isAdmin ? `<div class=\"actions\"><button data-id=\"${it.id}\" data-action=\"approve\" class=\"btn\" title=\"Approve\">✓</button><button data-id=\"${it.id}\" data-action=\"reject\" class=\"btn delete\" title=\"Reject\">✕</button></div>` : '';
                     return `<div class=\"item\" data-id=\"${it.id}\"><div class=\"left\"><div class=\"avatar\">${avatar}</div></div>${meta}${actions}</div>`;
                 }).join('');
@@ -518,8 +559,15 @@
                     const ok = document.getElementById('confirmOk');
                     const cancel = document.getElementById('confirmCancel');
 
-                    title.textContent = (action === 'approve') ? 'Approve Request' : 'Deny Request';
-                    msg.textContent = infoText || ((action === 'approve') ? 'Approving will issue the items and update inventory. Proceed?' : 'Denying will mark this request as rejected. Proceed?');
+                            if(action === 'approve') title.textContent = 'Approve Request';
+                            else if(action === 'reject') title.textContent = 'Deny Request';
+                            else if(action === 'delete') title.textContent = 'Delete Request';
+                            else title.textContent = 'Confirm action';
+
+                            if(action === 'approve') msg.textContent = infoText || 'Approving will issue the items and update inventory. Proceed?';
+                            else if(action === 'reject') msg.textContent = infoText || 'Denying will mark this request as rejected. Proceed?';
+                            else if(action === 'delete') msg.textContent = infoText || 'This will permanently delete the request. This action cannot be undone.';
+                            else msg.textContent = infoText || 'Are you sure you want to perform this action?';
 
                     function cleanup() {
                         backdrop.style.display = 'none';
@@ -563,6 +611,30 @@
                     }catch(e){ alert('Error'); btn.disabled=false }
                 };
                 })();
+            </script>
+            <script>
+                // Delete request helper
+                window.deleteRequest = async function(id, btn){
+                    const ok = await showConfirm('delete', id, 'This will permanently delete the request. This action cannot be undone.');
+                    if(!ok) return;
+                    btn.disabled = true;
+                    try{
+                        const res = await fetch('/requests/'+encodeURIComponent(id), {
+                            method: 'DELETE',
+                            headers: { 'Content-Type':'application/json','X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content },
+                            credentials: 'same-origin'
+                        });
+                        if(res.ok){
+                            showToast('Request deleted', 'success');
+                            setTimeout(function(){ location.reload(); }, 700);
+                        } else {
+                            let msg = 'Delete failed';
+                            try{ const j = await res.json(); msg = j.message || msg }catch(e){}
+                            showToast(msg, 'error');
+                            btn.disabled = false;
+                        }
+                    }catch(e){ console.error(e); showToast('Error deleting request','error'); btn.disabled = false }
+                };
             </script>
             <script>
             (function(){
@@ -665,6 +737,21 @@
                 e.stopPropagation();
                 submenu.style.display = submenu.style.display === 'none' ? '' : 'none';
             });
+        })();
+    </script>
+    <script>
+        // Apply shared formatLocalISO to any elements marked with .local-datetime
+        (function(){
+            function applyLocalTimes(){
+                const els = document.querySelectorAll('.local-datetime');
+                els.forEach(el=>{
+                    const iso = el.getAttribute('data-datetime');
+                    if(!iso) return;
+                    try{ el.textContent = formatLocalISO(iso); }catch(e){ el.textContent = iso }
+                });
+            }
+            if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', applyLocalTimes);
+            else applyLocalTimes();
         })();
     </script>
 </body>

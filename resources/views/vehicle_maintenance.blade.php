@@ -80,6 +80,7 @@
         }
     </style>
     @include('partials._bg-preload')
+    @include('partials._formatters')
 </head>
 <body>
     <div class="bg" aria-hidden="true"></div>
@@ -88,17 +89,29 @@
     <div class="topbar" role="banner">
         <div class="topbar-inner">
             <div style="display:flex;align-items:center;gap:12px">
-                <button id="burger-top" aria-label="Toggle menu" style="display:inline-flex;width:44px;height:44px;border-radius:8px;align-items:center;justify-content:center;background:transparent;border:1px solid transparent;cursor:pointer">
+                <button id="burger-top" class="burger" aria-label="Toggle menu" title="Toggle menu" style="display:inline-flex;width:44px;height:44px;border-radius:8px;align-items:center;justify-content:center;background:transparent;border:1px solid transparent;cursor:pointer">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 12h18M3 6h18M3 18h18" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
                 </button>
-                <a href="/dashboard" style="display:flex;align-items:center;gap:6px;font-weight:700;text-decoration:none;color:inherit">
-                    <img src="/images/favi.png" alt="Logo" width="40" height="40" />
-                    <span>Vehicle Maintenance</span>
-                </a>
+                <div style="display:flex;flex-direction:column">
+                        <a href="/dashboard" class="brand-title" style="text-decoration:none;color:inherit;display:flex;align-items:center;gap:6px">
+                            <img src="/images/favi.png" alt="Logo" width="40" height="40" style="display:inline-block" />
+                            <span>San Juan CDRRMD Dashboard</span>
+                        </a>
+                    <div class="brand-subtitle">Overview of Stocks</div>
+                </div>
             </div>
-            <div style="text-align:right">
-                <div style="font-size:12px;color:var(--muted)">Welcome</div>
-                <div style="font-weight:700">{{ auth()->user()->name }}</div>
+            <div style="text-align:right;display:flex;align-items:center;gap:12px;justify-content:flex-end">
+                <div class="notif-bell" id="notif-bell">
+                    <button id="notif-toggle" aria-haspopup="true" aria-expanded="false" title="Notifications">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 10-12 0v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1h6z" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    </button>
+                    <div class="notif-count" id="notif-count" style="display:none">0</div>
+                    <div class="notif-dropdown" id="notif-dropdown" aria-hidden="true"></div>
+                </div>
+                <div style="text-align:right">
+                    <div style="font-size:13px;color:var(--muted-2)">Welcome!</div>
+                    <div style="font-weight:700">{{ auth()->user()->name }}</div>
+                </div>
             </div>
         </div>
     </div>

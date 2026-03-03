@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <title>Edit Equipment — San Juan CDRMMD</title>
     <link rel="icon" href="/images/favi.png" type="image/png">
+        @include('partials._formatters')
     <meta name="theme-color" content="#0b1220">
     <style>
         :root{--bg:#f6f8fb;--panel:#ffffff;--accent:#2563eb;--accent-2:#7c3aed;--muted:#6b7280;--muted-2:#94a3b8;--topbar-height:72px}

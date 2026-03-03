@@ -168,6 +168,7 @@
         }
     </style>
     @include('partials._bg-preload')
+    @include('partials._formatters')
 </head>
 <body>
     <div class="bg" aria-hidden="true"></div>
@@ -662,6 +663,10 @@
                 modal.style.display = 'none';
                 modal.setAttribute('aria-hidden','true');
                 document.body.style.overflow = '';
+                if (window.__requestRedirectTimeout) {
+                    clearTimeout(window.__requestRedirectTimeout);
+                    window.__requestRedirectTimeout = null;
+                }
             }
 
             toastClose && toastClose.addEventListener('click', hideToast);
@@ -692,15 +697,17 @@
                     // If server returned JSON with success message
                     const contentType = res.headers.get('content-type') || '';
                     if(res.ok){
+                        // After successful submission, show centered success modal then redirect to main inventory after 3s
                         if(contentType.includes('application/json')){
                             const data = await res.json();
-                            window.location.href = '/inventory';
-                            return;
+                            const msg = data.message || 'Request submitted successfully';
+                            showModal('Request Submitted', data.detail || msg);
                         } else {
-                            // not JSON — still redirect to inventory after successful submit
-                            window.location.href = '/inventory';
-                            return;
+                            showModal('Request Submitted', 'Your request was submitted successfully.');
                         }
+                        try{ form.reset(); }catch(e){}
+                        // schedule redirect (store id so it can be cancelled if user closes the modal)
+                        window.__requestRedirectTimeout = setTimeout(function(){ window.location.href = '/inventory'; }, 3000);
                     } else {
                         // parse error message if available
                         let errMsg = 'Request failed';
