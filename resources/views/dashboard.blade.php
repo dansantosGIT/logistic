@@ -81,6 +81,25 @@
         .recent-item .meta{min-width:0}
         .recent-item .title{font-weight:700}
         .recent-item .sub{font-size:12px;color:var(--muted);margin-top:4px}
+        /* status badges */
+        .badge{display:inline-block;padding:6px 10px;border-radius:999px;font-size:12px;font-weight:700;line-height:1;text-transform:none;transition:all .12s ease}
+        .badge.approved{background:#10b981;color:white}
+        .badge.rejected{background:#ef4444;color:white}
+        .badge.pending{background:#696969;color:white;border:1px solid rgba(0,0,0,0.08)}
+        .badge.needed{background:linear-gradient(90deg,#f59e0b,#f97316);color:white}
+        .badge.done{background:#696969;color:white;border:1px solid rgba(0,0,0,0.08)}
+        /* Recent Activity tab styles */
+        .recent-activity{height:420px;display:flex;flex-direction:column;padding:14px}
+        .tabs{gap:10px}
+        .tab-button{background:white;border:1px solid rgba(2,6,23,0.06);padding:8px 12px;border-radius:999px;cursor:pointer;font-weight:600;color:#334155;transition:all .12s ease;box-shadow:0 2px 6px rgba(2,6,23,0.04)}
+        .tab-button:hover{transform:translateY(-1px)}
+        .tab-button.active{background:linear-gradient(135deg,var(--accent),var(--accent-2));color:white;border-color:transparent;box-shadow:0 10px 30px rgba(37,99,235,0.12)}
+        .tab-button:focus{outline:none}
+        .tab-button:focus-visible{box-shadow:0 0 0 4px rgba(37,99,235,0.08);border-color:rgba(37,99,235,0.2)}
+        .tab-panel{flex:1;min-height:0;overflow:auto}
+        .recent-list{max-height:100%;overflow:auto;padding-right:6px}
+        .recent-item .title{color:#0b1220}
+        .recent-item .sub{color:#0f172a;opacity:0.9}
         .placeholder{height:200px;border-radius:8px;background:linear-gradient(90deg,#eef2ff,#f0fdf4);display:flex;align-items:center;justify-content:center;color:var(--muted)}
 
         /* Modal backdrop and styling - Professional upgrade */
@@ -223,46 +242,63 @@
 
             <section class="center">
                 <div>
-                    <div class="list">
-                        <h3 style="margin:0 0 8px">Recent Requests</h3>
+                    <div class="card recent-activity">
+                        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+                            <h3 style="margin:0;">Recent Activity</h3>
+                            <div style="font-size:13px;color:var(--muted)">Quick view</div>
+                        </div>
+
                         @php
                             $recentRequests = $recentRequests ?? (\App\Models\InventoryRequest::orderBy('created_at','desc')->take(5)->get());
+                            $recentEquip = $recent ?? (\App\Models\Equipment::orderBy('created_at','desc')->take(5)->get());
+                            $recentMaint = $recentMaint ?? ($recent_maintenances ?? (\App\Models\VehicleMaintenance::with('vehicle')->orderBy('created_at','desc')->take(5)->get()));
+                            $reqCount = $recentRequests ? $recentRequests->count() : 0;
+                            $eqCount = $recentEquip ? $recentEquip->take(5)->count() : 0;
+                            $mtCount = $recentMaint ? $recentMaint->count() : 0;
                         @endphp
-                        @if($recentRequests && $recentRequests->count())
-                            <div class="recent-list">
-                                <ul style="list-style:none;padding:0;margin:0;display:grid;gap:8px">
-                                    @foreach($recentRequests as $req)
-                                        <li class="recent-item">
-                                            <a href="/requests/{{ $req->uuid }}">
-                                                <div class="meta">
-                                                    <div class="title">{{ $req->item_name }}</div>
-                                                    <div class="sub">
-                                                        {{ $req->requester }} · {{ $req->role ?? '—' }}
-                                                        @if(($req->role ?? '') === 'Operations' && !empty($req->department))
-                                                            · {{ $req->department }}
-                                                        @endif
-                                                        · Qty: {{ $req->quantity ?? 1 }}
-                                                    </div>
-                                                </div>
-                                                <div style="text-align:right;font-size:12px;color:var(--muted)">
-                                                    <div>{{ $req->created_at->diffForHumans() }}</div>
-                                                    <div style="margin-top:6px"><span class="badge {{ $req->status }}">{{ ucfirst(strtolower($req->status)) }}</span></div>
-                                                </div>
-                                            </a>
-                                        </li>
-                                    @endforeach
-                                </ul>
-                            </div>
-                        @else
-                            <div class="placeholder">No recent requests</div>
-                        @endif
-                    </div>
-                    <div class="list" style="margin-top:12px">
-                        <h3 style="margin:0 0 8px">Recent Equipment Added</h3>
-                            @if(isset($recent) && $recent->count())
+
+                        <div class="tabs" style="display:flex;gap:8px;margin-bottom:12px">
+                            <button type="button" class="tab-button active" data-tab="requests" aria-selected="true">Requests</button>
+                            <button type="button" class="tab-button" data-tab="equipment">Equipment</button>
+                            <button type="button" class="tab-button" data-tab="maintenance">Maintenance</button>
+                        </div>
+
+                        <div class="tab-panel" data-tab="requests">
+                            @if($recentRequests && $recentRequests->count())
                                 <div class="recent-list">
                                     <ul style="list-style:none;padding:0;margin:0;display:grid;gap:8px">
-                                        @foreach($recent->take(5) as $item)
+                                        @foreach($recentRequests as $req)
+                                            <li class="recent-item">
+                                                <a href="/requests/{{ $req->uuid }}">
+                                                    <div class="meta">
+                                                        <div class="title">{{ $req->item_name }}</div>
+                                                        <div class="sub">
+                                                            {{ $req->requester }} · {{ $req->role ?? '—' }}
+                                                            @if(($req->role ?? '') === 'Operations' && !empty($req->department))
+                                                                · {{ $req->department }}
+                                                            @endif
+                                                            · Qty: {{ $req->quantity ?? 1 }}
+                                                        </div>
+                                                    </div>
+                                                    <div style="text-align:right;font-size:12px;color:var(--muted)">
+                                                        <div>{{ $req->created_at->diffForHumans() }}</div>
+                                                        <div style="margin-top:6px"><span class="badge {{ strtolower($req->status) }}">{{ ucfirst(strtolower($req->status)) }}</span></div>
+                                                    </div>
+                                                </a>
+                                            </li>
+                                        @endforeach
+                                    </ul>
+                                </div>
+                            @else
+                                <div class="placeholder">No recent requests</div>
+                            @endif
+                        </div>
+
+                        <div class="tab-panel" data-tab="equipment" style="display:none">
+                            @if(isset($recentEquip) && $recentEquip->count())
+                                <div class="recent-list">
+                                    <ul style="list-style:none;padding:0;margin:0;display:grid;gap:8px">
+                                        @foreach($recentEquip->take(5) as $item)
                                             <li class="recent-item">
                                                 <a onclick="openEquipmentModal(this)" data-equipment='{{json_encode(["id" => $item->id, "name" => $item->name, "category" => $item->category ?? "—", "location" => $item->location ?? "—", "serial" => $item->serial ?? "—", "quantity" => $item->quantity, "type" => $item->type ?? "—", "tag" => $item->tag ?? "—", "notes" => $item->notes ?? "No description provided", "image_path" => $item->image_path, "date_added" => $item->date_added ? $item->date_added->format('M d, Y') : $item->created_at->format('M d, Y'), "created_at" => $item->created_at->format('M d, Y'), "updated_at" => $item->updated_at->format('M d, Y')])}}' style="display:flex;justify-content:space-between;gap:12px">
                                                     <div class="meta">
@@ -278,6 +314,63 @@
                             @else
                                 <div class="placeholder">No recent equipment</div>
                             @endif
+                        </div>
+
+                        <div class="tab-panel" data-tab="maintenance" style="display:none">
+                            @if($recentMaint && $recentMaint->count())
+                                <div class="recent-list">
+                                    <ul style="list-style:none;padding:0;margin:0;display:grid;gap:8px">
+                                        @foreach($recentMaint as $m)
+                                            <li class="recent-item">
+                                                <a href="{{ $m->vehicle ? '/vehicle/'.$m->vehicle->id.'/maintenance' : '/vehicle/maintenance' }}">
+                                                    <div class="meta">
+                                                        <div class="title">{{ $m->task ?? 'Maintenance' }}</div>
+                                                        <div class="sub">{{ $m->vehicle ? ($m->vehicle->name . (empty($m->vehicle->plate_number) ? '' : ' · '.$m->vehicle->plate_number)) : '—' }}</div>
+                                                    </div>
+                                                    <div style="text-align:right;font-size:12px;color:var(--muted)">
+                                                        <div>{{ $m->created_at->diffForHumans() }}</div>
+                                                        <div style="margin-top:6px"><span class="badge {{ strtolower($m->status) }}">{{ ucfirst(strtolower($m->status)) }}</span></div>
+                                                    </div>
+                                                </a>
+                                            </li>
+                                        @endforeach
+                                    </ul>
+                                </div>
+                            @else
+                                <div class="placeholder">No recent maintenance</div>
+                            @endif
+                        </div>
+
+                        <script>
+                            (function(){
+                                const container = document.currentScript.parentNode;
+                                const buttons = container.querySelectorAll('.tab-button');
+                                const panels = container.querySelectorAll('.tab-panel');
+                                function activate(tab){
+                                    buttons.forEach(b=>{
+                                        const is = b.getAttribute('data-tab')===tab;
+                                        b.classList.toggle('active', is);
+                                        b.setAttribute('aria-selected', is? 'true' : 'false');
+                                    });
+                                    panels.forEach(p=> p.style.display = (p.getAttribute('data-tab')===tab) ? '' : 'none');
+                                    try{ localStorage.setItem('dashboard.activeTab', tab); }catch(e){}
+                                }
+                                buttons.forEach(b=>{
+                                    b.addEventListener('click', ()=> activate(b.getAttribute('data-tab')));
+                                    b.addEventListener('keydown', (ev)=>{
+                                        if(ev.key === 'ArrowRight' || ev.key === 'ArrowLeft'){
+                                            ev.preventDefault();
+                                            const idx = Array.prototype.indexOf.call(buttons, b);
+                                            const next = ev.key === 'ArrowRight' ? (idx+1)%buttons.length : (idx-1+buttons.length)%buttons.length;
+                                            buttons[next].focus();
+                                            activate(buttons[next].getAttribute('data-tab'));
+                                        }
+                                    });
+                                });
+                                // restore
+                                try{ const saved = localStorage.getItem('dashboard.activeTab'); if(saved) activate(saved); else activate('requests'); }catch(e){ activate('requests'); }
+                            })();
+                        </script>
                     </div>
                 </div>
                     <aside>
