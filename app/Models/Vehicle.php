@@ -16,6 +16,7 @@ class Vehicle extends Model
         'orcr_image_path',
         'type',
         'brand',
+        'model',
         'year',
         'is_firetruck',
         'status',
@@ -25,5 +26,10 @@ class Vehicle extends Model
     public function maintenances()
     {
         return $this->hasMany(VehicleMaintenance::class);
+    }
+
+    public function monitoringReports()
+    {
+        return $this->hasMany(VehicleMonitoringReport::class);
     }
 }

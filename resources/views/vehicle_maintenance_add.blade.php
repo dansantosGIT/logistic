@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>Vehicle Maintenance — San Juan CDRMMD</title>
+    <title>Add Maintenance — San Juan CDRMMD</title>
     <link rel="icon" href="/images/favi.png" type="image/png">
     <link rel="apple-touch-icon" href="/images/favi.png">
     <meta name="theme-color" content="#0b1220">
@@ -24,41 +24,26 @@
         .burger:hover{background:#eef2ff}
         .app{display:flex;min-height:100vh}
         .sidebar{position:fixed;left:0;top:var(--topbar-height);bottom:0;width:240px;background:var(--panel);border-right:1px solid #e6e9ef;padding:20px;transition:width .22s ease,transform .22s ease;z-index:50;height:calc(100vh - var(--topbar-height))}
-        .sidebar.collapsed{width:64px}
-        .brand{font-weight:800;color:var(--accent);margin-bottom:18px;display:flex;align-items:center;gap:10px}
-        .nav{display:flex;flex-direction:column;gap:6px;margin-top:6px}
-        .nav a,.nav button.action{display:flex;align-items:center;gap:12px;padding:10px;border-radius:8px;color:#0f172a;text-decoration:none;background:transparent;border:none;cursor:pointer;font-size:14px;min-height:44px}
-        .nav a:hover,.nav button.action:hover{background:#f1f5f9}
-        .nav a.active{background:linear-gradient(90deg,var(--accent),var(--accent-2));color:#fff}
-        .nav a.sub-link{margin-left:26px;min-height:36px;padding:8px 12px;font-size:13px;justify-content:flex-start;text-align:left}
-        .nav .nav-with-toggle{position:relative;display:flex;align-items:center;border-radius:8px;min-height:44px}
-        .nav .nav-with-toggle.active{background:linear-gradient(90deg,var(--accent),var(--accent-2));color:#fff}
-        .nav .nav-with-toggle .vehicle-link{display:flex;align-items:center;gap:12px;flex:1;color:inherit;text-decoration:none;padding:10px 36px 10px 12px;border-radius:8px}
-        .nav .nav-with-toggle .toggle-btn{position:absolute;right:8px;top:50%;transform:translateY(-50%);border:none;background:transparent;color:#475569;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;font-size:12px;line-height:1;padding:2px 4px;opacity:1}
         .main{flex:1;padding:16px;margin-top:var(--topbar-height)}
         .sidebar{transform:translateX(-110%);transition:transform .22s ease,width .22s ease}
         .sidebar.open{transform:translateX(0);z-index:90}
-        .sidebar.collapsed{width:64px;transform:translateX(0)}
         .panel{background:var(--panel);padding:14px;border-radius:12px;box-shadow:0 6px 20px rgba(15,23,42,0.04);width:calc(100% - 24px);margin:10px auto}
+        .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+        .field{display:flex;flex-direction:column;gap:6px}
+        .field.full{grid-column:1/-1}
+        input,select,textarea{width:100%;padding:10px;border:1px solid #e6e9ef;border-radius:8px;font:inherit}
+        textarea{min-height:90px;resize:vertical}
         .btn{padding:8px 12px;border-radius:8px;border:1px solid #e6e9ef;background:#fff;cursor:pointer;text-decoration:none;color:#0f172a}
         .btn.primary{background:#2563eb;border:none;color:#fff}
-        .btn.success{background:#10b981;border:none;color:#fff}
-        .btn.warn{background:#f59e0b;border:none;color:#fff}
-        .btn.danger{background:#ef4444;border:none;color:#fff}
+        .btn.ghost{background:#fff;border:1px solid #d1d5db;color:#334155}
         .actions{display:flex;gap:8px;flex-wrap:wrap}
-        table{width:100%;border-collapse:separate;border-spacing:0;font-size:14px}
-        th,td{padding:10px 8px;border-bottom:1px solid #edf2f7;text-align:left;vertical-align:top}
-        th{font-size:12px;text-transform:uppercase;letter-spacing:.3px;color:var(--muted)}
         .muted{color:var(--muted);font-size:13px}
-        .maintenance-row{cursor:pointer}
-        .modal-backdrop{position:fixed;inset:0;background:rgba(2,6,23,.55);display:none;z-index:210}
-        .modal-backdrop.show{display:block}
-        .modal{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);width:min(900px,94vw);max-height:90vh;background:#fff;border-radius:14px;box-shadow:0 30px 70px rgba(2,6,23,.3);display:none;z-index:220;overflow:auto}
-        .modal.show{display:block}
-        .modal-head{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-bottom:1px solid #e5e7eb}
-        .modal-close{border:none;background:#f3f4f6;color:#111827;width:32px;height:32px;border-radius:8px;cursor:pointer}
-        .modal-body{padding:14px 16px}
-        .modal-img{max-width:100%;max-height:72vh;display:block;margin:0 auto;border-radius:10px;border:1px solid #e2e8f0;background:#f8fafc}
+        .photo-upload{border:1px dashed #cbd5e1;border-radius:10px;padding:10px;background:#f8fafc}
+        .photo-upload.disabled{opacity:.65}
+        .photo-upload-top{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+        .photo-file-name{font-size:12px;color:var(--muted);max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+        .photo-preview{margin-top:10px;max-width:100%;max-height:220px;border-radius:10px;border:1px solid #e2e8f0;display:none;background:#fff}
+        .photo-upload-actions{display:flex;align-items:center;gap:8px;margin-top:10px}
         .toast{position:fixed;right:20px;bottom:20px;background:#10b981;color:#fff;padding:12px 16px;border-radius:8px;box-shadow:0 10px 30px rgba(2,6,23,.2);z-index:200;display:none}
         .toast.show{display:block}
         .notif-bell{position:relative;display:inline-flex;align-items:center;gap:8px;margin-right:12px}
@@ -76,8 +61,18 @@
         .notif-dropdown .time{font-size:11px;color:#94a3b8;margin-left:6px}
         .notif-dropdown .actions{display:flex;gap:6px;flex-shrink:0}
         .notif-dropdown .empty{padding:12px;color:var(--muted);text-align:center}
+        .nav{display:flex;flex-direction:column;gap:6px;margin-top:6px}
+        .nav a,.nav button.action{display:flex;align-items:center;gap:12px;padding:10px;border-radius:8px;color:#0f172a;text-decoration:none;background:transparent;border:none;cursor:pointer;font-size:14px;min-height:44px}
+        .nav a:hover,.nav button.action:hover{background:#f1f5f9}
+        .nav a.active{background:linear-gradient(90deg,var(--accent),var(--accent-2));color:#fff}
+        .nav a.sub-link{margin-left:26px;min-height:36px;padding:8px 12px;font-size:13px;justify-content:flex-start;text-align:left}
+        .nav .nav-with-toggle{position:relative;display:flex;align-items:center;border-radius:8px;min-height:44px}
+        .nav .nav-with-toggle.active{background:linear-gradient(90deg,var(--accent),var(--accent-2));color:#fff}
+        .nav .nav-with-toggle .vehicle-link{display:flex;align-items:center;gap:12px;flex:1;color:inherit;text-decoration:none;padding:10px 36px 10px 12px;border-radius:8px}
+        .nav .nav-with-toggle .toggle-btn{position:absolute;right:8px;top:50%;transform:translateY(-50%);border:none;background:transparent;color:#475569;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;font-size:12px;line-height:1;padding:2px 4px;opacity:1}
         .nav-overlay{position:fixed;left:0;right:0;top:var(--topbar-height);bottom:0;background:rgba(2,6,23,0.45);opacity:0;visibility:hidden;transition:opacity .18s ease;z-index:80}
         .nav-overlay.show{opacity:1;visibility:visible}
+        @media(max-width:980px){.form-grid{grid-template-columns:1fr}}
         @media(max-width:900px){.sidebar{position:fixed;left:0;top:0;bottom:0;z-index:80;transform:translateX(-110%);height:100vh}.sidebar.open{transform:translateX(0)}.main{padding:16px}}
     </style>
     @include('partials._bg-preload')
@@ -94,9 +89,9 @@
                 <div class="branding">
                     <a href="/dashboard" class="brand-title" style="text-decoration:none;color:inherit;display:flex;align-items:center;gap:6px">
                         <img src="/images/favi.png" alt="Logo" width="40" height="40" style="display:inline-block" />
-                        <span style="font-weight:700">San Juan CDRMMD Vehicle Maintenance</span>
+                        <span style="font-weight:700">San Juan CDRMMD Add Maintenance</span>
                     </a>
-                    <div class="brand-subtitle">View all maintenance records</div>
+                    <div class="brand-subtitle">Create a new maintenance record</div>
                 </div>
             </div>
             <div style="text-align:right;display:flex;align-items:center;gap:12px;justify-content:flex-end">
@@ -134,66 +129,53 @@
         <main class="main">
             <div class="panel">
                 <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
-                    <h2 style="margin:0">Vehicle Maintenance</h2>
-                    <div class="actions">
-                        <a href="/vehicle/maintenance/add" class="btn primary">Add Maintenance</a>
-                        <a href="/vehicle" class="btn">Back to Vehicles</a>
-                    </div>
+                    <h2 style="margin:0">Add Maintenance</h2>
+                    <a href="/vehicle/maintenance" class="btn">View Maintenance List</a>
                 </div>
-                <div class="muted" style="margin-top:6px">All maintenance records are shown below.</div>
+                <div class="muted" style="margin-top:6px">Fill in the details below to add a new maintenance record.</div>
             </div>
 
             <div class="panel">
-                <h3 style="margin-top:0">All Maintenance List</h3>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Vehicle</th>
-                            <th>Maintenance Task</th>
-                            <th>Due</th>
-                            <th>Notes</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @forelse($maintenances as $maintenance)
-                            <tr class="maintenance-row" onclick="openUploadedPhoto(this)" data-photo-url="{{ $maintenance->evidence_image_path ? asset('storage/' . $maintenance->evidence_image_path) : '' }}">
-                                <td>
-                                    <div style="font-weight:700">{{ $maintenance->vehicle->name ?? '—' }}</div>
-                                    <div class="muted">{{ $maintenance->vehicle->plate_number ?? 'No plate' }}</div>
-                                </td>
-                                <td>{{ $maintenance->task }}</td>
-                                <td>{{ $maintenance->due_date ? $maintenance->due_date->format('Y-m-d') : '—' }}</td>
-                                <td>{{ $maintenance->notes ?: '—' }}</td>
-                                <td onclick="event.stopPropagation()">
-                                    <div class="actions">
-                                        <form method="POST" action="/vehicle/{{ $maintenance->vehicle_id }}/maintenance/{{ $maintenance->id }}/reviewed">@csrf<button class="btn success" type="submit" {{ $maintenance->reviewed_at ? 'disabled' : '' }}>{{ $maintenance->reviewed_at ? 'Reviewed' : 'Mark Reviewed' }}</button></form>
-                                        <form method="POST" action="/vehicle/{{ $maintenance->vehicle_id }}/maintenance/{{ $maintenance->id }}/checked">@csrf<button class="btn warn" type="submit" {{ $maintenance->checked_at ? 'disabled' : '' }}>{{ $maintenance->checked_at ? 'Checked' : 'Mark Checked' }}</button></form>
-                                        <form method="POST" action="/vehicle/{{ $maintenance->vehicle_id }}/maintenance/{{ $maintenance->id }}/updated">@csrf<button class="btn primary" type="submit" {{ $maintenance->updated_marker_at ? 'disabled' : '' }}>{{ $maintenance->updated_marker_at ? 'Updated' : 'Mark Updated' }}</button></form>
-                                        <form method="POST" action="/vehicle/{{ $maintenance->vehicle_id }}/maintenance/{{ $maintenance->id }}/delete" onsubmit="return confirm('Delete this maintenance entry?')">@csrf<button class="btn danger" type="submit">Delete</button></form>
-                                    </div>
-                                    <div class="muted" style="margin-top:8px;font-size:12px">Reviewed: {{ $maintenance->reviewed_at ? $maintenance->reviewed_at->format('Y-m-d H:i') : '—' }}<br>Checked: {{ $maintenance->checked_at ? $maintenance->checked_at->format('Y-m-d H:i') : '—' }}<br>Updated: {{ $maintenance->updated_marker_at ? $maintenance->updated_marker_at->format('Y-m-d H:i') : '—' }}</div>
-                                </td>
-                            </tr>
-                        @empty
-                            <tr><td colspan="5" class="muted">No maintenance entries yet.</td></tr>
-                        @endforelse
-                    </tbody>
-                </table>
+                <form method="POST" action="/vehicle/maintenance" enctype="multipart/form-data">
+                    @csrf
+                    <div class="form-grid">
+                        <div class="field">
+                            <label for="vehicle_id">Vehicle</label>
+                            <select id="vehicle_id" name="vehicle_id" required>
+                                @forelse($vehicles as $v)
+                                    <option value="{{ $v->id }}" {{ ($selectedVehicle && $selectedVehicle->id === $v->id) ? 'selected' : '' }}>{{ $v->name }} ({{ $v->plate_number ?: 'No plate' }})</option>
+                                @empty
+                                    <option value="">No available vehicle</option>
+                                @endforelse
+                            </select>
+                        </div>
+                        <div class="field full">
+                            <label for="task">Maintenance Task</label>
+                            <textarea id="task" name="task" required placeholder="Type full maintenance task details" {{ empty($vehicles) ? 'disabled' : '' }}></textarea>
+                        </div>
+                        <div class="field">
+                            <label for="due_date">Due Date</label>
+                            <input id="due_date" name="due_date" type="date" {{ empty($vehicles) ? 'disabled' : '' }}>
+                        </div>
+                        <div class="field">
+                            <label for="maintenance-supervisor-photo">Upload Photo (optional)</label>
+                            <div class="photo-upload {{ empty($vehicles) ? 'disabled' : '' }}">
+                                <input id="maintenance-supervisor-photo" name="supervisor_photo" type="file" accept="image/*" {{ empty($vehicles) ? 'disabled' : '' }}>
+                                <div class="photo-upload-top"><span id="supervisor-photo-file-name" class="photo-file-name">No image selected</span></div>
+                                <img id="supervisor-photo-preview" class="photo-preview" alt="Upload photo preview">
+                                <div class="photo-upload-actions"><button id="supervisor-photo-clear" type="button" class="btn ghost" {{ empty($vehicles) ? 'disabled' : '' }}>Remove Image</button></div>
+                                <div class="muted" style="margin-top:8px">Image only (JPG, PNG, WEBP) up to 5MB.</div>
+                            </div>
+                        </div>
+                        <div class="field full">
+                            <label for="maintenance-notes">Notes</label>
+                            <textarea id="maintenance-notes" name="notes" placeholder="Optional notes for this maintenance task" {{ empty($vehicles) ? 'disabled' : '' }}></textarea>
+                        </div>
+                        <div class="field full"><button type="submit" class="btn primary" {{ empty($vehicles) ? 'disabled' : '' }}>Save Maintenance</button></div>
+                    </div>
+                </form>
             </div>
         </main>
-    </div>
-
-    <div id="photo-modal-backdrop" class="modal-backdrop"></div>
-    <div id="photo-modal" class="modal">
-        <div class="modal-head">
-            <div style="font-weight:700">Uploaded Photo</div>
-            <button id="photo-modal-close" class="modal-close" type="button">✕</button>
-        </div>
-        <div class="modal-body">
-            <img id="photo-modal-img" class="modal-img" alt="Uploaded photo" style="display:none">
-            <div id="photo-modal-empty" class="muted" style="text-align:center;padding:10px 0">No uploaded photo for this maintenance item.</div>
-        </div>
     </div>
 
     @if(session('success'))
@@ -225,29 +207,24 @@
 
         (function(){ const toast = document.getElementById('success-toast'); if(!toast) return; toast.classList.add('show'); setTimeout(()=> toast.classList.remove('show'), 3500); })();
 
-        function openUploadedPhoto(row){
-            const url = row.dataset.photoUrl || '';
-            const backdrop = document.getElementById('photo-modal-backdrop');
-            const modal = document.getElementById('photo-modal');
-            const img = document.getElementById('photo-modal-img');
-            const empty = document.getElementById('photo-modal-empty');
-            if(!backdrop || !modal || !img || !empty) return;
-            if(url){ img.src = url; img.style.display = 'block'; empty.style.display = 'none'; }
-            else { img.style.display = 'none'; empty.style.display = 'block'; }
-            backdrop.classList.add('show');
-            modal.classList.add('show');
-            document.body.style.overflow = 'hidden';
-        }
-
         (function(){
-            const backdrop = document.getElementById('photo-modal-backdrop');
-            const modal = document.getElementById('photo-modal');
-            const closeBtn = document.getElementById('photo-modal-close');
-            if(!backdrop || !modal || !closeBtn) return;
-            function closeModal(){ backdrop.classList.remove('show'); modal.classList.remove('show'); document.body.style.overflow = ''; }
-            closeBtn.addEventListener('click', closeModal);
-            backdrop.addEventListener('click', closeModal);
-            document.addEventListener('keydown', function(e){ if(e.key === 'Escape' && modal.classList.contains('show')) closeModal(); });
+            const input = document.getElementById('maintenance-supervisor-photo');
+            const preview = document.getElementById('supervisor-photo-preview');
+            const fileName = document.getElementById('supervisor-photo-file-name');
+            const clearBtn = document.getElementById('supervisor-photo-clear');
+            if(!input || !preview || !fileName || !clearBtn) return;
+            function resetPreview(){ input.value = ''; preview.removeAttribute('src'); preview.style.display = 'none'; fileName.textContent = 'No image selected'; }
+            input.addEventListener('change', function(){
+                const file = input.files && input.files[0] ? input.files[0] : null;
+                if(!file){ resetPreview(); return; }
+                if(!file.type || !file.type.startsWith('image/')){ alert('Please upload an image file only.'); resetPreview(); return; }
+                const maxBytes = 5 * 1024 * 1024;
+                if(file.size > maxBytes){ alert('Image must be 5MB or smaller.'); resetPreview(); return; }
+                fileName.textContent = file.name;
+                preview.src = URL.createObjectURL(file);
+                preview.style.display = 'block';
+            });
+            clearBtn.addEventListener('click', function(){ resetPreview(); });
         })();
 
         (function(){

@@ -45,7 +45,10 @@
         .btn.primary{background:#2563eb;border:none;color:#fff}
         .btn.light{background:#f3f4f6;border-color:#d1d5db;color:#374151}
         .actions{display:flex;gap:10px;flex-wrap:wrap}
-        .back-row{display:flex;justify-content:flex-end;margin-bottom:12px}
+        .upload-form{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between}
+        .upload-form .btn{margin-left:auto}
+        .replace-wrap{display:flex;justify-content:center;margin-top:12px}
+        .replace-form{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:center}
         .preview{margin-top:14px}
         .preview img{max-width:100%;width:auto;max-height:520px;border-radius:10px;border:1px solid #e2e8f0;background:#f8fafc;display:block}
         .empty{padding:16px;border:1px dashed #cbd5e1;border-radius:10px;background:#f8fafc;color:#64748b}
@@ -68,9 +71,9 @@
                 <div style="display:flex;flex-direction:column">
                         <a href="/dashboard" class="brand-title" style="text-decoration:none;color:inherit;display:flex;align-items:center;gap:6px">
                             <img src="/images/favi.png" alt="Logo" width="40" height="40" style="display:inline-block" />
-                            <span>San Juan CDRRMD Dashboard</span>
+                            <span>San Juan CDRRMD Vehicle ORCR</span>
                         </a>
-                    <div class="brand-subtitle">Overview of Stocks</div>
+                    <div class="brand-subtitle">Verified OR/CR profile and registration details</div>
                 </div>
             </div>
             <div style="text-align:right;display:flex;align-items:center;gap:12px;justify-content:flex-end">
@@ -112,18 +115,11 @@
 
         <main class="main">
             <div class="panel">
-                <h2 style="margin:0 0 6px 0">{{ $vehicle->name }} OR/CR</h2>
-                <p class="muted" style="margin:0 0 14px 0">Plate: {{ $vehicle->plate_number ?: 'No plate' }}</p>
-
-                <form method="POST" action="/vehicle/{{ $vehicle->id }}/orcr" enctype="multipart/form-data" class="actions" style="margin-bottom:12px">
-                    @csrf
-                    <input name="orcr_image" type="file" accept="image/*" required>
-                    <button class="btn primary" type="submit">{{ $vehicle->orcr_image_path ? 'Replace OR/CR Photo' : 'Upload OR/CR Photo' }}</button>
-                </form>
-
-                <div class="back-row">
+                <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
+                    <h2 style="margin:0">{{ $vehicle->name }} OR/CR</h2>
                     <a href="/vehicle" class="btn light">Back to Vehicles</a>
                 </div>
+                <p class="muted" style="margin:6px 0 14px 0">Plate: {{ $vehicle->plate_number ?: 'No plate' }}</p>
 
                 @if($vehicle->orcr_image_path)
                     <div class="actions" style="margin-bottom:10px">
@@ -132,8 +128,20 @@
                     <div class="preview">
                         <img src="{{ asset('storage/' . $vehicle->orcr_image_path) }}" alt="OR/CR Photo">
                     </div>
+                    <div class="replace-wrap">
+                        <form method="POST" action="/vehicle/{{ $vehicle->id }}/orcr" enctype="multipart/form-data" class="replace-form">
+                            @csrf
+                            <input name="orcr_image" type="file" accept="image/*" required>
+                            <button class="btn primary" type="submit">Replace OR/CR Photo</button>
+                        </form>
+                    </div>
                 @else
                     <div class="empty">No OR/CR photo uploaded yet.</div>
+                    <form method="POST" action="/vehicle/{{ $vehicle->id }}/orcr" enctype="multipart/form-data" class="upload-form" style="margin-top:12px">
+                        @csrf
+                        <input name="orcr_image" type="file" accept="image/*" required>
+                        <button class="btn primary" type="submit">Upload OR/CR Photo</button>
+                    </form>
                 @endif
             </div>
         </main>

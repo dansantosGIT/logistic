@@ -18,6 +18,8 @@
 
         .topbar{position:fixed;left:0;right:0;top:0;height:72px;background:rgba(255,255,255,0.95);backdrop-filter:saturate(1.05) blur(4px);box-shadow:0 6px 24px rgba(2,6,23,0.08);z-index:60}
         .topbar-inner{max-width:none;width:100%;margin:0;padding:12px 12px 12px 0;display:flex;justify-content:space-between;align-items:center}
+        .topbar .left-area{display:flex;align-items:center;gap:12px}
+        .topbar .branding{display:flex;flex-direction:column}
         .topbar .brand-title{display:flex;align-items:center;gap:6px;font-weight:700}
         .topbar .brand-subtitle{font-size:12px;color:var(--muted)}
         .burger{display:inline-flex;width:44px;height:44px;border-radius:8px;align-items:center;justify-content:center;background:transparent;border:1px solid transparent;cursor:pointer}
@@ -62,6 +64,8 @@
         .btn.add-vehicle:hover{background:#4b5563}
         .btn.quick-maintenance{background:#fff;color:#0f172a;border:1px solid #e6e9ef;display:inline-flex;align-items:center;gap:6px}
         .btn.quick-maintenance:hover{background:#f8fafc}
+        .btn.quick-monitoring{background:#fff;color:#0f172a;border:1px solid #e6e9ef;display:inline-flex;align-items:center;gap:6px}
+        .btn.quick-monitoring:hover{background:#f8fafc}
         .top-section{margin-top:16px;padding-bottom:14px;margin-bottom:16px;border-bottom:3px solid #e5e7eb}
         .btn.success{background:#10b981;border:none;color:#fff}
         .btn.warn{background:#f59e0b;border:none;color:#fff}
@@ -130,14 +134,14 @@
 
     <div class="topbar" role="banner">
         <div class="topbar-inner">
-            <div style="display:flex;align-items:center;gap:12px">
+            <div class="left-area">
                 <button id="burger-top" class="burger" aria-label="Toggle menu" title="Toggle menu" style="display:inline-flex;width:44px;height:44px;border-radius:8px;align-items:center;justify-content:center;background:transparent;border:1px solid transparent;cursor:pointer">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 12h18M3 6h18M3 18h18" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
                 </button>
-                <div style="display:flex;flex-direction:column">
+                <div class="branding">
                         <a href="/dashboard" class="brand-title" style="text-decoration:none;color:inherit;display:flex;align-items:center;gap:6px">
                             <img src="/images/favi.png" alt="Logo" width="40" height="40" style="display:inline-block" />
-                            <span>San Juan CDRRMD Vehicles</span>
+                            <span>San Juan CDRMMD Vehicles</span>
                         </a>
                     <div class="brand-subtitle">Overview of Vehicles</div>
                 </div>
@@ -167,6 +171,7 @@
                 </div>
                 <div id="vehicle-submenu" style="display:none">
                     <a href="/vehicle/maintenance" class="sub-link"><span class="label">Maintenance</span></a>
+                    <a href="/vehicle/monitoring" class="sub-link"><span class="label">Monitoring</span></a>
                 </div>
                 <a href="/requests"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M19 3H5a2 2 0 00-2 2v14l4-2 4 2 4-2 4 2V5a2 2 0 00-2-2z" fill="currentColor"/></svg><span class="label">Request</span></a>
                 <a href="#"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 8a4 4 0 100 8 4 4 0 000-8zM3 13h3l1-3 2 2 3-4 2 4 3-2 1 3h3" stroke="currentColor" stroke-width="1" fill="none"/></svg><span class="label">Settings</span></a>
@@ -181,6 +186,7 @@
                         <h2 style="margin:0">Vehicle Monitoring</h2>
                         <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
                             <a href="/vehicle/maintenance" class="btn quick-maintenance" title="Go to maintenance page">Maintenance</a>
+                            <a href="/vehicle/monitoring" class="btn quick-monitoring" title="Go to monitoring page">Monitoring</a>
                             <a href="/vehicle/add" class="btn add-vehicle"><span aria-hidden="true">+</span><span>Add Vehicle</span></a>
                         </div>
                     </div>
@@ -194,7 +200,7 @@
                             <thead>
                                 <tr>
                                     <th>Name</th>
-                                    <th>Type / Brand / Year</th>
+                                    <th>Type / Brand / Model / Year</th>
                                     <th>Class</th>
                                     <th>Maintenance</th>
                                     <th></th>
@@ -202,16 +208,15 @@
                             </thead>
                             <tbody>
                                 @forelse($vehicles as $vehicle)
-                                    <tr class="vehicle-row" onclick="openVehicleQuickView(this)" data-vehicle='{{ json_encode(["id" => $vehicle->id, "name" => $vehicle->name, "plate_number" => $vehicle->plate_number, "image_path" => $vehicle->image_path, "orcr_image_path" => $vehicle->orcr_image_path, "type" => $vehicle->type, "brand" => $vehicle->brand, "year" => $vehicle->year, "is_firetruck" => $vehicle->is_firetruck, "status" => $vehicle->status, "needed_count" => $vehicle->needed_count ?? 0, "done_count" => $vehicle->done_count ?? 0]) }}'>
+                                    <tr class="vehicle-row" onclick="openVehicleQuickView(this)" data-vehicle='{{ json_encode(["id" => $vehicle->id, "name" => $vehicle->name, "plate_number" => $vehicle->plate_number, "image_path" => $vehicle->image_path, "orcr_image_path" => $vehicle->orcr_image_path, "type" => $vehicle->type, "brand" => $vehicle->brand, "model" => $vehicle->model, "year" => $vehicle->year, "is_firetruck" => $vehicle->is_firetruck, "status" => $vehicle->status, "maintenance_count" => $vehicle->maintenance_count ?? 0]) }}'>
                                         <td>
                                             <div style="font-weight:700">{{ $vehicle->name }}</div>
                                             <div class="muted">{{ $vehicle->plate_number ?: 'No plate' }}</div>
                                         </td>
-                                        <td>{{ $vehicle->type ?: '—' }} / {{ $vehicle->brand ?: '—' }} / {{ $vehicle->year ?: '—' }}</td>
+                                        <td>{{ $vehicle->type ?: '—' }} / {{ $vehicle->brand ?: '—' }} / {{ $vehicle->model ?: '—' }} / {{ $vehicle->year ?: '—' }}</td>
                                         <td><span class="badge {{ $vehicle->is_firetruck ? 'done' : 'active' }}">{{ $vehicle->is_firetruck ? 'Firetruck' : 'Standard' }}</span></td>
                                         <td>
-                                            <span class="badge needed">Needed: {{ $vehicle->needed_count ?? 0 }}</span>
-                                            <span class="badge done" style="margin-left:6px">Done: {{ $vehicle->done_count ?? 0 }}</span>
+                                            <span class="badge active">Total: {{ $vehicle->maintenance_count ?? 0 }}</span>
                                         </td>
                                         <td>
                                             <div class="actions" onclick="event.stopPropagation()">
@@ -245,12 +250,14 @@
                     <div class="quick-card"><div class="quick-label">Plate Number</div><div id="quick-plate" class="quick-value">—</div></div>
                     <div class="quick-card"><div class="quick-label">Type</div><div id="quick-type" class="quick-value">—</div></div>
                     <div class="quick-card"><div class="quick-label">Brand</div><div id="quick-brand" class="quick-value">—</div></div>
+                    <div class="quick-card"><div class="quick-label">Model</div><div id="quick-model" class="quick-value">—</div></div>
                     <div class="quick-card"><div class="quick-label">Year</div><div id="quick-year" class="quick-value">—</div></div>
                     <div class="quick-card"><div class="quick-label">Vehicle Class</div><div id="quick-class" class="quick-value">—</div></div>
                     <div class="quick-card"><div class="quick-label">Maintenance</div><div id="quick-maint" class="quick-value">—</div></div>
                 </div>
                 <div class="quick-actions">
                     <a id="quick-edit-link" class="quick-action" href="/vehicle/add">Edit Details</a>
+                    <a id="quick-monitoring-link" class="quick-action" href="/vehicle/monitoring">Monitoring</a>
                     <a id="quick-maintenance-link" class="quick-action primary" href="/vehicle/maintenance">Maintenance</a>
                 </div>
             </div>
@@ -350,13 +357,15 @@
             document.getElementById('quick-plate').textContent = data.plate_number || 'No plate';
             document.getElementById('quick-type').textContent = data.type || '—';
             document.getElementById('quick-brand').textContent = data.brand || '—';
+            document.getElementById('quick-model').textContent = data.model || '—';
             document.getElementById('quick-year').textContent = data.year || '—';
             document.getElementById('quick-class').textContent = data.is_firetruck ? 'Firetruck' : 'Standard';
-            document.getElementById('quick-maint').textContent = 'Needed: ' + (data.needed_count || 0) + ' • Done: ' + (data.done_count || 0);
+            document.getElementById('quick-maint').textContent = 'Total entries: ' + (data.maintenance_count || 0);
 
             const image = document.getElementById('quick-image');
             const noImage = document.getElementById('quick-no-image');
             const maintenanceLink = document.getElementById('quick-maintenance-link');
+            const monitoringLink = document.getElementById('quick-monitoring-link');
             const editLink = document.getElementById('quick-edit-link');
             if(data.image_path){
                 image.src = '/storage/' + data.image_path;
@@ -369,6 +378,9 @@
 
             if(maintenanceLink){
                 maintenanceLink.href = data.id ? ('/vehicle/maintenance?vehicle=' + encodeURIComponent(data.id)) : '/vehicle/maintenance';
+            }
+            if(monitoringLink){
+                monitoringLink.href = data.id ? ('/vehicle/monitoring?vehicle=' + encodeURIComponent(data.id)) : '/vehicle/monitoring';
             }
             if(editLink){
                 editLink.href = data.id ? ('/vehicle/' + encodeURIComponent(data.id) + '/edit') : '/vehicle/add';

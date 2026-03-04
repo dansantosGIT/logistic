@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Hash;
 use App\Models\User;
 use App\Models\Vehicle;
 use App\Models\VehicleMaintenance;
+use App\Models\VehicleMonitoringReport;
 
 Route::get('/', function () {
     // show latest 5 equipment and simple stock analysis on the welcome page
@@ -113,14 +114,10 @@ Route::get('/inventory', function () {
 Route::get('/vehicle', function (Request $request) {
     $selectedVehicleId = (int) $request->query('vehicle', 0);
 
-    $vehicles = Vehicle::where('status', 'active')->withCount([
-        'maintenances as needed_count' => function ($query) {
-            $query->where('status', 'needed');
-        },
-        'maintenances as done_count' => function ($query) {
-            $query->where('status', 'done');
-        },
-    ])->orderBy('name')->get();
+    $vehicles = Vehicle::where('status', 'active')
+        ->withCount('maintenances as maintenance_count')
+        ->orderBy('name')
+        ->get();
 
     $selectedVehicle = $selectedVehicleId > 0
         ? $vehicles->firstWhere('id', $selectedVehicleId)
@@ -129,7 +126,6 @@ Route::get('/vehicle', function (Request $request) {
     $maintenances = collect();
     if ($selectedVehicle) {
         $maintenances = VehicleMaintenance::where('vehicle_id', $selectedVehicle->id)
-            ->orderByRaw("case when status = 'needed' then 0 else 1 end")
             ->orderBy('due_date')
             ->orderByDesc('created_at')
             ->get();
@@ -147,26 +143,98 @@ Route::get('/vehicle/{vehicle}/edit', function (Vehicle $vehicle) {
 })->middleware('auth');
 
 Route::get('/vehicle/maintenance', function () {
-    $selectedVehicleId = (int) request()->query('vehicle', 0);
+    $maintenances = VehicleMaintenance::with('vehicle')
+        ->whereHas('vehicle', function ($q) {
+            $q->where('status', 'active');
+        })
+        ->orderBy('due_date')
+        ->orderByDesc('created_at')
+        ->get();
+
+    return view('vehicle_maintenance', compact('maintenances'));
+})->middleware('auth');
+
+Route::get('/vehicle/maintenance/add', function (Request $request) {
+    $selectedVehicleId = (int) $request->query('vehicle', 0);
     $vehicles = Vehicle::where('status', 'active')->orderBy('name')->get();
     $selectedVehicle = $selectedVehicleId > 0
         ? $vehicles->firstWhere('id', $selectedVehicleId)
         : $vehicles->first();
 
-    $maintenances = VehicleMaintenance::with('vehicle')
-        ->whereHas('vehicle', function ($q) {
-            $q->where('status', 'active');
-        })
-        ->orderByRaw("case when status = 'needed' then 0 else 1 end")
-        ->orderBy('due_date')
-        ->orderByDesc('created_at')
-        ->get();
+    return view('vehicle_maintenance_add', compact('vehicles', 'selectedVehicle'));
+})->middleware('auth');
 
-    return view('vehicle_maintenance', compact('vehicles', 'selectedVehicle', 'maintenances'));
+Route::get('/vehicle/monitoring', function (Request $request) {
+    $selectedVehicleId = (int) $request->query('vehicle', 0);
+    $vehicles = Vehicle::where('status', 'active')->orderBy('name')->get();
+    $selectedVehicle = $selectedVehicleId > 0
+        ? $vehicles->firstWhere('id', $selectedVehicleId)
+        : $vehicles->first();
+
+    $reports = collect();
+    if ($selectedVehicle) {
+        $reports = VehicleMonitoringReport::where('vehicle_id', $selectedVehicle->id)
+            ->orderByDesc('created_at')
+            ->get();
+    }
+
+    return view('vehicle_monitoring', compact('vehicles', 'selectedVehicle', 'reports'));
+})->middleware('auth');
+
+Route::get('/vehicle/monitoring/add', function (Request $request) {
+    $selectedVehicleId = (int) $request->query('vehicle', 0);
+    $vehicles = Vehicle::where('status', 'active')->orderBy('name')->get();
+    $selectedVehicle = $selectedVehicleId > 0
+        ? $vehicles->firstWhere('id', $selectedVehicleId)
+        : $vehicles->first();
+
+    return view('vehicle_monitoring_add', compact('vehicles', 'selectedVehicle'));
+})->middleware('auth');
+
+Route::get('/vehicle/{vehicle}/monitoring', function (Vehicle $vehicle) {
+    return redirect('/vehicle/monitoring?vehicle=' . $vehicle->id);
+})->middleware('auth');
+
+Route::post('/vehicle/monitoring', function (Request $request) {
+    $data = $request->validate([
+        'vehicle_id' => 'required|integer|exists:vehicles,id',
+        'report' => 'required|string|max:2000',
+    ]);
+
+    $vehicle = Vehicle::findOrFail($data['vehicle_id']);
+    abort_if($vehicle->status !== 'active', 422);
+
+    VehicleMonitoringReport::create([
+        'vehicle_id' => $vehicle->id,
+        'report' => trim($data['report']),
+    ]);
+
+    return redirect('/vehicle/monitoring?vehicle=' . $vehicle->id)->with('success', 'Monitoring report saved.');
+})->middleware('auth');
+
+Route::post('/vehicle/monitoring/{report}/update', function (Request $request, VehicleMonitoringReport $report) {
+    $data = $request->validate([
+        'report' => 'required|string|max:2000',
+    ]);
+
+    $vehicle = Vehicle::findOrFail($report->vehicle_id);
+    abort_if($vehicle->status !== 'active', 422);
+
+    $report->report = trim($data['report']);
+    $report->save();
+
+    return redirect('/vehicle/monitoring?vehicle=' . $report->vehicle_id)->with('success', 'Monitoring report updated.');
+})->middleware('auth');
+
+Route::post('/vehicle/monitoring/{report}/delete', function (VehicleMonitoringReport $report) {
+    $vehicleId = $report->vehicle_id;
+    $report->delete();
+
+    return redirect('/vehicle/monitoring?vehicle=' . $vehicleId)->with('success', 'Monitoring report deleted.');
 })->middleware('auth');
 
 Route::get('/vehicle/{vehicle}/maintenance', function (Vehicle $vehicle) {
-    return redirect('/vehicle/maintenance?vehicle=' . $vehicle->id);
+    return redirect('/vehicle/maintenance/add?vehicle=' . $vehicle->id);
 })->middleware('auth');
 
 Route::get('/vehicle/{vehicle}/orcr', function (Vehicle $vehicle) {
@@ -181,6 +249,7 @@ Route::post('/vehicle', function (Request $request) {
         'orcr_image' => 'nullable|file|image|max:5120',
         'type' => 'required|string|max:255',
         'brand' => 'nullable|string|max:255',
+        'model' => 'nullable|string|max:255',
         'year' => 'nullable|integer|min:1900|max:2100',
         'is_firetruck' => 'nullable|boolean',
         'notes' => 'nullable|string|max:500',
@@ -191,23 +260,24 @@ Route::post('/vehicle', function (Request $request) {
         $imagePath = $request->file('image')->store('vehicles', 'public');
     }
 
-    $orcrImagePath = null;
-    if ($request->hasFile('orcr_image') && $request->file('orcr_image')->isValid()) {
-        $orcrImagePath = $request->file('orcr_image')->store('vehicles/orcr', 'public');
-    }
-
-    Vehicle::create([
+    $vehicle = Vehicle::create([
         'name' => $data['name'],
         'plate_number' => $data['plate_number'] ?? null,
         'image_path' => $imagePath,
-        'orcr_image_path' => $orcrImagePath,
+        'orcr_image_path' => null,
         'type' => $data['type'],
         'brand' => $data['brand'] ?? null,
+        'model' => $data['model'] ?? null,
         'year' => $data['year'] ?? null,
         'is_firetruck' => $request->boolean('is_firetruck'),
         'status' => 'active',
         'notes' => $data['notes'] ?? null,
     ]);
+
+    if ($request->hasFile('orcr_image') && $request->file('orcr_image')->isValid()) {
+        $vehicle->orcr_image_path = $request->file('orcr_image')->store('vehicles/orcr/' . $vehicle->id, 'public');
+        $vehicle->save();
+    }
 
     return redirect('/vehicle')->with('success', 'Vehicle added.');
 })->middleware('auth');
@@ -220,6 +290,7 @@ Route::post('/vehicle/{vehicle}/update', function (Request $request, Vehicle $ve
         'orcr_image' => 'nullable|file|image|max:5120',
         'type' => 'required|string|max:255',
         'brand' => 'nullable|string|max:255',
+        'model' => 'nullable|string|max:255',
         'year' => 'nullable|integer|min:1900|max:2100',
         'is_firetruck' => 'nullable|boolean',
         'notes' => 'nullable|string|max:500',
@@ -236,13 +307,14 @@ Route::post('/vehicle/{vehicle}/update', function (Request $request, Vehicle $ve
         if ($vehicle->orcr_image_path && Storage::disk('public')->exists($vehicle->orcr_image_path)) {
             Storage::disk('public')->delete($vehicle->orcr_image_path);
         }
-        $vehicle->orcr_image_path = $request->file('orcr_image')->store('vehicles/orcr', 'public');
+        $vehicle->orcr_image_path = $request->file('orcr_image')->store('vehicles/orcr/' . $vehicle->id, 'public');
     }
 
     $vehicle->name = $data['name'];
     $vehicle->plate_number = $data['plate_number'] ?? null;
     $vehicle->type = $data['type'];
     $vehicle->brand = $data['brand'] ?? null;
+    $vehicle->model = $data['model'] ?? null;
     $vehicle->year = $data['year'] ?? null;
     $vehicle->is_firetruck = $request->boolean('is_firetruck');
     $vehicle->notes = $data['notes'] ?? null;
@@ -260,28 +332,45 @@ Route::post('/vehicle/{vehicle}/orcr', function (Request $request, Vehicle $vehi
         Storage::disk('public')->delete($vehicle->orcr_image_path);
     }
 
-    $orcrImagePath = $request->file('orcr_image')->store('vehicles/orcr', 'public');
+    $orcrImagePath = $request->file('orcr_image')->store('vehicles/orcr/' . $vehicle->id, 'public');
     $vehicle->orcr_image_path = $orcrImagePath;
     $vehicle->save();
 
-    return redirect('/vehicle')->with('success', 'OR/CR photo uploaded.');
+    return redirect('/vehicle/' . $vehicle->id . '/orcr')->with('success', 'OR/CR photo uploaded.');
 })->middleware('auth');
 
 Route::post('/vehicle/{vehicle}/maintenance', function (Request $request, Vehicle $vehicle) {
     $data = $request->validate([
         'task' => 'required|string|max:255',
         'due_date' => 'nullable|date',
-        'status' => 'required|in:needed,done',
+        'supervisor_photo' => 'nullable|file|image|max:5120',
         'notes' => 'nullable|string|max:500',
     ]);
 
-    VehicleMaintenance::create([
+    $evidenceImagePath = null;
+    $photoField = $request->hasFile('supervisor_photo') ? 'supervisor_photo' : ($request->hasFile('evidence_image') ? 'evidence_image' : null);
+    if ($photoField && $request->file($photoField)->isValid()) {
+        $evidenceImagePath = $request->file($photoField)->store('vehicles/maintenance/' . $vehicle->id, 'public');
+    }
+
+    $maintenance = VehicleMaintenance::create([
         'vehicle_id' => $vehicle->id,
         'task' => $data['task'],
         'due_date' => $data['due_date'] ?? null,
-        'status' => $data['status'],
-        'completed_at' => $data['status'] === 'done' ? now() : null,
+        'evidence_image_path' => $evidenceImagePath,
         'notes' => $data['notes'] ?? null,
+    ]);
+
+    $autoReportParts = [
+        'Maintenance reported: ' . $maintenance->task,
+        'Due: ' . ($maintenance->due_date ? $maintenance->due_date->format('Y-m-d') : 'No due date'),
+        'Notes: ' . ($maintenance->notes ?: 'None'),
+        'Photo: ' . ($maintenance->evidence_image_path ? 'Uploaded' : 'None'),
+    ];
+
+    VehicleMonitoringReport::create([
+        'vehicle_id' => $vehicle->id,
+        'report' => implode("\n", $autoReportParts),
     ]);
 
     return redirect('/vehicle/maintenance?vehicle=' . $vehicle->id)->with('success', 'Maintenance entry saved.');
@@ -292,37 +381,40 @@ Route::post('/vehicle/maintenance', function (Request $request) {
         'vehicle_id' => 'required|integer|exists:vehicles,id',
         'task' => 'required|string|max:255',
         'due_date' => 'nullable|date',
-        'status' => 'required|in:needed,done',
+        'supervisor_photo' => 'nullable|file|image|max:5120',
         'notes' => 'nullable|string|max:500',
     ]);
 
     $vehicle = Vehicle::findOrFail($data['vehicle_id']);
     abort_if($vehicle->status !== 'active', 422);
 
-    VehicleMaintenance::create([
+    $evidenceImagePath = null;
+    $photoField = $request->hasFile('supervisor_photo') ? 'supervisor_photo' : ($request->hasFile('evidence_image') ? 'evidence_image' : null);
+    if ($photoField && $request->file($photoField)->isValid()) {
+        $evidenceImagePath = $request->file($photoField)->store('vehicles/maintenance/' . $vehicle->id, 'public');
+    }
+
+    $maintenance = VehicleMaintenance::create([
         'vehicle_id' => $vehicle->id,
         'task' => $data['task'],
         'due_date' => $data['due_date'] ?? null,
-        'status' => $data['status'],
-        'completed_at' => $data['status'] === 'done' ? now() : null,
+        'evidence_image_path' => $evidenceImagePath,
         'notes' => $data['notes'] ?? null,
     ]);
 
-    return redirect('/vehicle/maintenance?vehicle=' . $vehicle->id)->with('success', 'Maintenance entry saved.');
-})->middleware('auth');
+    $autoReportParts = [
+        'Maintenance reported: ' . $maintenance->task,
+        'Due: ' . ($maintenance->due_date ? $maintenance->due_date->format('Y-m-d') : 'No due date'),
+        'Notes: ' . ($maintenance->notes ?: 'None'),
+        'Photo: ' . ($maintenance->evidence_image_path ? 'Uploaded' : 'None'),
+    ];
 
-Route::post('/vehicle/{vehicle}/maintenance/{maintenance}/mark', function (Request $request, Vehicle $vehicle, VehicleMaintenance $maintenance) {
-    abort_if($maintenance->vehicle_id !== $vehicle->id, 404);
-
-    $data = $request->validate([
-        'status' => 'required|in:needed,done',
+    VehicleMonitoringReport::create([
+        'vehicle_id' => $vehicle->id,
+        'report' => implode("\n", $autoReportParts),
     ]);
 
-    $maintenance->status = $data['status'];
-    $maintenance->completed_at = $data['status'] === 'done' ? now() : null;
-    $maintenance->save();
-
-    return redirect('/vehicle/maintenance?vehicle=' . $vehicle->id)->with('success', 'Maintenance status updated.');
+    return redirect('/vehicle/maintenance?vehicle=' . $vehicle->id)->with('success', 'Maintenance entry saved.');
 })->middleware('auth');
 
 Route::post('/vehicle/{vehicle}/maintenance/{maintenance}/delete', function (Vehicle $vehicle, VehicleMaintenance $maintenance) {
@@ -331,6 +423,39 @@ Route::post('/vehicle/{vehicle}/maintenance/{maintenance}/delete', function (Veh
     $maintenance->delete();
 
     return redirect('/vehicle/maintenance?vehicle=' . $vehicle->id)->with('success', 'Maintenance entry deleted.');
+})->middleware('auth');
+
+Route::post('/vehicle/{vehicle}/maintenance/{maintenance}/reviewed', function (Vehicle $vehicle, VehicleMaintenance $maintenance) {
+    abort_if($maintenance->vehicle_id !== $vehicle->id, 404);
+
+    if (!$maintenance->reviewed_at) {
+        $maintenance->reviewed_at = now();
+        $maintenance->save();
+    }
+
+    return redirect('/vehicle/maintenance?vehicle=' . $vehicle->id)->with('success', 'Marked as reviewed.');
+})->middleware('auth');
+
+Route::post('/vehicle/{vehicle}/maintenance/{maintenance}/checked', function (Vehicle $vehicle, VehicleMaintenance $maintenance) {
+    abort_if($maintenance->vehicle_id !== $vehicle->id, 404);
+
+    if (!$maintenance->checked_at) {
+        $maintenance->checked_at = now();
+        $maintenance->save();
+    }
+
+    return redirect('/vehicle/maintenance?vehicle=' . $vehicle->id)->with('success', 'Marked as checked.');
+})->middleware('auth');
+
+Route::post('/vehicle/{vehicle}/maintenance/{maintenance}/updated', function (Vehicle $vehicle, VehicleMaintenance $maintenance) {
+    abort_if($maintenance->vehicle_id !== $vehicle->id, 404);
+
+    if (!$maintenance->updated_marker_at) {
+        $maintenance->updated_marker_at = now();
+        $maintenance->save();
+    }
+
+    return redirect('/vehicle/maintenance?vehicle=' . $vehicle->id)->with('success', 'Marked as updated.');
 })->middleware('auth');
 
 // Inventory search (AJAX): returns rendered table rows for the query

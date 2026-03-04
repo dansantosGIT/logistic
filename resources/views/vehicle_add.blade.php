@@ -143,6 +143,10 @@
                             <input id="vehicle-brand" name="brand" placeholder="e.g., Isuzu" value="{{ old('brand', $vehicle->brand ?? '') }}">
                         </div>
                         <div class="field">
+                            <label for="vehicle-model">Model</label>
+                            <input id="vehicle-model" name="model" placeholder="e.g., D-Max" value="{{ old('model', $vehicle->model ?? '') }}">
+                        </div>
+                        <div class="field">
                             <label for="vehicle-year">Year</label>
                             <input id="vehicle-year" name="year" type="number" min="1900" max="2100" placeholder="e.g., 2022" value="{{ old('year', $vehicle->year ?? '') }}">
                         </div>
