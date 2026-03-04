@@ -86,6 +86,7 @@ Route::post('/register', function (Request $request) {
 // Dashboard (protected)
 Route::get('/dashboard', function () {
     $recent = collect();
+    $recent_maintenances = collect();
     $total_items = 0;
     $total_quantity = 0;
     $instock_count = 0;
@@ -98,11 +99,12 @@ Route::get('/dashboard', function () {
         $instock_count = App\Models\Equipment::where('quantity', '>=', 10)->count();
         $low_count = App\Models\Equipment::where('quantity', '>', 0)->where('quantity', '<', 10)->count();
         $out_count = App\Models\Equipment::where('quantity', 0)->count();
+        $recent_maintenances = App\Models\VehicleMaintenance::with('vehicle')->orderBy('created_at','desc')->limit(5)->get();
     } catch (Throwable $e) {
         $recent = collect();
     }
 
-    return view('dashboard', compact('recent','total_items','total_quantity','instock_count','low_count','out_count'));
+    return view('dashboard', compact('recent','total_items','total_quantity','instock_count','low_count','out_count','recent_maintenances'));
 })->middleware('auth');
 
 // Inventory (protected)

@@ -141,16 +141,24 @@
         .icon-btn.ok{background:#10b981;color:#fff;border:none}
         .icon-btn.rej{background:#ef4444;color:#fff;border:none}
         .icon-btn.delete{border:1px solid #ef4444;color:#ef4444;background:transparent}
-        .icon-btn:hover{transform:translateY(-4px);box-shadow:0 10px 24px rgba(2,6,23,0.12);z-index:220}
+          .icon-btn:hover{transform:translateY(-4px);box-shadow:0 10px 24px rgba(2,6,23,0.12);z-index:220}
 
-        /* Make action buttons visually blend with row hover (no white gap) */
-        .inventory-table tbody tr:hover td .icon-btn{background:transparent}
-        .inventory-table tbody tr:hover td.actions .icon-btn{border-color:rgba(0,0,0,0.08)}
-        .inventory-table tbody tr:hover td.actions .icon-btn.delete{background:transparent !important;border-color:rgba(239,68,68,0.18) !important}
-        /* ensure the actions cell shows the same hover background as other cells */
-        .inventory-table tbody tr:hover td.actions{background:#fff7cc}
-        .icon-btn:active{transform:translateY(-1px)}
-        .icon-btn:focus{outline:none;box-shadow:0 0 0 4px rgba(37,99,235,0.12)}
+          /* Make action buttons visually blend with row hover (no white gap) */
+          .inventory-table tbody tr:hover td .icon-btn{background:transparent}
+          .inventory-table tbody tr:hover td.actions .icon-btn{border-color:rgba(0,0,0,0.08)}
+          .inventory-table tbody tr:hover td.actions .icon-btn.delete{background:transparent !important;border-color:rgba(239,68,68,0.18) !important}
+          /* ensure the actions cell shows the same hover background as other cells */
+          .inventory-table tbody tr:hover td.actions{background:#fff7cc}
+
+          /* Keep approve/reject buttons' color and contrast even when row is hovered.
+              These selectors are slightly more specific than the generic hover rules above
+              so they reliably preserve the green/red backgrounds and white icon/text. */
+          .inventory-table tbody tr:hover td.actions .icon-btn.ok{background:#10b981;color:#fff;border:none}
+          .inventory-table tbody tr:hover td.actions .icon-btn.rej{background:#ef4444;color:#fff;border:none}
+          .inventory-table tbody tr:hover td.actions .icon-btn.view{background:transparent;color:inherit;border:1px solid rgba(230,238,249,0.8)}
+
+          .icon-btn:active{transform:translateY(-1px)}
+          .icon-btn:focus{outline:none;box-shadow:0 0 0 4px rgba(37,99,235,0.12)}
 
         @media(max-width:900px){
             .inventory-table thead th:nth-child(4), .inventory-table thead th:nth-child(6){display:none}
