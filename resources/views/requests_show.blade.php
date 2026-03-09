@@ -180,6 +180,27 @@
         .batch-table .small-muted{font-size:12px;color:var(--muted)}
         .batch-note{margin-top:6px}
         .batch-note-toggle{padding:6px 8px;border-radius:6px;border:1px solid #e6e9ef;background:#fff;font-size:12px;cursor:pointer}
+        /* Mobile: convert items-table and batch-table rows into stacked cards for better readability */
+        @media (max-width:900px) {
+            .items-table thead, .batch-table thead { display: none; }
+            .items-table, .items-table tbody, .items-table tr, .batch-table, .batch-table tbody, .batch-table tr { display: block; width: 100%; }
+            .items-table tbody tr, .batch-table tbody tr { margin-bottom: 12px; background: #fff; padding: 12px; border-radius: 10px; box-shadow: 0 8px 20px rgba(2,6,23,0.04); border: 1px solid rgba(14,21,40,0.04); }
+            .items-table tbody td, .batch-table tbody td { display: block; padding: 8px 0; border: none; }
+            .items-table tbody td:first-child, .batch-table tbody td:first-child { font-weight:700; color:#0f172a; margin-bottom:6px }
+            .items-table tbody td:nth-child(2)::before { content: 'Requested: '; font-weight:700; color:var(--muted); }
+            .items-table tbody td:nth-child(3)::before { content: 'Issued: '; font-weight:700; color:var(--muted); }
+            .items-table tbody td:nth-child(4)::before { content: 'Return: '; font-weight:700; color:var(--muted); }
+            .items-table tbody td:nth-child(5)::before { content: 'Reason: '; font-weight:700; color:var(--muted); }
+            .items-table tbody td:nth-child(6)::before { content: 'Status: '; font-weight:700; color:var(--muted); }
+            .batch-table tbody td:nth-child(2)::before { content: 'Item: '; font-weight:700; color:var(--muted); }
+            .batch-table tbody td:nth-child(3)::before { content: 'Details: '; font-weight:700; color:var(--muted); }
+            .batch-table tbody td:nth-child(4)::before { content: 'Requested: '; font-weight:700; color:var(--muted); }
+            .batch-table tbody td:nth-child(5)::before { content: 'Available: '; font-weight:700; color:var(--muted); }
+            .batch-table tbody td:nth-child(6)::before { content: 'Issue Qty: '; font-weight:700; color:var(--muted); }
+            .batch-table tbody td:nth-child(7)::before { content: 'Note: '; font-weight:700; color:var(--muted); }
+            .items-table tbody td::before, .batch-table tbody td::before { display: inline-block; margin-right:6px; color:var(--muted); font-weight:700 }
+            .items-table tbody td:last-child, .batch-table tbody td:last-child { display:flex;gap:8px;align-items:center;justify-content:flex-start }
+        }
     </style>
     @include('partials._bg-preload')
     @include('partials._formatters')

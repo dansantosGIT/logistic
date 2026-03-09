@@ -126,6 +126,22 @@
             .inventory-table tbody tr td.actions{padding-right:0}
             .inventory-table tbody tr td.actions .actions{position:static;height:auto;transform:none;justify-content:flex-start}
         }
+        /* Mobile card view for request tables */
+        @media (max-width:900px) {
+            .inventory-table thead, table.inventory-table thead { display:none; }
+            .inventory-table tbody tr, table.inventory-table tbody tr { display:block; margin-bottom:12px; padding:12px; border-radius:10px; background:#fff; border:1px solid rgba(14,21,40,0.04); }
+            .inventory-table tbody td, table.inventory-table tbody td { display:flex; justify-content:space-between; gap:8px; padding:8px 6px; border-bottom:none; }
+            .inventory-table tbody td:nth-child(1)::before { content: "Requested"; color:var(--muted); font-weight:600; margin-right:6px; }
+            .inventory-table tbody td:nth-child(2)::before { content: "Equipment"; color:var(--muted); font-weight:600; margin-right:6px; }
+            .inventory-table tbody td:nth-child(3)::before { content: "Personnel"; color:var(--muted); font-weight:600; margin-right:6px; }
+            .inventory-table tbody td:nth-child(4)::before { content: "Role"; color:var(--muted); font-weight:600; margin-right:6px; }
+            .inventory-table tbody td:nth-child(5)::before { content: "Department"; color:var(--muted); font-weight:600; margin-right:6px; }
+            .inventory-table tbody td:nth-child(6)::before { content: "Qty"; color:var(--muted); font-weight:600; margin-right:6px; }
+            .inventory-table tbody td:nth-child(7)::before { content: "Return"; color:var(--muted); font-weight:600; margin-right:6px; }
+            .inventory-table tbody td:nth-child(8)::before { content: "Actions"; color:var(--muted); font-weight:600; margin-right:6px; }
+            .inventory-table tbody td span, .inventory-table tbody td div { white-space:normal; word-break:break-word; }
+            .inventory-table tbody td.actions { justify-content:flex-start; flex-wrap:wrap; }
+        }
         .badge.pending{display:inline-block;padding:6px 10px;border-radius:999px;background:#ffebc2;color:#92400e;font-weight:700}
         .badge.returned{display:inline-block;padding:6px 10px;border-radius:999px;background:#ffebc2;color:#92400e;font-weight:700}
         .badge.partial{display:inline-block;padding:6px 10px;border-radius:999px;background:#ffebc2;color:#92400e;font-weight:700}
@@ -169,6 +185,23 @@
             .inventory-table tbody tr{display:block;margin-bottom:12px;padding:12px}
             .inventory-table tbody td{display:block;padding:6px 0;border-bottom:none}
             .inventory-table tbody td.actions{text-align:left}
+        }
+
+        /* Additional: unnamed tables inside .table-wrap for requests listing */
+        @media (max-width:900px) {
+            .table-wrap table thead { display: none; }
+            .table-wrap table, .table-wrap table tbody, .table-wrap table tr { display:block; width:100%; }
+            .table-wrap table tbody tr { margin-bottom:12px; padding:12px; border-radius:10px; background:#fff; border:1px solid rgba(14,21,40,0.04); }
+            .table-wrap table tbody td { display:flex; justify-content:space-between; padding:8px 6px; border-bottom:none; }
+            .table-wrap table tbody td:nth-child(1)::before { content: 'Requested'; color:var(--muted); font-weight:600; margin-right:6px; }
+            .table-wrap table tbody td:nth-child(2)::before { content: 'Equipment'; color:var(--muted); font-weight:600; margin-right:6px; }
+            .table-wrap table tbody td:nth-child(3)::before { content: 'Personnel'; color:var(--muted); font-weight:600; margin-right:6px; }
+            .table-wrap table tbody td:nth-child(4)::before { content: 'Role'; color:var(--muted); font-weight:600; margin-right:6px; }
+            .table-wrap table tbody td:nth-child(5)::before { content: 'Department'; color:var(--muted); font-weight:600; margin-right:6px; }
+            .table-wrap table tbody td:nth-child(6)::before { content: 'Qty'; color:var(--muted); font-weight:600; margin-right:6px; }
+            .table-wrap table tbody td:nth-child(7)::before { content: 'Return'; color:var(--muted); font-weight:600; margin-right:6px; }
+            .table-wrap table tbody td:nth-child(8)::before { content: 'Actions'; color:var(--muted); font-weight:600; margin-right:6px; }
+            .table-wrap table tbody td span, .table-wrap table tbody td div { white-space:normal; word-break:break-word; }
         }
 
         /* table head / body layout */
@@ -293,7 +326,7 @@
                     </div>
                     <a href="/inventory" class="tab alt back-btn" style="background:#f3f4f6;color:#111;padding:8px 10px;margin-left:12px;white-space:nowrap">Back</a>
                 </div>
-                <div class="inventory-table">
+                <div class="table-wrap" style="overflow:auto">
                     <table>
                         <thead>
                                 <tr>

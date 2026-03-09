@@ -83,6 +83,7 @@
       </div>
     </div>
 
+    <div style="overflow:auto">
     <table class="items-table" aria-label="Requested items">
       <thead>
         <tr>
@@ -161,6 +162,7 @@
         @endfor
       </tbody>
     </table>
+    </div>
 
     <div>
       <div style="font-weight:700;margin-bottom:6px">Reason / Remarks</div>

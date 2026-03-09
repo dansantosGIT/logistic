@@ -94,6 +94,17 @@
             .sidebar.open{transform:translateX(0)}
             .main{padding:16px}
         }
+        /* Mobile: stack monitoring table rows into cards */
+        @media (max-width:900px) {
+            table thead { display: none; }
+            table, table tbody, table tr { display: block; width: 100%; }
+            table tbody tr { margin-bottom: 12px; background: #fff; padding: 12px; border-radius: 10px; box-shadow: 0 8px 20px rgba(2,6,23,0.04); border: 1px solid rgba(14,21,40,0.04); }
+            table tbody td { display: block; padding: 6px 0; border: none; }
+            table tbody td:first-child { font-weight:700; margin-bottom:6px }
+            table tbody td:nth-child(3)::before { content: 'Report: '; font-weight:700; color:var(--muted); }
+            table tbody td:nth-child(4)::before { content: 'Actions: '; font-weight:700; color:var(--muted); }
+            table tbody td::before { display:inline-block; margin-right:6px }
+        }
     </style>
     @include('partials._bg-preload')
     @include('partials._formatters')
@@ -173,6 +184,7 @@
 
             <div class="panel">
                 <h3 style="margin-top:0">Monitoring History {{ $selectedVehicle ? '— ' . $selectedVehicle->name : '' }}</h3>
+                <div style="overflow:auto">
                 <table>
                     <thead>
                         <tr>
@@ -219,6 +231,7 @@
                         @endforelse
                     </tbody>
                 </table>
+                </div>
             </div>
         </main>
     </div>

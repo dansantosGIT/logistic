@@ -5,6 +5,45 @@
     /* Placeholder and class-based swap for the full-bleed background */
     .bg{position:fixed;inset:0;background-image:linear-gradient(180deg,#e9f0fb,#f6fbf9);background-size:cover;background-position:center center;filter:brightness(0.6) saturate(0.95);z-index:-3;transition:opacity .28s ease}
     .bg.has-image{background-image:url('{{ $bgUrl }}');background-size:cover;background-position:center center}
+    /* Shared Topbar styles applied site-wide for consistent header layout */
+    :root{--topbar-height:72px}
+    .topbar{position:fixed;left:0;right:0;top:0;height:var(--topbar-height,72px);background:rgba(255,255,255,0.95);backdrop-filter:saturate(1.05) blur(4px);box-shadow:0 6px 24px rgba(2,6,23,0.08);z-index:60}
+    .topbar-inner{max-width:none;width:100%;margin:0;padding:12px 12px 12px 0;display:flex;justify-content:space-between;align-items:center}
+    .topbar .left-area{display:flex;align-items:center;gap:12px}
+    .topbar .branding{display:flex;flex-direction:column}
+    .topbar .brand-title{display:flex;align-items:center;gap:6px;font-weight:700}
+    .topbar .brand-subtitle{font-size:12px;color:var(--muted, #6b7280)}
+    .notif-bell{position:relative;display:inline-flex;align-items:center;gap:8px;margin-right:12px}
+    .notif-bell button{background:transparent;border:none;cursor:pointer;padding:8px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center}
+    .notif-count{position:absolute;top:-6px;right:-6px;z-index:70;background:#ef4444;color:#fff;font-size:12px;padding:3px 6px;border-radius:999px;min-width:20px;text-align:center;box-shadow:0 6px 18px rgba(2,6,23,0.12)}
+    .notif-dropdown{position:absolute;right:0;top:44px;width:360px;max-height:420px;background:linear-gradient(180deg,#ffffff,#fbfdff);border-radius:12px;box-shadow:0 18px 50px rgba(2,6,23,0.16);overflow:auto;display:none;z-index:120;padding:8px}
+    .notif-dropdown.show{display:block}
+
+    /* Mobile: pin notification dropdown under topbar and limit height so it's fully visible */
+    @media (max-width:900px) {
+        .notif-dropdown{position:fixed;left:12px;right:12px;top:calc(var(--topbar-height,72px) + 8px);width:auto;max-height:calc(100vh - var(--topbar-height,72px) - 24px);overflow:auto;z-index:9999;box-shadow:0 24px 60px rgba(2,6,23,0.24)}
+        .notif-dropdown.show{display:block}
+        .cards{grid-template-columns:1fr !important}
+        .center{grid-template-columns:1fr !important;gap:12px}
+    }
+
+    /* Conservative, site-wide table/card responsive defaults.
+       These are minimal fallbacks so pages without per-view rules
+       still behave on small screens. Keep selectors broad but non-invasive. */
+    .table-wrap{overflow-x:auto}
+    .table-wrap table{width:100%;border-collapse:separate}
+    .badge{max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+    @media (max-width:900px) {
+        .table-wrap table thead{display:none}
+        .table-wrap table, .table-wrap table tbody, .table-wrap table tr{display:block;width:100%}
+        .table-wrap table tbody tr{margin-bottom:12px;padding:12px;border-radius:10px;background:#fff;border:1px solid rgba(14,21,40,0.04)}
+        .table-wrap table tbody td{display:flex;justify-content:space-between;gap:8px;padding:8px 6px;border-bottom:none;align-items:flex-start}
+        /* allow templates to provide readable labels by adding data-label attributes to TDs */
+        .table-wrap table tbody td::before{content:attr(data-label);color:var(--muted);font-weight:600;margin-right:8px;flex:0 0 auto}
+        .table-wrap td .badge{max-width:140px}
+        .table-wrap .actions{display:flex;gap:8px;flex-wrap:wrap}
+    }
 </style>
 <script>
     (function(){
@@ -44,6 +83,42 @@
             document.addEventListener('DOMContentLoaded', applyBgAndLogo);
         } else {
             applyBgAndLogo();
+        }
+    })();
+</script>
+<script>
+    // Improve mobile card view accessibility: copy table headers into td[data-label]
+    (function(){
+        function applyDataLabels(){
+            try{
+                var tables = document.querySelectorAll('.table-wrap table, table.inventory-table, table');
+                tables.forEach(function(table){
+                    var thead = table.querySelector('thead');
+                    if(!thead) return;
+                    var headers = Array.prototype.slice.call(thead.querySelectorAll('th')).map(function(th){
+                        return th.textContent.trim();
+                    });
+
+                    var bodies = table.querySelectorAll('tbody');
+                    bodies.forEach(function(tbody){
+                        Array.prototype.slice.call(tbody.querySelectorAll('tr')).forEach(function(row){
+                            var cells = Array.prototype.slice.call(row.children).filter(function(n){ return n.tagName.toLowerCase() === 'td' || n.tagName.toLowerCase() === 'th'; });
+                            cells.forEach(function(td, i){
+                                // don't overwrite existing explicit labels
+                                if(td.hasAttribute('data-label')) return;
+                                var label = headers[i] || '';
+                                if(label) td.setAttribute('data-label', label + ':');
+                            });
+                        });
+                    });
+                });
+            }catch(e){console && console.error && console.error('applyDataLabels', e)}
+        }
+
+        if(document.readyState === 'loading'){
+            document.addEventListener('DOMContentLoaded', function(){ applyDataLabels(); setTimeout(applyDataLabels, 600); });
+        } else {
+            applyDataLabels(); setTimeout(applyDataLabels, 600);
         }
     })();
 </script>

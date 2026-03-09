@@ -158,6 +158,26 @@
             .sidebar.open{transform:translateX(0)}
             .sidebar + .main{margin-left:0}
             .main{padding:16px}
+
+            /* Dashboard-specific: stack cards and center column for small screens */
+            .cards{grid-template-columns:1fr !important}
+            .center{grid-template-columns:1fr !important;gap:12px}
+
+            /* Recent list: stack meta and right-side badge/details vertically */
+            .recent-item a{display:flex;flex-direction:column;align-items:flex-start;gap:8px}
+            .recent-item .meta{width:100%;display:block}
+            .recent-item .meta .title{font-size:15px}
+            .recent-item .sub{font-size:13px;color:var(--muted);margin-top:6px}
+            .recent-item > div[style*="text-align:right"]{width:100%;text-align:left;margin-top:6px}
+
+            /* Make charts / aside stack under main content */
+            section.center > aside, section.center > div{width:100%}
+        }
+
+        /* Mobile: pin notification dropdown under topbar and limit height so it's fully visible */
+        @media (max-width:900px) {
+            .notif-dropdown{position:fixed;left:12px;right:12px;top:calc(var(--topbar-height) + 8px);width:auto;max-height:calc(100vh - var(--topbar-height) - 24px);overflow:auto;z-index:9999;box-shadow:0 24px 60px rgba(2,6,23,0.24)}
+            .notif-dropdown.show{display:block}
         }
     </style>
     @include('partials._bg-preload')

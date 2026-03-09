@@ -124,6 +124,19 @@
         .notif-dropdown .time{font-size:11px;color:#94a3b8;margin-left:6px}
         .notif-dropdown .actions{display:flex;gap:6px;flex-shrink:0}
         .notif-dropdown .empty{padding:12px;color:var(--muted);text-align:center}
+        /* Mobile: make vehicle table rows stack as cards */
+        @media (max-width:900px) {
+            table thead { display: none; }
+            table, table tbody, table tr { display: block; width: 100%; }
+            table tbody tr { margin-bottom: 12px; background: #fff; padding: 12px; border-radius: 10px; box-shadow: 0 8px 20px rgba(2,6,23,0.04); border: 1px solid rgba(14,21,40,0.04); }
+            table tbody td { display: block; padding: 6px 0; border: none; }
+            table tbody td:first-child { font-weight:700; margin-bottom:6px }
+            table tbody td:nth-child(2)::before { content: 'Type / Brand / Model / Year: '; font-weight:700; color:var(--muted); }
+            table tbody td:nth-child(3)::before { content: 'Class: '; font-weight:700; color:var(--muted); }
+            table tbody td:nth-child(4)::before { content: 'Maintenance: '; font-weight:700; color:var(--muted); }
+            table tbody td:nth-child(5)::before { content: ''; }
+            table tbody td::before { display:inline-block; margin-right:6px }
+        }
     </style>
     @include('partials._bg-preload')
     @include('partials._formatters')
@@ -196,6 +209,7 @@
                     <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px">
                         <h3 style="margin:0">Available Vehicle List</h3>
                     </div>
+                        <div style="overflow:auto">
                         <table>
                             <thead>
                                 <tr>
@@ -229,6 +243,7 @@
                                 @endforelse
                             </tbody>
                         </table>
+                        </div>
                 </section>
             </div>
         </main>

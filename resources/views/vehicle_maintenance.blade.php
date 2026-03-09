@@ -79,6 +79,19 @@
         .nav-overlay{position:fixed;left:0;right:0;top:var(--topbar-height);bottom:0;background:rgba(2,6,23,0.45);opacity:0;visibility:hidden;transition:opacity .18s ease;z-index:80}
         .nav-overlay.show{opacity:1;visibility:visible}
         @media(max-width:900px){.sidebar{position:fixed;left:0;top:0;bottom:0;z-index:80;transform:translateX(-110%);height:100vh}.sidebar.open{transform:translateX(0)}.main{padding:16px}}
+        /* Mobile: stack maintenance table rows into cards */
+        @media (max-width:900px) {
+            table thead { display: none; }
+            table, table tbody, table tr { display: block; width: 100%; }
+            table tbody tr { margin-bottom: 12px; background: #fff; padding: 12px; border-radius: 10px; box-shadow: 0 8px 20px rgba(2,6,23,0.04); border: 1px solid rgba(14,21,40,0.04); }
+            table tbody td { display: block; padding: 6px 0; border: none; }
+            table tbody td:first-child { font-weight:700; margin-bottom:6px }
+            table tbody td:nth-child(2)::before { content: 'Task: '; font-weight:700; color:var(--muted); }
+            table tbody td:nth-child(3)::before { content: 'Due: '; font-weight:700; color:var(--muted); }
+            table tbody td:nth-child(4)::before { content: 'Notes: '; font-weight:700; color:var(--muted); }
+            table tbody td:nth-child(5)::before { content: 'Actions: '; font-weight:700; color:var(--muted); }
+            table tbody td::before { display:inline-block; margin-right:6px }
+        }
     </style>
     @include('partials._bg-preload')
     @include('partials._formatters')
@@ -145,6 +158,7 @@
 
             <div class="panel">
                 <h3 style="margin-top:0">All Maintenance List</h3>
+                <div style="overflow:auto">
                 <table>
                     <thead>
                         <tr>
@@ -180,6 +194,7 @@
                         @endforelse
                     </tbody>
                 </table>
+                </div>
             </div>
         </main>
     </div>

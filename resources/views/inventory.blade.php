@@ -221,6 +221,70 @@
             .sidebar.open{transform:translateX(0)}
             .main{padding:16px}
         }
+        /* Fix table layout on narrow screens: render each row as a readable "card" */
+        @media (max-width:900px) {
+            /* hide header and make each row a block card */
+            table.inventory-table { width:100%; border:0; }
+            table.inventory-table thead { display:none; }
+            table.inventory-table tbody tr { display:block; margin-bottom:12px; background:linear-gradient(180deg,#ffffff,#fbfdff); padding:10px; border-radius:10px; box-shadow:none; border:1px solid rgba(14,21,40,0.03); }
+
+            /* make each cell a two-column flex: label (before) and value */
+            table.inventory-table tbody td { display:flex; justify-content:space-between; gap:8px; padding:8px 6px; border-bottom:none; align-items:flex-start; }
+
+            /* For the name column, stack label above the value to give more room */
+            table.inventory-table tbody td:nth-child(1) { flex-direction:column; align-items:flex-start; }
+            table.inventory-table tbody td:nth-child(1)::before { content:"Name"; font-weight:700; color:var(--muted); margin-bottom:6px; }
+
+            /* other columns: show small label before value */
+            table.inventory-table tbody td:nth-child(2)::before { content:"Category"; color:var(--muted); font-weight:600; margin-right:6px; }
+            table.inventory-table tbody td:nth-child(3)::before { content:"Room"; color:var(--muted); font-weight:600; margin-right:6px; }
+            table.inventory-table tbody td:nth-child(4)::before { content:"Serial"; color:var(--muted); font-weight:600; margin-right:6px; }
+            table.inventory-table tbody td:nth-child(5)::before { content:"Qty"; color:var(--muted); font-weight:600; margin-right:6px; }
+            table.inventory-table tbody td:nth-child(6)::before { content:"Type"; color:var(--muted); font-weight:600; margin-right:6px; }
+            table.inventory-table tbody td:nth-child(7)::before { content:"Status"; color:var(--muted); font-weight:600; margin-right:6px; }
+            table.inventory-table tbody td:nth-child(8)::before { content:"Date"; color:var(--muted); font-weight:600; margin-right:6px; }
+            table.inventory-table tbody td:nth-child(9)::before { content:"Actions"; color:var(--muted); font-weight:600; margin-right:6px; }
+
+            /* Ensure values wrap and long names break naturally */
+            table.inventory-table tbody td span, table.inventory-table tbody td div { white-space:normal; word-break:break-word; }
+
+            /* Constrain badges and buttons visually */
+            .badge { max-width:140px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+            table.inventory-table tbody td:last-child { display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end; }
+            table.inventory-table img { max-width:100%; height:auto; display:block; }
+        }
+        /* Prevent tabs/buttons from overlapping table on small screens; improve touch targets */
+        @media (max-width:900px) {
+            .tabs{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px}
+            .tabs .tab{flex:0 0 auto;padding:8px 10px;font-size:14px;border-radius:8px}
+            .search-row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+            .search-row input.search{flex:1 1 100%;min-width:0}
+            .search-row select.page-size{flex:0 0 auto}
+            /* Ensure table-wrap doesn't get overlapped by header controls */
+            .table-wrap{margin-top:8px;padding-bottom:18px}
+            /* Make Add button a visible, non-overlapping element (keeps in header flow) */
+            .panel .row a.btn.primary{position:static}
+        }
+        /* Additional mobile polish: stack header actions and improve card spacing */
+        @media (max-width:900px) {
+            /* Stack the panel header controls so the Add button doesn't overlap content */
+            .panel > div[style*="display:flex;justify-content:space-between"] { display:flex; flex-direction:column; gap:10px; }
+            .panel .row { display:flex; flex-wrap:wrap; gap:8px; }
+            .panel .row .btn, .panel .row a.btn { flex:0 0 auto; }
+            .panel .row a.btn.primary { align-self:flex-start; }
+
+            /* Give the table wrap a little bottom padding so floating controls don't collide */
+            .table-wrap { padding-bottom:14px; }
+
+            /* Card spacing improvements */
+            table.inventory-table tbody tr { padding:12px; }
+            table.inventory-table tbody td { padding:8px 6px; gap:12px; }
+            table.inventory-table tbody td:nth-child(1) { font-weight:700; font-size:15px; }
+
+            /* Make actions align left under value for easier tapping */
+            table.inventory-table tbody td:last-child { justify-content:flex-start; }
+            table.inventory-table tbody td:last-child .btn { padding:8px 10px; height:auto; }
+        }
         /* Approval / Delete modal styles (shared) */
         .approval-backdrop{position:fixed;inset:0;background:rgba(0,0,0,0.5);display:none;z-index:999;animation:fadeIn 0.2s ease-out}
         .approval-backdrop.show{display:block}
