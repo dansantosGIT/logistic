@@ -4,6 +4,7 @@
 <style>
     /* Placeholder and class-based swap for the full-bleed background */
     .bg{position:fixed;inset:0;background-image:linear-gradient(180deg,#e9f0fb,#f6fbf9);background-size:cover;background-position:center center;filter:brightness(0.6) saturate(0.95);z-index:-3;transition:opacity .28s ease}
+    .overlay{position:fixed;inset:0;background:linear-gradient(180deg,rgba(2,6,23,0.28),rgba(2,6,23,0.4));z-index:-2}
     .bg.has-image{background-image:url('{{ $bgUrl }}');background-size:cover;background-position:center center}
     /* Shared Topbar styles applied site-wide for consistent header layout */
     :root{--topbar-height:72px}
@@ -18,6 +19,20 @@
     .notif-count{position:absolute;top:-6px;right:-6px;z-index:70;background:#ef4444;color:#fff;font-size:12px;padding:3px 6px;border-radius:999px;min-width:20px;text-align:center;box-shadow:0 6px 18px rgba(2,6,23,0.12)}
     .notif-dropdown{position:absolute;right:0;top:44px;width:360px;max-height:420px;background:linear-gradient(180deg,#ffffff,#fbfdff);border-radius:12px;box-shadow:0 18px 50px rgba(2,6,23,0.16);overflow:auto;display:none;z-index:120;padding:8px}
     .notif-dropdown.show{display:block}
+
+    /* Overlay shown when sidebar opens on small screens */
+    .nav-overlay{position:fixed;left:0;right:0;top:var(--topbar-height);bottom:0;background:rgba(2,6,23,0.45);opacity:0;visibility:hidden;transition:opacity .18s ease;z-index:80}
+    .nav-overlay.show{opacity:1;visibility:visible}
+    .notif-dropdown .item{display:flex;align-items:center;gap:12px;padding:10px;border-radius:8px;transition:background .12s ease,transform .12s ease;cursor:pointer}
+    .notif-dropdown .item:hover{background:linear-gradient(90deg,rgba(37,99,235,0.04),rgba(124,58,237,0.02));transform:translateY(-2px)}
+    .notif-dropdown .left{flex:0 0 44px;display:flex;align-items:center;justify-content:center}
+    .notif-dropdown .avatar{width:44px;height:44px;border-radius:50%;display:inline-grid;place-items:center;background:linear-gradient(135deg,var(--accent, #2563eb),var(--accent-2, #7c3aed));color:#fff;font-weight:700;box-shadow:0 8px 22px rgba(15,23,42,0.06)}
+    .notif-dropdown .meta{flex:1;min-width:0}
+    .notif-dropdown .meta .title{font-weight:700;color:#0f172a;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center;gap:8px}
+    .notif-dropdown .meta .sub{font-size:12px;color:var(--muted, #6b7280);margin-top:4px}
+    .notif-dropdown .time{font-size:11px;color:var(--muted, #6b7280);margin-left:6px}
+    .notif-dropdown .actions{display:flex;gap:6px;flex-shrink:0}
+    .notif-dropdown .empty{padding:12px;color:var(--muted, #6b7280);text-align:center}
 
     /* Mobile: pin notification dropdown under topbar and limit height so it's fully visible */
     @media (max-width:900px) {

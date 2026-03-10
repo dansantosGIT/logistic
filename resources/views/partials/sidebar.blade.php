@@ -3,26 +3,115 @@
     .app{display:flex;min-height:100vh}
 
     /* Sidebar - fixed below the topbar to avoid overlap */
-    #sidebar{position:fixed;left:0;top:var(--topbar-height);bottom:0;width:240px;background:var(--panel);border-right:1px solid #e6e9ef;padding:20px;transition:width .22s ease,transform .22s ease;z-index:50;height:calc(100vh - var(--topbar-height))}
+    #sidebar{position:fixed;left:0;top:var(--topbar-height);bottom:0;width:240px;background:var(--panel);border-right:1px solid #e6e9ef;padding:20px;transition:width .22s ease,transform .22s ease;z-index:50;height:calc(100vh - var(--topbar-height));overflow:hidden}
     #sidebar.collapsed{width:64px}
     #sidebar .brand{font-weight:800;color:var(--accent);margin-bottom:18px;display:flex;align-items:center;gap:10px}
     #sidebar .brand .logo{width:36px;height:36px;border-radius:8px;background:linear-gradient(135deg,var(--accent),var(--accent-2));display:inline-flex;align-items:center;justify-content:center;color:white;font-weight:800}
     #sidebar .nav{display:flex;flex-direction:column;gap:6px;margin-top:6px}
     #sidebar .nav a, #sidebar .nav button.action{display:flex;align-items:center;gap:12px;padding:10px;border-radius:8px;color:#0f172a;text-decoration:none;background:transparent;border:none;cursor:pointer;font-size:14px;min-height:44px}
+    /* Force a sane width inside the sidebar to override page-level styles that set full-width links */
+    #sidebar .nav a, #sidebar .nav button.action{width:auto !important;box-sizing:border-box}
     #sidebar .nav a svg, #sidebar .nav button.action svg{display:block;width:18px;height:18px}
     #sidebar .nav a:hover, #sidebar .nav button.action:hover{background:#f1f5f9}
-    #sidebar .nav a.active{background:linear-gradient(90deg,var(--accent),var(--accent-2));color:white}
+    /* Top-level active: full-width gradient (keeps Accounts prominent) */
+    #sidebar .nav > a.active{
+        background: linear-gradient(90deg,var(--accent),var(--accent-2)) !important;
+        color: #fff !important;
+    }
+
+    /* Move label right to avoid indicator overlap for sub-links */
+    #sidebar .nav a.sub-link.active .label{ padding-left:24px; }
+
+    /* Hide indicator when sidebar is collapsed/closed/hidden */
+    #sidebar.collapsed .nav a.active::before,
+    #sidebar.hidden .nav a.active::before,
+    #sidebar.closed .nav a.active::before{ display:none !important; }
+
+    /* When sidebar is collapsed/closed we avoid showing the full highlight pill */
+    #sidebar.collapsed .nav a.active,
+    #sidebar.hidden .nav a.active,
+    #sidebar.closed .nav a.active{background:transparent;color:inherit}
+
+    /* Specifically target sub-link active state (Monitoring/Maintenance) to prevent long/full-width highlights */
+    #sidebar .nav a.sub-link{ position:relative; }
+    #sidebar .nav a.sub-link.active{
+        background: none !important;
+        background-image: none !important;
+        box-shadow: none !important;
+        color: inherit !important;
+        position:relative !important;
+        padding-left:26px !important; /* make room for indicator */
+        padding-right:12px !important;
+    }
+
+    /* Short left indicator only for sub-links */
+    #sidebar .nav a.sub-link.active::before{
+        content:'' !important;
+        position:absolute !important;
+        left:12px !important;
+        top:50% !important;
+        transform:translateY(-50%) !important;
+        height:20px !important;
+        width:6px !important;
+        border-radius:4px !important;
+        background: linear-gradient(180deg,var(--accent),var(--accent-2)) !important;
+        box-shadow:none !important;
+    }
+
+    /* ensure sub-link text and icon keep normal color */
+    #sidebar .nav a.sub-link.active, #sidebar .nav a.sub-link.active .label, #sidebar .nav a.sub-link.active svg { color: inherit !important; }
+
+    /* Ensure sub-links cannot overflow the sidebar or cast large shadows */
+    #sidebar .nav a.sub-link,
+    #sidebar .nav a.sub-link .label{
+        max-width:100%;
+        box-sizing:border-box;
+        overflow:hidden;
+        text-overflow:ellipsis;
+        white-space:nowrap;
+    }
+
+    #sidebar .nav a.sub-link.active{
+        display:inline-flex;
+        width:100% !important;
+        max-width:100% !important;
+        box-shadow:none !important;
+        background-clip:padding-box !important;
+    }
+
+    /* Last-resort clamps: ensure no pseudo-elements or page styles can make the highlight wider */
+    #sidebar .nav a,
+    #sidebar .nav a *,
+    #sidebar .nav a::before,
+    #sidebar .nav a::after,
+    #sidebar .nav a.sub-link::before,
+    #sidebar .nav a.sub-link::after {
+        box-shadow: none !important;
+        max-width: 100% !important;
+        overflow: hidden !important;
+        white-space: nowrap !important;
+        text-overflow: ellipsis !important;
+    }
+
+    /* Keep the icon and label aligned while constraining width */
+    #sidebar .nav a{
+        display:flex !important;
+        align-items:center !important;
+        width:100% !important;
+        box-sizing:border-box !important;
+    }
     #sidebar .nav a.sub-link{margin-left:26px;min-height:36px;padding:8px 12px;font-size:13px;justify-content:flex-start;text-align:left}
     #sidebar .nav svg{flex-shrink:0}
 
     /* ensure active label/icon remain readable regardless of page-level overrides */
     #sidebar .nav a .label { color: inherit !important; }
-    #sidebar .nav a.active, #sidebar .nav a.active .label, #sidebar .nav a.active svg { color: #fff !important; }
+    /* Let active links inherit color (we show a left indicator instead of full-width fill) */
+    #sidebar .nav a.active, #sidebar .nav a.active .label, #sidebar .nav a.active svg { color: inherit !important; }
     /* Avoid conflicts with page-level `.label` rules (form labels) */
     #sidebar .label { font-weight: 500 !important; }
 
     /* Main area (push down for topbar). Sidebar is overlay by default - match dashboard behaviour */
-    .main{flex:1;padding:24px;margin-top:var(--topbar-height);margin-left:0;transition:margin .22s ease}
+    .main{flex:1;padding:24px;margin-top:var(--topbar-height);margin-left:0;transition:margin .22s ease;position:relative;z-index:75}
     #sidebar{transform:translateX(-110%);transition:transform .22s ease,width .22s ease}
     #sidebar.open{transform:translateX(0);z-index:90}
     #sidebar.collapsed{width:64px;transform:translateX(0)}
@@ -70,6 +159,7 @@
             <a href="/vehicle/maintenance" class="sub-link {{ request()->is('vehicle/maintenance*') ? 'active' : '' }}"><span class="label">Maintenance</span></a>
         </div>
         <a href="/requests" class="{{ request()->is('requests*') ? 'active' : '' }}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M19 3H5a2 2 0 00-2 2v14l4-2 4 2 4-2 4 2V5a2 2 0 00-2-2z" fill="currentColor"/></svg><span class="label">Request</span></a>
+        <a href="/accounts" class="{{ request()->is('accounts*') ? 'active' : '' }}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 12a5 5 0 100-10 5 5 0 000 10zM4 20a8 8 0 0116 0v1H4v-1z" fill="currentColor"/></svg><span class="label">Accounts</span></a>
         <a href="#" class="{{ request()->is('settings*') ? 'active' : '' }}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 8a4 4 0 100 8 4 4 0 000-8zM3 13h3l1-3 2 2 3-4 2 4 3-2 1 3h3" stroke="currentColor" stroke-width="1" fill="none"/></svg><span class="label">Settings</span></a>
         <a href="#" class="nav-logout" onclick="event.preventDefault();document.getElementById('logout-form').submit();">
             <svg width="18" height="18" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M10 17l5-5-5-5v3H3v4h7v3zM19 3h-8v2h8v14h-8v2h8a2 2 0 002-2V5a2 2 0 00-2-2z" fill="currentColor"/></svg>
@@ -79,10 +169,10 @@
 </aside>
 <script>
     (function(){
-        if (window.__vehicleSubmenuInitialized) return; window.__vehicleSubmenuInitialized = true;
         const toggle = document.getElementById('vehicle-submenu-toggle');
         const submenu = document.getElementById('vehicle-submenu');
         if(!toggle || !submenu) return;
+        if (window.__vehicleSubmenuInitialized) return; window.__vehicleSubmenuInitialized = true;
 
         const storageKey = 'sidebar.vehicleOpen';
         // server-side hint whether current page is vehicle-related
@@ -117,11 +207,11 @@
 <script>
     // Sidebar burger/overlay behaviour - single guarded initializer
     (function(){
-        if (window.__sidebarInitialized) return; window.__sidebarInitialized = true;
         const sidebar = document.getElementById('sidebar');
         const burger = document.getElementById('burger-top');
         const topbar = document.querySelector('.topbar');
         if (!sidebar || !burger) return;
+        if (window.__sidebarInitialized) return; window.__sidebarInitialized = true;
 
         let navOverlay = document.getElementById('nav-overlay');
         if (!navOverlay) {
@@ -165,4 +255,31 @@
             setOverlay(false);
         });
     })();
+    // Fallback callable from inline onclick if main initializer not attached (pages without layouts.app)
+    window.__sidebarFallback = function(e){
+        if (window.__sidebarInitialized) { try{ console.log('__sidebarFallback suppressed (main listener active)'); }catch(e){}; return; }
+        try{ console.log('__sidebarFallback invoked'); }catch(e){}
+        e && e.stopPropagation();
+        const sidebar = document.getElementById('sidebar');
+        if(!sidebar) return;
+        let navOverlay = document.getElementById('nav-overlay');
+        if(!navOverlay){
+            navOverlay = document.createElement('div');
+            navOverlay.id = 'nav-overlay';
+            navOverlay.className = 'nav-overlay';
+            document.body.appendChild(navOverlay);
+            navOverlay.addEventListener('click', function(){ sidebar.classList.remove('open'); navOverlay.classList.remove('show'); document.body.style.overflow = ''; });
+        }
+        const isMobile = window.matchMedia('(max-width:900px)').matches;
+        if(isMobile){
+            const willOpen = !sidebar.classList.contains('open');
+            sidebar.classList.toggle('open');
+            sidebar.classList.remove('collapsed');
+            navOverlay.classList.toggle('show', willOpen);
+            document.body.style.overflow = willOpen ? 'hidden' : '';
+        } else {
+            const collapsed = sidebar.classList.toggle('collapsed');
+            document.querySelector('.main')?.classList.toggle('sidebar-hidden', collapsed);
+        }
+    };
 </script>

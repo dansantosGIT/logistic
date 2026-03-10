@@ -1,29 +1,12 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>Vehicle Maintenance — San Juan CDRMMD</title>
-    <link rel="icon" href="/images/favi.png" type="image/png">
-    <link rel="apple-touch-icon" href="/images/favi.png">
-    <meta name="theme-color" content="#0b1220">
-    <meta name="csrf-token" content="{{ csrf_token() }}">
+@extends('layouts.app')
+
+@section('head')
     <style>
         :root{--bg:#f6f8fb;--panel:#ffffff;--accent:#2563eb;--accent-2:#7c3aed;--muted:#6b7280;--muted-2:#94a3b8;--topbar-height:72px}
         *{box-sizing:border-box}
         body{margin:0;font-family:Inter,system-ui,Arial,Helvetica;background:var(--bg);color:#0f172a}
         .bg{position:fixed;inset:0;background-image:url('/images/welcome-bg.jpg');background-size:cover;background-position:center;filter:brightness(0.6) saturate(0.95);z-index:-3}
         .overlay{position:fixed;inset:0;background:linear-gradient(180deg,rgba(2,6,23,0.28),rgba(2,6,23,0.4));z-index:-2}
-        .topbar{position:fixed;left:0;right:0;top:0;height:72px;background:rgba(255,255,255,0.95);backdrop-filter:saturate(1.05) blur(4px);box-shadow:0 6px 24px rgba(2,6,23,0.08);z-index:60}
-        .topbar-inner{max-width:none;width:100%;margin:0;padding:12px 12px 12px 0;display:flex;justify-content:space-between;align-items:center}
-        .topbar .left-area{display:flex;align-items:center;gap:12px}
-        .topbar .branding{display:flex;flex-direction:column}
-        .topbar .brand-title{display:flex;align-items:center;gap:6px;font-weight:700}
-        .topbar .brand-subtitle{font-size:12px;color:var(--muted)}
-        .burger{display:inline-flex;width:44px;height:44px;border-radius:8px;align-items:center;justify-content:center;background:transparent;border:1px solid transparent;cursor:pointer}
-        .burger:hover{background:#eef2ff}
-        .app{display:flex;min-height:100vh}
-        /* Sidebar styles moved to the shared partial (`partials.sidebar`) to ensure consistent look/behavior */
         .panel{background:var(--panel);padding:14px;border-radius:12px;box-shadow:0 6px 20px rgba(15,23,42,0.04);width:min(1240px,calc(100% - 24px));margin:10px auto}
         .btn{padding:8px 12px;border-radius:8px;border:1px solid #e6e9ef;background:#fff;cursor:pointer;text-decoration:none;color:#0f172a}
         .btn.primary{background:#2563eb;border:none;color:#fff}
@@ -64,26 +47,10 @@
         .confirm-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:14px}
         .toast{position:fixed;right:20px;bottom:20px;background:#10b981;color:#fff;padding:12px 16px;border-radius:8px;box-shadow:0 10px 30px rgba(2,6,23,.2);z-index:200;display:none}
         .toast.show{display:block}
-        .notif-bell{position:relative;display:inline-flex;align-items:center;gap:8px;margin-right:12px}
-        .notif-bell button{background:transparent;border:none;cursor:pointer;padding:8px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center}
-        .notif-count{position:absolute;top:-6px;right:-6px;z-index:70;background:#ef4444;color:#fff;font-size:12px;padding:3px 6px;border-radius:999px;min-width:20px;text-align:center;box-shadow:0 6px 18px rgba(2,6,23,0.12)}
-        .notif-dropdown{position:absolute;right:0;top:44px;width:360px;max-height:420px;background:linear-gradient(180deg,#ffffff,#fbfdff);border-radius:12px;box-shadow:0 18px 50px rgba(2,6,23,0.16);overflow:auto;display:none;z-index:120;padding:8px}
-        .notif-dropdown.show{display:block}
-        .notif-dropdown .item{display:flex;align-items:center;gap:12px;padding:10px;border-radius:8px;transition:background .12s ease,transform .12s ease;cursor:pointer}
-        .notif-dropdown .item:hover{background:linear-gradient(90deg,rgba(37,99,235,0.04),rgba(124,58,237,0.02));transform:translateY(-2px)}
-        .notif-dropdown .left{flex:0 0 44px;display:flex;align-items:center;justify-content:center}
-        .notif-dropdown .avatar{width:44px;height:44px;border-radius:50%;display:inline-grid;place-items:center;background:linear-gradient(135deg,var(--accent),var(--accent-2));color:#fff;font-weight:700;box-shadow:0 8px 22px rgba(15,23,42,0.06)}
-        .notif-dropdown .meta{flex:1;min-width:0}
-        .notif-dropdown .meta .title{font-weight:700;color:#0f172a;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center;gap:8px}
-        .notif-dropdown .meta .sub{font-size:12px;color:#94a3b8;margin-top:4px}
-        .notif-dropdown .time{font-size:11px;color:#94a3b8;margin-left:6px}
-        .notif-dropdown .actions{display:flex;gap:6px;flex-shrink:0}
-        .notif-dropdown .empty{padding:12px;color:var(--muted);text-align:center}
         .nav-overlay{position:fixed;left:0;right:0;top:var(--topbar-height);bottom:0;background:rgba(2,6,23,0.45);opacity:0;visibility:hidden;transition:opacity .18s ease;z-index:80}
         .nav-overlay.show{opacity:1;visibility:visible}
         @media(max-width:900px){.sidebar{position:fixed;left:0;top:0;bottom:0;z-index:80;transform:translateX(-110%);height:100vh}.sidebar.open{transform:translateX(0)}.main{padding:16px}}
         @media(max-width:900px){.page-actions{width:100%}.page-actions .btn{flex:1}}
-        /* Mobile: stack maintenance table rows into cards */
         @media (max-width:900px) {
             table thead { display: none; }
             table, table tbody, table tr { display: block; width: 100%; }
@@ -100,113 +67,81 @@
             .delete-cell{text-align:left}
         }
     </style>
-    @include('partials._bg-preload')
-    @include('partials._formatters')
-</head>
-<body>
-    <div class="bg" aria-hidden="true"></div>
-    <div class="overlay" aria-hidden="true"></div>
+@endsection
 
-    <div class="topbar" role="banner">
-        <div class="topbar-inner">
-            <div class="left-area">
-                <button id="burger-top" class="burger" aria-label="Toggle menu" title="Toggle menu"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 12h18M3 6h18M3 18h18" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></button>
-                <div class="branding">
-                    <a href="/dashboard" class="brand-title" style="text-decoration:none;color:inherit;display:flex;align-items:center;gap:6px">
-                        <img src="/images/favi.png" alt="Logo" width="40" height="40" style="display:inline-block" />
-                        <span style="font-weight:700">San Juan CDRMMD Vehicle Maintenance</span>
-                    </a>
-                    <div class="brand-subtitle">View all maintenance records</div>
-                </div>
-            </div>
-            <div style="text-align:right;display:flex;align-items:center;gap:12px;justify-content:flex-end">
-                @include('partials._notifications')
-                <div style="text-align:right">
-                    <div style="font-size:13px;color:var(--muted-2)">Welcome!</div>
-                    <div style="font-weight:700">{{ optional(auth()->user())->name }}</div>
-                </div>
+@section('content')
+    <div class="panel">
+        <div class="page-head">
+            <h2 style="margin:0">Vehicle Maintenance</h2>
+            <div class="page-actions">
+                <a href="/vehicle/maintenance/add" class="btn primary">Add Maintenance</a>
+                <a href="/vehicle" class="btn">Back to Vehicles</a>
             </div>
         </div>
+        <div class="muted" style="margin-top:6px">All maintenance records are shown below.</div>
     </div>
 
-    <div class="app">
-        @include('partials.sidebar')
-
-        <main class="main">
-            <div class="panel">
-                <div class="page-head">
-                    <h2 style="margin:0">Vehicle Maintenance</h2>
-                    <div class="page-actions">
-                        <a href="/vehicle/maintenance/add" class="btn primary">Add Maintenance</a>
-                        <a href="/vehicle" class="btn">Back to Vehicles</a>
-                    </div>
-                </div>
-                <div class="muted" style="margin-top:6px">All maintenance records are shown below.</div>
-            </div>
-
-            <div class="panel">
-                <h3 style="margin-top:0">All Maintenance List</h3>
-                <div style="overflow:auto">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Vehicle</th>
-                            <th>Maintenance Task</th>
-                            <th>Due</th>
-                            <th>Notes</th>
-                            <th>Timeline</th>
-                            <th class="delete-header">Delete</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @forelse($maintenances as $maintenance)
-                            <tr class="maintenance-row" onclick="openUploadedPhoto(this)" data-photo-url="{{ $maintenance->evidence_image_path ? asset('storage/' . $maintenance->evidence_image_path) : '' }}">
-                                <td>
-                                    <div style="font-weight:700">{{ $maintenance->vehicle->name ?? '—' }}</div>
-                                    <div class="muted">{{ $maintenance->vehicle->plate_number ?? 'No plate' }}</div>
-                                </td>
-                                <td>
-                                    @php
-                                        $taskText = (string) ($maintenance->task ?? '—');
-                                        $taskIsLong = \Illuminate\Support\Str::length($taskText) > 70;
-                                    @endphp
-                                    <span class="row-text">
-                                        <span class="row-short">{{ $taskIsLong ? \Illuminate\Support\Str::limit($taskText, 70) : $taskText }}</span>
-                                        @if($taskIsLong)
-                                            <span class="row-full">{{ $taskText }}</span>
-                                            <button type="button" class="view-more-btn" onclick="toggleRowText(this, event)">View more</button>
-                                        @endif
-                                    </span>
-                                </td>
-                                <td>{{ $maintenance->due_date ? $maintenance->due_date->format('Y-m-d') : '—' }}</td>
-                                <td>
-                                    @php
-                                        $notesText = (string) ($maintenance->notes ?: '—');
-                                        $notesIsLong = \Illuminate\Support\Str::length($notesText) > 90;
-                                    @endphp
-                                    <span class="row-text">
-                                        <span class="row-short">{{ $notesIsLong ? \Illuminate\Support\Str::limit($notesText, 90) : $notesText }}</span>
-                                        @if($notesIsLong)
-                                            <span class="row-full">{{ $notesText }}</span>
-                                            <button type="button" class="view-more-btn" onclick="toggleRowText(this, event)">View more</button>
-                                        @endif
-                                    </span>
-                                </td>
-                                <td onclick="event.stopPropagation()">
-                                    <div class="muted timeline-meta">Reviewed: {{ $maintenance->reviewed_at ? $maintenance->reviewed_at->format('Y-m-d H:i') : '—' }}<br>Checked: {{ $maintenance->checked_at ? $maintenance->checked_at->format('Y-m-d H:i') : '—' }}<br>Updated: {{ $maintenance->updated_marker_at ? $maintenance->updated_marker_at->format('Y-m-d H:i') : '—' }}</div>
-                                </td>
-                                <td class="delete-cell" onclick="event.stopPropagation()">
-                                    <form class="js-delete-maintenance-form" method="POST" action="/vehicle/{{ $maintenance->vehicle_id }}/maintenance/{{ $maintenance->id }}/delete">@csrf<button class="btn danger" type="submit">Delete</button></form>
-                                </td>
-                            </tr>
-                        @empty
-                            <tr><td colspan="6" class="muted">No maintenance entries yet.</td></tr>
-                        @endforelse
-                    </tbody>
-                </table>
-                </div>
-            </div>
-        </main>
+    <div class="panel">
+        <h3 style="margin-top:0">All Maintenance List</h3>
+        <div style="overflow:auto">
+        <table>
+            <thead>
+                <tr>
+                    <th>Vehicle</th>
+                    <th>Maintenance Task</th>
+                    <th>Due</th>
+                    <th>Notes</th>
+                    <th>Timeline</th>
+                    <th class="delete-header">Delete</th>
+                </tr>
+            </thead>
+            <tbody>
+                @forelse($maintenances as $maintenance)
+                    <tr class="maintenance-row" onclick="openUploadedPhoto(this)" data-photo-url="{{ $maintenance->evidence_image_path ? asset('storage/' . $maintenance->evidence_image_path) : '' }}">
+                        <td>
+                            <div style="font-weight:700">{{ $maintenance->vehicle->name ?? '—' }}</div>
+                            <div class="muted">{{ $maintenance->vehicle->plate_number ?? 'No plate' }}</div>
+                        </td>
+                        <td>
+                            @php
+                                $taskText = (string) ($maintenance->task ?? '—');
+                                $taskIsLong = \Illuminate\Support\Str::length($taskText) > 70;
+                            @endphp
+                            <span class="row-text">
+                                <span class="row-short">{{ $taskIsLong ? \Illuminate\Support\Str::limit($taskText, 70) : $taskText }}</span>
+                                @if($taskIsLong)
+                                    <span class="row-full">{{ $taskText }}</span>
+                                    <button type="button" class="view-more-btn" onclick="toggleRowText(this, event)">View more</button>
+                                @endif
+                            </span>
+                        </td>
+                        <td>{{ $maintenance->due_date ? $maintenance->due_date->format('Y-m-d') : '—' }}</td>
+                        <td>
+                            @php
+                                $notesText = (string) ($maintenance->notes ?: '—');
+                                $notesIsLong = \Illuminate\Support\Str::length($notesText) > 90;
+                            @endphp
+                            <span class="row-text">
+                                <span class="row-short">{{ $notesIsLong ? \Illuminate\Support\Str::limit($notesText, 90) : $notesText }}</span>
+                                @if($notesIsLong)
+                                    <span class="row-full">{{ $notesText }}</span>
+                                    <button type="button" class="view-more-btn" onclick="toggleRowText(this, event)">View more</button>
+                                @endif
+                            </span>
+                        </td>
+                        <td onclick="event.stopPropagation()">
+                            <div class="muted timeline-meta">Reviewed: {{ $maintenance->reviewed_at ? $maintenance->reviewed_at->format('Y-m-d H:i') : '—' }}<br>Checked: {{ $maintenance->checked_at ? $maintenance->checked_at->format('Y-m-d H:i') : '—' }}<br>Updated: {{ $maintenance->updated_marker_at ? $maintenance->updated_marker_at->format('Y-m-d H:i') : '—' }}</div>
+                        </td>
+                        <td class="delete-cell" onclick="event.stopPropagation()">
+                            <form class="js-delete-maintenance-form" method="POST" action="/vehicle/{{ $maintenance->vehicle_id }}/maintenance/{{ $maintenance->id }}/delete">@csrf<button class="btn danger" type="submit">Delete</button></form>
+                        </td>
+                    </tr>
+                @empty
+                    <tr><td colspan="6" class="muted">No maintenance entries yet.</td></tr>
+                @endforelse
+            </tbody>
+        </table>
+        </div>
     </div>
 
     <div id="photo-modal-backdrop" class="modal-backdrop"></div>
@@ -234,12 +169,10 @@
     @if(session('success'))
         <div id="success-toast" class="toast">{{ session('success') }}</div>
     @endif
+@endsection
 
-    <form id="logout-form" method="POST" action="/logout" style="display:none">@csrf</form>
-
+@push('scripts')
     <script>
-        // Sidebar burger/overlay and vehicle submenu toggles are handled by the shared partial (partials.sidebar)
-
         (function(){ const toast = document.getElementById('success-toast'); if(!toast) return; toast.classList.add('show'); setTimeout(()=> toast.classList.remove('show'), 3500); })();
 
         (function(){
@@ -348,5 +281,4 @@
             });
         })();
     </script>
-</body>
-</html>
+@endpush
