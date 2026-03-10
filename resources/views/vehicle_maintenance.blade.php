@@ -23,22 +23,7 @@
         .burger{display:inline-flex;width:44px;height:44px;border-radius:8px;align-items:center;justify-content:center;background:transparent;border:1px solid transparent;cursor:pointer}
         .burger:hover{background:#eef2ff}
         .app{display:flex;min-height:100vh}
-        .sidebar{position:fixed;left:0;top:var(--topbar-height);bottom:0;width:240px;background:var(--panel);border-right:1px solid #e6e9ef;padding:20px;transition:width .22s ease,transform .22s ease;z-index:50;height:calc(100vh - var(--topbar-height))}
-        .sidebar.collapsed{width:64px}
-        .brand{font-weight:800;color:var(--accent);margin-bottom:18px;display:flex;align-items:center;gap:10px}
-        .nav{display:flex;flex-direction:column;gap:6px;margin-top:6px}
-        .nav a,.nav button.action{display:flex;align-items:center;gap:12px;padding:10px;border-radius:8px;color:#0f172a;text-decoration:none;background:transparent;border:none;cursor:pointer;font-size:14px;min-height:44px}
-        .nav a:hover,.nav button.action:hover{background:#f1f5f9}
-        .nav a.active{background:linear-gradient(90deg,var(--accent),var(--accent-2));color:#fff}
-        .nav a.sub-link{margin-left:26px;min-height:36px;padding:8px 12px;font-size:13px;justify-content:flex-start;text-align:left}
-        .nav .nav-with-toggle{position:relative;display:flex;align-items:center;border-radius:8px;min-height:44px}
-        .nav .nav-with-toggle.active{background:linear-gradient(90deg,var(--accent),var(--accent-2));color:#fff}
-        .nav .nav-with-toggle .vehicle-link{display:flex;align-items:center;gap:12px;flex:1;color:inherit;text-decoration:none;padding:10px 36px 10px 12px;border-radius:8px}
-        .nav .nav-with-toggle .toggle-btn{position:absolute;right:8px;top:50%;transform:translateY(-50%);border:none;background:transparent;color:#475569;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;font-size:12px;line-height:1;padding:2px 4px;opacity:1}
-        .main{flex:1;padding:16px;margin-top:var(--topbar-height)}
-        .sidebar{transform:translateX(-110%);transition:transform .22s ease,width .22s ease}
-        .sidebar.open{transform:translateX(0);z-index:90}
-        .sidebar.collapsed{width:64px;transform:translateX(0)}
+        /* Sidebar styles moved to the shared partial (`partials.sidebar`) to ensure consistent look/behavior */
         .panel{background:var(--panel);padding:14px;border-radius:12px;box-shadow:0 6px 20px rgba(15,23,42,0.04);width:min(1240px,calc(100% - 24px));margin:10px auto}
         .btn{padding:8px 12px;border-radius:8px;border:1px solid #e6e9ef;background:#fff;cursor:pointer;text-decoration:none;color:#0f172a}
         .btn.primary{background:#2563eb;border:none;color:#fff}
@@ -145,26 +130,7 @@
     </div>
 
     <div class="app">
-        <aside class="sidebar" id="sidebar">
-            <a href="/dashboard" class="brand" style="text-decoration:none;color:inherit">
-                <img src="/images/favi.png" alt="San Juan" style="width:36px;height:36px;border-radius:8px;object-fit:cover">
-                <div class="text" style="font-size:14px">San Juan CDRMMD</div>
-            </a>
-            <nav class="nav">
-                <a href="/dashboard"><span class="label">Home</span></a>
-                <a href="/inventory"><span class="label">Inventory</span></a>
-                <div id="vehicle-nav-group" class="nav-with-toggle active">
-                    <a href="/vehicle" id="vehicle-nav-link" class="vehicle-link"><span class="label">Vehicle</span></a>
-                    <button id="vehicle-submenu-toggle" class="toggle-btn" type="button" aria-label="Toggle Vehicle submenu" title="Toggle Vehicle submenu">▾</button>
-                </div>
-                <div id="vehicle-submenu" style="display:none">
-                    <a href="/vehicle/maintenance" class="sub-link active"><span class="label">Maintenance</span></a>
-                    <a href="/vehicle/monitoring" class="sub-link"><span class="label">Monitoring</span></a>
-                </div>
-                <a href="/requests"><span class="label">Request</span></a>
-                <a href="#" class="nav-logout" onclick="event.preventDefault();document.getElementById('logout-form').submit();"><span class="label">Logout</span></a>
-            </nav>
-        </aside>
+        @include('partials.sidebar')
 
         <main class="main">
             <div class="panel">
@@ -272,25 +238,8 @@
     <form id="logout-form" method="POST" action="/logout" style="display:none">@csrf</form>
 
     <script>
-        (function(){
-            const sidebar = document.getElementById('sidebar');
-            const burger = document.getElementById('burger-top');
-            const topbar = document.querySelector('.topbar');
-            let navOverlay = document.getElementById('nav-overlay');
-            if(!navOverlay){ navOverlay = document.createElement('div'); navOverlay.id = 'nav-overlay'; navOverlay.className = 'nav-overlay'; document.body.appendChild(navOverlay); }
-            if(!burger || !sidebar) return;
-            function setOverlay(show){ navOverlay.classList.toggle('show', !!show); document.body.style.overflow = show ? 'hidden' : ''; }
-            burger.addEventListener('click', function(e){ e.stopPropagation(); const willOpen = !sidebar.classList.contains('open'); sidebar.classList.toggle('open'); setOverlay(willOpen); });
-            document.addEventListener('click', function(e){ if(sidebar.classList.contains('open') && !sidebar.contains(e.target) && !burger.contains(e.target) && !topbar.contains(e.target)){ sidebar.classList.remove('open'); setOverlay(false); } });
-            navOverlay.addEventListener('click', function(){ sidebar.classList.remove('open'); setOverlay(false); });
-        })();
-
-        (function(){
-            const submenu = document.getElementById('vehicle-submenu');
-            const submenuToggle = document.getElementById('vehicle-submenu-toggle');
-            if(!submenu || !submenuToggle) return;
-            submenuToggle.addEventListener('click', function(e){ e.preventDefault(); submenu.style.display = submenu.style.display === 'none' ? '' : 'none'; });
-        })();
+        // Sidebar burger/overlay and vehicle submenu toggles are handled by the shared partial (partials.sidebar)
+    </script>
 
         (function(){ const toast = document.getElementById('success-toast'); if(!toast) return; toast.classList.add('show'); setTimeout(()=> toast.classList.remove('show'), 3500); })();
 
