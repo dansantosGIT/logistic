@@ -516,6 +516,13 @@ Route::get('/inventory/{id}/request', function ($id) {
     return view('inventory_request', compact('item'));
 })->middleware('auth');
 
+// Show equipment details (partial view used by AJAX side-drawer)
+Route::get('/inventory/{id}', function ($id) {
+    $item = App\Models\Equipment::findOrFail($id);
+    // return a partial HTML snippet so front-end can load it into a drawer/modal
+    return view('partials.inventory_show', compact('item'));
+})->middleware('auth');
+
 // Update equipment (handler with robust image handling)
 Route::post('/inventory/{id}/update', function (Request $request, $id) {
     $item = App\Models\Equipment::findOrFail($id);

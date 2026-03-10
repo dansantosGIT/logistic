@@ -106,7 +106,8 @@
                     <button id="vehicle-submenu-toggle" class="toggle-btn" type="button" aria-label="Toggle Maintenance menu" title="Toggle Maintenance menu">▾</button>
                 </div>
                 <div id="vehicle-submenu" style="display:none">
-                    <a href="/vehicle/maintenance" class="sub-link"><span class="label">Maintenance</span></a>
+                    <a href="/vehicle/monitoring" class="sub-link {{ request()->is('vehicle/monitoring*') ? 'active' : '' }}"><span class="label">Monitoring</span></a>
+                    <a href="/vehicle/maintenance" class="sub-link {{ request()->is('vehicle/maintenance*') ? 'active' : '' }}"><span class="label">Maintenance</span></a>
                 </div>
                 <a href="/requests"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M19 3H5a2 2 0 00-2 2v14l4-2 4 2 4-2 4 2V5a2 2 0 00-2-2z" fill="currentColor"/></svg><span class="label">Request</span></a>
                 <a href="#" class="nav-logout" onclick="event.preventDefault();document.getElementById('logout-form').submit();"><svg width="18" height="18" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M10 17l5-5-5-5v3H3v4h7v3zM19 3h-8v2h8v14h-8v2h8a2 2 0 002-2V5a2 2 0 00-2-2z" fill="currentColor"/></svg><span class="label">Logout</span></a>

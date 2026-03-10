@@ -91,6 +91,7 @@
         .inventory-table thead th:first-child{border-top-left-radius:10px}
         .inventory-table thead th:last-child{border-top-right-radius:10px}
         .inventory-table tbody tr{background:#fff;border-radius:8px;box-shadow:0 6px 18px rgba(2,6,23,0.04);display:table-row;cursor:pointer}
+        .inventory-table tbody tr:focus{outline:none;box-shadow:0 6px 18px rgba(2,6,23,0.04), 0 0 0 4px rgba(37,99,235,0.08)}
         .inventory-table tbody tr:hover{transform:none}
         .inventory-table tbody tr:hover td{background:#fff7cc}
         .inventory-table tbody tr:hover .badge.pending, .inventory-table tbody tr:hover .badge.returned, .inventory-table tbody tr:hover .badge.partial, .inventory-table tbody tr:hover .badge.waiting{background:#ffffff;color:#92400e;border:1px solid rgba(146,64,14,0.22)}
@@ -246,6 +247,32 @@
         .th-sort-menu button:hover{background:#f6f8fb}
 
         @media(max-width:900px){.sidebar{position:fixed;left:0;top:0;bottom:0;z-index:90;height:100vh}.sidebar.open{transform:translateX(0)}.main{padding:16px}}
+
+        /* Equipment drawer (polished) */
+        .equipment-drawer-backdrop{position:fixed;inset:72px 0 0 0;background:rgba(2,6,23,0.48);z-index:250;display:none;transition:opacity .18s ease}
+        .equipment-drawer{position:fixed;right:0;top:72px;bottom:0;width:460px;max-width:100%;background:linear-gradient(180deg,#ffffff,#fbfdff);box-shadow:-24px 0 60px rgba(2,6,23,0.16);z-index:260;padding:18px;transform:translateX(110%);transition:transform .26s ease;overflow:auto;border-left:1px solid rgba(14,21,40,0.04);border-radius:12px 0 0 12px}
+        .equipment-drawer.open{transform:translateX(0)}
+        .equipment-drawer .drawer-header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
+        .equipment-drawer .drawer-title{font-weight:800;font-size:16px;color:#0f172a}
+        .equipment-drawer .drawer-sub{color:var(--muted-2);font-size:13px}
+        .equipment-drawer .drawer-close{border:none;background:transparent;padding:6px 8px;border-radius:8px;cursor:pointer;color:var(--muted)}
+        .equipment-drawer .drawer-body{display:flex;gap:12px;align-items:flex-start}
+        .equipment-drawer .drawer-img{width:140px;height:140px;border-radius:8px;object-fit:cover;border:1px solid #eef2ff;background:linear-gradient(135deg,#f3f4f6,#ffffff);display:inline-grid;place-items:center;color:#64748b;font-weight:700}
+        .equipment-drawer .meta{flex:1}
+        .equipment-drawer .meta .name{font-weight:800;font-size:18px;color:#0f172a}
+        .equipment-drawer .meta .meta-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+        .equipment-drawer .pill{background:#fff;border:1px solid #eef2ff;padding:8px 10px;border-radius:8px;color:#475569}
+        .equipment-drawer .status-badge{display:inline-block;padding:6px 10px;border-radius:999px;font-weight:700;color:#fff;font-size:13px}
+        .equipment-drawer .status-badge.available{background:#10b981}
+        .equipment-drawer .status-badge.out-of-stock{background:#ef4444}
+        .equipment-drawer .status-badge.unknown{background:#94a3b8}
+        .equipment-drawer .serial{color:#6b7280;font-size:13px;text-align:right}
+        .equipment-drawer .notes{margin-top:12px;color:#475569;white-space:pre-wrap}
+        .equipment-drawer .inventory-actions{margin-top:14px;display:flex;gap:8px}
+        .equipment-drawer .btn.request{background:linear-gradient(90deg,var(--accent),var(--accent-2));color:#fff;border:none}
+        .equipment-drawer .btn.edit{background:#fff;border:1px solid #e6e9ef}
+        .equipment-drawer .loader{display:inline-grid;place-items:center;width:100%;padding:36px 0;color:var(--muted-2);}
+        @media(max-width:560px){.equipment-drawer{width:100%;top:60px;border-radius:0;}.equipment-drawer-backdrop{inset:60px 0 0 0}}
     </style>
     @include('partials._bg-preload')
     @include('partials._formatters')
@@ -296,7 +323,8 @@
                     <button id="vehicle-submenu-toggle" type="button" aria-label="Toggle Vehicle menu" title="Toggle Vehicle menu" style="width:28px;height:28px;border:none;background:transparent;color:#475569;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;font-size:12px;line-height:1;padding:0">⌄</button>
                 </div>
                 <div id="vehicle-submenu" style="display:none">
-                    <a href="/vehicle/maintenance" class="sub-link"><span class="label">Maintenance</span></a>
+                    <a href="/vehicle/monitoring" class="sub-link {{ request()->is('vehicle/monitoring*') ? 'active' : '' }}"><span class="label">Monitoring</span></a>
+                    <a href="/vehicle/maintenance" class="sub-link {{ request()->is('vehicle/maintenance*') ? 'active' : '' }}"><span class="label">Maintenance</span></a>
                 </div>
                 <a href="/requests" class="active"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M19 3H5a2 2 0 00-2 2v14l4-2 4 2 4-2 4 2V5a2 2 0 00-2-2z" fill="currentColor"/></svg><span class="label">Request</span></a>
                 <a href="#"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 8a4 4 0 100 8 4 4 0 000-8zM3 13h3l1-3 2 2 3-4 2 4 3-2 1 3h3" stroke="currentColor" stroke-width="1" fill="none"/></svg><span class="label">Settings</span></a>
@@ -327,7 +355,7 @@
                     <a href="/inventory" class="tab alt back-btn" style="background:#f3f4f6;color:#111;padding:8px 10px;margin-left:12px;white-space:nowrap">Back</a>
                 </div>
                 <div class="table-wrap" style="overflow:auto">
-                    <table>
+                    <table class="inventory-table">
                         <thead>
                                 <tr>
                                 <th>Requested</th>
@@ -342,7 +370,7 @@
                         </thead>
                         <tbody>
                             @forelse($items as $r)
-                                    <tr data-uuid="{{ $r->uuid }}">
+                                    <tr tabindex="0" role="link" data-uuid="{{ $r->uuid }}">
                                     <td><span class="local-datetime" data-datetime="{{ $r->created_at->toIso8601String() }}">{{ $r->created_at->format('F j, Y, g:i A') }}</span></td>
                                     @php
                                         $isGroup = isset($r->items) && $r->items->count() > 1;
@@ -681,16 +709,38 @@
             (function(){
             const tbody = document.querySelector('.inventory-table tbody');
             if(!tbody) return;
+
+            function isInteractive(el){
+                return el && el.closest && el.closest('a, button, input, select, textarea, .icon-btn, .actions, [data-no-row-click], [onclick]');
+            }
+
+            // click handler (row activation)
             tbody.addEventListener('click', function(e){
                 const target = e.target;
                 // ignore clicks on interactive elements/buttons/links and elements explicitly marked to skip row-click
-                if (target.closest('a, button, input, select, textarea, .icon-btn, .actions, [data-no-row-click], [onclick]')) return;
+                if (isInteractive(target)) return;
                 // find the row container
                 const row = target.closest('tr[data-uuid]');
                 if(!row) return;
                 const id = row.dataset.uuid || row.getAttribute('data-uuid');
                 if(id) viewRequest(id);
             });
+
+            // keyboard activation: Enter or Space when a row has focus
+            tbody.addEventListener('keydown', function(e){
+                if(e.key !== 'Enter' && e.key !== ' ') return;
+                const el = document.activeElement;
+                if(!el) return;
+                // ensure the focused element is a row (or inside one) and not an interactive child
+                if(isInteractive(el)) return;
+                const row = el.closest('tr[data-uuid]');
+                if(!row) return;
+                const id = row.dataset.uuid || row.getAttribute('data-uuid');
+                if(!id) return;
+                e.preventDefault();
+                viewRequest(id);
+            });
+
         })();
     </script>
     <script>
@@ -793,6 +843,74 @@
             }
             if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', applyLocalTimes);
             else applyLocalTimes();
+        })();
+    </script>
+    <!-- Equipment details side-drawer -->
+    <script>
+        (function(){
+            // backdrop
+            const backdrop = document.createElement('div');
+            backdrop.id = 'equipmentDrawerBackdrop';
+            backdrop.className = 'equipment-drawer-backdrop';
+            document.body.appendChild(backdrop);
+
+            // drawer
+            const drawer = document.createElement('aside');
+            drawer.id = 'equipmentDrawer';
+            drawer.className = 'equipment-drawer';
+            drawer.setAttribute('aria-hidden','true');
+            drawer.innerHTML = `
+                <div class="drawer-header">
+                    <div>
+                        <div class="drawer-title">Equipment details</div>
+                        <div class="drawer-sub">Details and actions</div>
+                    </div>
+                    <button id="equipmentDrawerClose" class="drawer-close" aria-label="Close">✕</button>
+                </div>
+                <div id="equipmentDrawerContent" class="drawer-body"><div class="loader">Loading…</div></div>
+            `;
+            document.body.appendChild(drawer);
+
+            const closeBtn = drawer.querySelector('#equipmentDrawerClose');
+
+            function showDrawer(html, title, sub){
+                const content = document.getElementById('equipmentDrawerContent');
+                content.innerHTML = html || '<div class="loader">No details</div>';
+                drawer.classList.add('open');
+                backdrop.style.display = '';
+                drawer.setAttribute('aria-hidden','false');
+                document.body.style.overflow = 'hidden';
+                if(title) { const t = drawer.querySelector('.drawer-title'); if(t) t.textContent = title; }
+                if(sub) { const s = drawer.querySelector('.drawer-sub'); if(s) s.textContent = sub; }
+                // move focus to close button for accessibility
+                if(closeBtn) closeBtn.focus();
+            }
+            function hideDrawer(){ drawer.classList.remove('open'); backdrop.style.display = 'none'; drawer.setAttribute('aria-hidden','true'); document.body.style.overflow = ''; }
+
+            closeBtn.addEventListener('click', hideDrawer);
+            backdrop.addEventListener('click', hideDrawer);
+            document.addEventListener('keydown', function(e){ if(e.key === 'Escape') hideDrawer(); });
+
+            // Delegate: intercept clicks on equipment links and load partial into drawer
+            document.addEventListener('click', function(e){
+                const a = e.target.closest('a.link[href]');
+                if(!a) return;
+                const href = a.getAttribute('href') || '';
+                if(!href.match(/^\/inventory\/[0-9]+$/)) return; // only numeric equipment links
+                e.preventDefault();
+                const content = document.getElementById('equipmentDrawerContent');
+                if(content) content.innerHTML = '<div class="loader">Loading…</div>';
+                fetch(href, { credentials: 'same-origin' })
+                    .then(res => {
+                        if(!res.ok) throw new Error(res.status || 'Not found');
+                        return res.text();
+                    })
+                    .then(html => showDrawer(html))
+                    .catch(err => {
+                        showDrawer('<div style="color:#ef4444">Unable to load details.</div>');
+                        console.error('Equipment drawer load error', err);
+                    });
+            });
         })();
     </script>
 </body>
