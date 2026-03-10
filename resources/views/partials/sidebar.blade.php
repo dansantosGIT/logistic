@@ -26,6 +26,12 @@
     #sidebar{transform:translateX(-110%);transition:transform .22s ease,width .22s ease}
     #sidebar.open{transform:translateX(0);z-index:90}
     #sidebar.collapsed{width:64px;transform:translateX(0)}
+    /* Allow hiding the sidebar on desktop by toggling `.hidden` */
+    #sidebar.hidden{transform:translateX(-110%)}
+    .main.sidebar-hidden{margin-left:0}
+
+    /* Sidebar inline badge to avoid conflict with global notif-count */
+    .sidebar-badge{display:inline-block;background:#ef4444;color:#fff;font-size:12px;padding:3px 6px;border-radius:999px;margin-left:8px;vertical-align:middle}
 
     /* Collapsed state adjustments (copy from dashboard) */
     #sidebar.collapsed .brand .text,
@@ -132,10 +138,17 @@
 
         burger.addEventListener('click', function(e){
             e.stopPropagation();
-            const willOpen = !sidebar.classList.contains('open');
-            sidebar.classList.toggle('open');
-            sidebar.classList.remove('collapsed');
-            setOverlay(willOpen);
+            const isMobile = window.matchMedia('(max-width:900px)').matches;
+            if (isMobile) {
+                const willOpen = !sidebar.classList.contains('open');
+                sidebar.classList.toggle('open');
+                sidebar.classList.remove('collapsed');
+                setOverlay(willOpen);
+            } else {
+                // on desktop, allow hiding the sidebar by toggling `hidden`
+                const hidden = sidebar.classList.toggle('hidden');
+                document.querySelector('.main')?.classList.toggle('sidebar-hidden', hidden);
+            }
         });
 
         document.addEventListener('click', function(e){

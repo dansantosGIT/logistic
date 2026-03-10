@@ -56,11 +56,14 @@
         .notif-dropdown .actions{display:flex;gap:6px;flex-shrink:0}
         .notif-dropdown .empty{padding:12px;color:var(--muted);text-align:center}
 
-        /* Main area (push down for topbar). Sidebar is overlay by default */
-        .main{flex:1;padding:24px;margin-top:var(--topbar-height);margin-left:0;transition:margin .22s ease}
-        .sidebar{transform:translateX(-110%);transition:transform .22s ease,width .22s ease}
+        /* Main area (push down for topbar). Sidebar visible on desktop, overlay only on small screens */
+        .main{flex:1;padding:24px;margin-top:var(--topbar-height);margin-left:240px;transition:margin .22s ease}
+        .sidebar{transform:none;transition:transform .22s ease,width .22s ease}
         .sidebar.open{transform:translateX(0);z-index:90}
-        .sidebar.collapsed{width:64px;transform:translateX(0)}
+        .sidebar.collapsed{width:64px;transform:none}
+        /* allow hiding sidebar on desktop */
+        .sidebar.hidden{transform:translateX(-110%)}
+        .main.sidebar-hidden{margin-left:0}
         /* Header becomes a white panel inside the main area to visually join with the sidebar */
         header{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;gap:12px;background:var(--panel);padding:12px 16px;border-radius:10px;box-shadow:0 6px 20px rgba(2,6,23,0.08)}
         header h1{color:#0f172a;margin:0}
@@ -231,9 +234,19 @@
                     <button id="vehicle-submenu-toggle" type="button" aria-label="Toggle Vehicle menu" title="Toggle Vehicle menu" style="width:28px;height:28px;border:none;background:transparent;color:#475569;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;font-size:12px;line-height:1;padding:0">⌄</button>
                 </div>
                 <div id="vehicle-submenu" style="display:none">
-                    <a href="/vehicle/maintenance" class="sub-link"><span class="label">Maintenance</span></a>
+                    <a href="/vehicle/monitoring" class="sub-link {{ request()->is('vehicle/monitoring*') ? 'active' : '' }}"><span class="label">Monitoring</span></a>
+                    <a href="/vehicle/maintenance" class="sub-link {{ request()->is('vehicle/maintenance*') ? 'active' : '' }}"><span class="label">Maintenance</span></a>
                 </div>
                 <a href="/requests"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M19 3H5a2 2 0 00-2 2v14l4-2 4 2 4-2 4 2V5a2 2 0 00-2-2z" fill="currentColor"/></svg><span class="label">Request</span></a>
+                @php
+                    $pendingAccounts = 0;
+                    try {
+                        $pendingAccounts = \App\Models\AccountRequest::where('status', 'pending')->count();
+                    } catch (Throwable $e) {
+                        $pendingAccounts = 0;
+                    }
+                @endphp
+                <a href="/accounts" class="{{ request()->is('accounts*') ? 'active' : '' }}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 8a4 4 0 100 8 4 4 0 000-8zM3 13h3l1-3 2 2 3-4 2 4 3-2 1 3h3" stroke="currentColor" stroke-width="1" fill="none"/></svg><span class="label">Accounts</span>@if($pendingAccounts > 0)<span class="sidebar-badge" style="margin-left:8px">{{ $pendingAccounts }}</span>@endif</a>
                 <a href="#"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 8a4 4 0 100 8 4 4 0 000-8zM3 13h3l1-3 2 2 3-4 2 4 3-2 1 3h3" stroke="currentColor" stroke-width="1" fill="none"/></svg><span class="label">Settings</span></a>
                 <a href="#" class="nav-logout" onclick="event.preventDefault();document.getElementById('logout-form').submit();">
                     <svg width="18" height="18" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M10 17l5-5-5-5v3H3v4h7v3zM19 3h-8v2h8v14h-8v2h8a2 2 0 002-2V5a2 2 0 00-2-2z" fill="currentColor"/></svg>
@@ -530,10 +543,16 @@
 
             burger.addEventListener('click', function(e){
                 e.stopPropagation();
-                const willOpen = !sidebar.classList.contains('open');
-                sidebar.classList.toggle('open');
-                sidebar.classList.remove('collapsed');
-                setOverlay(willOpen);
+                const isMobile = window.matchMedia('(max-width:900px)').matches;
+                if (isMobile) {
+                    const willOpen = !sidebar.classList.contains('open');
+                    sidebar.classList.toggle('open');
+                    sidebar.classList.remove('collapsed');
+                    setOverlay(willOpen);
+                } else {
+                    const hidden = sidebar.classList.toggle('hidden');
+                    document.querySelector('.main')?.classList.toggle('sidebar-hidden', hidden);
+                }
             });
 
             document.addEventListener('click', function(e){
