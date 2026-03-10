@@ -123,7 +123,7 @@
                 @include('partials._notifications')
                 <div style="text-align:right">
                     <div style="font-size:13px;color:var(--muted-2)">Welcome!</div>
-                    <div style="font-weight:700">{{ auth()->user()->name }}</div>
+                    <div style="font-weight:700">{{ optional(auth()->user())->name }}</div>
                 </div>
             </div>
         </div>
@@ -239,7 +239,6 @@
 
     <script>
         // Sidebar burger/overlay and vehicle submenu toggles are handled by the shared partial (partials.sidebar)
-    </script>
 
         (function(){ const toast = document.getElementById('success-toast'); if(!toast) return; toast.classList.add('show'); setTimeout(()=> toast.classList.remove('show'), 3500); })();
 
