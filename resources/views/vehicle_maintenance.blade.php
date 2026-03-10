@@ -293,8 +293,14 @@
             const img = document.getElementById('photo-modal-img');
             const empty = document.getElementById('photo-modal-empty');
             if(!backdrop || !modal || !img || !empty) return;
-            if(url){ img.src = url; img.style.display = 'block'; empty.style.display = 'none'; }
-            else { img.style.display = 'none'; empty.style.display = 'block'; }
+            if(url){
+                img.src = url;
+                img.style.display = 'block';
+                empty.style.display = 'none';
+            } else {
+                img.style.display = 'none';
+                empty.style.display = 'block';
+            }
             backdrop.classList.add('show');
             modal.classList.add('show');
             document.body.style.overflow = 'hidden';
@@ -313,10 +319,16 @@
             const modal = document.getElementById('photo-modal');
             const closeBtn = document.getElementById('photo-modal-close');
             if(!backdrop || !modal || !closeBtn) return;
-            function closeModal(){ backdrop.classList.remove('show'); modal.classList.remove('show'); document.body.style.overflow = ''; }
+            function closeModal(){
+                backdrop.classList.remove('show');
+                modal.classList.remove('show');
+                document.body.style.overflow = '';
+            }
             closeBtn.addEventListener('click', closeModal);
             backdrop.addEventListener('click', closeModal);
-            document.addEventListener('keydown', function(e){ if(e.key === 'Escape' && modal.classList.contains('show')) closeModal(); });
+            document.addEventListener('keydown', function(e){
+                if(e.key === 'Escape' && modal.classList.contains('show')) closeModal();
+            });
         })();
 
         (function(){
@@ -326,6 +338,11 @@
                 if(e.target.closest('.actions')) return;
                 const item = e.target.closest('.item');
                 if(!item) return;
+                const url = item.dataset.url || item.getAttribute('data-url');
+                if(url) {
+                    window.location.href = url;
+                    return;
+                }
                 const id = item.dataset.uuid || item.getAttribute('data-uuid') || item.getAttribute('data-id');
                 if(id) window.location.href = '/requests/' + id;
             });

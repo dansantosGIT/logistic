@@ -716,26 +716,60 @@ Route::get('/notifications/requests', function (Request $request) {
     // consider user id 1 or name 'admin' as admin for now
     $isAdmin = $user && ( ($user->id ?? 0) === 1 || strcasecmp($user->name ?? '', 'admin') === 0 );
     if ($isAdmin) {
-        $items = InventoryRequest::where('status', 'pending')->orderBy('created_at','desc')->limit(8)->get();
+        $requestItems = InventoryRequest::where('status', 'pending')->orderBy('created_at','desc')->limit(8)->get();
     } else {
-        $items = InventoryRequest::where('requester_user_id', $user ? $user->id : 0)
+        $requestItems = InventoryRequest::where('requester_user_id', $user ? $user->id : 0)
             ->where('status', '!=', 'pending')
             ->orderBy('created_at','desc')
             ->limit(8)->get();
     }
 
+    $mappedRequestItems = $requestItems->map(function($r) use ($isAdmin){
+        return [
+            'id' => $r->uuid,
+            'item_name' => $r->item_name,
+            'requester' => $r->requester,
+            'subtitle' => 'Requested by ' . ($r->requester ?: 'Unknown'),
+            'department' => $r->department ?? null,
+            'status' => $r->status,
+            'created_at' => $r->created_at ? $r->created_at->toIso8601String() : now()->toIso8601String(),
+            'actionable' => $isAdmin,
+            'url' => '/requests/' . $r->uuid,
+        ];
+    });
+
+    $maintenanceItems = collect();
+    if ($isAdmin) {
+        $maintenanceItems = VehicleMaintenance::with('vehicle')
+            ->orderBy('created_at', 'desc')
+            ->limit(8)
+            ->get()
+            ->map(function ($m) {
+                $vehicleName = $m->vehicle->name ?? ('Vehicle #' . $m->vehicle_id);
+                $plate = $m->vehicle->plate_number ?? 'No plate';
+                return [
+                    'id' => null,
+                    'item_name' => 'Maintenance: ' . $vehicleName,
+                    'requester' => 'Vehicle Module',
+                    'subtitle' => 'New maintenance report · ' . $plate,
+                    'department' => null,
+                    'status' => 'posted',
+                    'created_at' => $m->created_at ? $m->created_at->toIso8601String() : now()->toIso8601String(),
+                    'actionable' => false,
+                    'url' => '/vehicle/maintenance?vehicle=' . $m->vehicle_id,
+                ];
+            });
+    }
+
+    $items = $mappedRequestItems
+        ->concat($maintenanceItems)
+        ->sortByDesc('created_at')
+        ->take(8)
+        ->values();
+
     return response()->json([
         'count' => $items->count(),
-        'items' => $items->map(function($r){
-            return [
-                'id' => $r->uuid,
-                'item_name' => $r->item_name,
-                'requester' => $r->requester,
-                'department' => $r->department ?? null,
-                'status' => $r->status,
-                'created_at' => $r->created_at->toIso8601String(),
-            ];
-        })->toArray(),
+        'items' => $items->values()->toArray(),
     ]);
 })->middleware('auth');
 

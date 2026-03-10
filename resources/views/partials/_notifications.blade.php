@@ -27,9 +27,13 @@
         }
         dropdown.innerHTML = items.map(it=>{
             const avatar = (it.item_name||'R').trim().charAt(0).toUpperCase();
-            const meta = `<div class="meta"><div class="title">${it.item_name} <span class="time">${formatLocalISO(it.created_at)}</span></div><div class="sub">Requested by ${it.requester}</div></div>`;
-            const actions = isAdmin ? `<div class="actions"><button data-id="${it.id}" data-action="approve" class="btn" title="Approve">✓</button><button data-id="${it.id}" data-action="reject" class="btn delete" title="Reject">✕</button></div>` : '';
-            return `<div class="item" data-id="${it.id}"><div class="left"><div class="avatar">${avatar}</div></div>${meta}${actions}</div>`;
+            const subtitle = it.subtitle || `Requested by ${it.requester || 'System'}`;
+            const targetUrl = it.url || (it.id ? `/requests/${encodeURIComponent(it.id)}` : '');
+            const meta = `<div class="meta"><div class="title">${it.item_name} <span class="time">${formatLocalISO(it.created_at)}</span></div><div class="sub">${subtitle}</div></div>`;
+            const actions = (isAdmin && it.actionable !== false && it.id)
+                ? `<div class="actions"><button data-id="${it.id}" data-action="approve" class="btn" title="Approve">✓</button><button data-id="${it.id}" data-action="reject" class="btn delete" title="Reject">✕</button></div>`
+                : '';
+            return `<div class="item" data-id="${it.id || ''}" data-url="${targetUrl}"><div class="left"><div class="avatar">${avatar}</div></div>${meta}${actions}</div>`;
         }).join('');
     }
 
@@ -62,6 +66,14 @@
             else alert('Action failed');
         }catch(err){ console.error(err); alert('Action error'); }
         finally{ btn.disabled = false; }
+    });
+
+    dropdown.addEventListener('click', function(e){
+        if(e.target.closest('button[data-id]') || e.target.closest('.actions')) return;
+        const item = e.target.closest('.item');
+        if(!item) return;
+        const url = item.dataset.url || item.getAttribute('data-url');
+        if(url) window.location.href = url;
     });
 
     toggle.addEventListener('click', function(e){
