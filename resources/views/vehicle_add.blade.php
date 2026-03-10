@@ -10,7 +10,7 @@
     <meta name="theme-color" content="#0b1220">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <style>
-        :root{--bg:#f6f8fb;--panel:#ffffff;--accent:#2563eb;--accent-2:#7c3aed;--muted:#6b7280;--topbar-height:72px}
+        :root{--bg:#f6f8fb;--panel:#ffffff;--accent:#2563eb;--accent-2:#7c3aed;--muted:#6b7280;--muted-2:#94a3b8;--topbar-height:72px}
         *{box-sizing:border-box}
         body{margin:0;font-family:Inter,system-ui,Arial,Helvetica;background:var(--bg);color:#0f172a}
         .bg{position:fixed;inset:0;background-image:url('/images/welcome-bg.jpg');background-size:cover;background-position:center;filter:brightness(0.6) saturate(0.95);z-index:-3}
@@ -50,6 +50,9 @@
         .btn{padding:8px 12px;border-radius:8px;border:1px solid #e6e9ef;background:#fff;cursor:pointer;text-decoration:none;color:#0f172a}
         .btn.primary{background:#2563eb;border:none;color:#fff}
         .actions{display:flex;justify-content:flex-end;gap:10px}
+        .page-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+        .page-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+        .page-actions .btn{min-height:38px;font-size:14px;font-weight:600}
         .sidebar.collapsed .brand .text,
         .sidebar.collapsed .nav a span.label,
         .sidebar.collapsed .nav button.action span.label{display:none}
@@ -63,6 +66,8 @@
             .sidebar{position:fixed;left:0;top:0;bottom:0;z-index:80;transform:translateX(-110%);height:100vh}
             .sidebar.open{transform:translateX(0)}
             .main{padding:16px}
+            .page-actions{width:100%}
+            .page-actions .btn{flex:1}
         }
     </style>
     @include('partials._bg-preload')
@@ -116,8 +121,7 @@
                     <button id="vehicle-submenu-toggle" class="toggle-btn" type="button" aria-label="Toggle Maintenance menu" title="Toggle Maintenance menu">▾</button>
                 </div>
                 <div id="vehicle-submenu" style="display:none">
-                    <a href="/vehicle/monitoring" class="sub-link {{ request()->is('vehicle/monitoring*') ? 'active' : '' }}"><span class="label">Monitoring</span></a>
-                    <a href="/vehicle/maintenance" class="sub-link {{ request()->is('vehicle/maintenance*') ? 'active' : '' }}"><span class="label">Maintenance</span></a>
+                    <a href="/vehicle/maintenance" class="sub-link"><span class="label">Maintenance</span></a>
                 </div>
                 <a href="/requests"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M19 3H5a2 2 0 00-2 2v14l4-2 4 2 4-2 4 2V5a2 2 0 00-2-2z" fill="currentColor"/></svg><span class="label">Request</span></a>
                 <a href="#"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 8a4 4 0 100 8 4 4 0 000-8zM3 13h3l1-3 2 2 3-4 2 4 3-2 1 3h3" stroke="currentColor" stroke-width="1" fill="none"/></svg><span class="label">Settings</span></a>
@@ -127,7 +131,12 @@
 
         <main class="main">
             <div class="panel">
-                <h2 style="margin:0 0 10px 0">{{ $isEdit ? 'Edit Vehicle' : 'Add Vehicle' }}</h2>
+                <div class="page-head">
+                    <h2 style="margin:0">{{ $isEdit ? 'Edit Vehicle' : 'Add Vehicle' }}</h2>
+                    <div class="page-actions">
+                        <a href="/vehicle" class="btn">Back to Vehicle List</a>
+                    </div>
+                </div>
                 <form method="POST" action="{{ $isEdit ? '/vehicle/' . $vehicle->id . '/update' : '/vehicle' }}" enctype="multipart/form-data">
                     @csrf
                     <div class="form-grid">
@@ -155,6 +164,14 @@
                             <label for="vehicle-plate">Plate Number</label>
                             <input id="vehicle-plate" name="plate_number" placeholder="e.g., ABC-1234" value="{{ old('plate_number', $vehicle->plate_number ?? '') }}">
                         </div>
+                        <div class="field">
+                            <label for="vehicle-status">Status</label>
+                            <select id="vehicle-status" name="status">
+                                <option value="active" {{ old('status', $vehicle->status ?? 'active') === 'active' ? 'selected' : '' }}>Serviceable</option>
+                                <option value="inactive" {{ old('status', $vehicle->status ?? 'active') === 'inactive' ? 'selected' : '' }}>Not Available</option>
+                            </select>
+                            <div class="muted" style="margin-top:4px">For Maintenance is automatically shown when maintenance entries exist.</div>
+                        </div>
                         <div class="field full">
                             <label for="vehicle-image">Vehicle Image</label>
                             <input id="vehicle-image" name="image" type="file" accept="image/*">
@@ -169,7 +186,6 @@
                         </div>
                     </div>
                     <div class="actions" style="margin-top:12px">
-                        <a href="/vehicle" class="btn">Back to Vehicle List</a>
                         <button class="btn primary" type="submit">{{ $isEdit ? 'Update Vehicle' : 'Save Vehicle' }}</button>
                     </div>
                 </form>

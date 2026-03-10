@@ -51,7 +51,7 @@
         .nav .nav-with-toggle.active .vehicle-link:hover{background:linear-gradient(90deg,var(--accent),var(--accent-2));color:#fff}
 
         .main{flex:1;padding:16px;margin-top:var(--topbar-height)}
-        .panel{background:var(--panel);padding:14px;border-radius:12px;box-shadow:0 6px 20px rgba(15,23,42,0.04);width:calc(100% - 24px);margin:10px auto}
+        .panel{background:var(--panel);padding:14px;border-radius:12px;box-shadow:0 6px 20px rgba(15,23,42,0.04);width:min(1240px,calc(100% - 24px));margin:10px auto}
         .grid{display:grid;grid-template-columns:1fr 2fr;gap:14px}
         .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
         .field{display:flex;flex-direction:column;gap:6px}
@@ -71,16 +71,34 @@
         .btn.warn{background:#f59e0b;border:none;color:#fff}
         .btn.danger{background:#ef4444;border:none;color:#fff}
         .actions{display:flex;gap:8px;flex-wrap:wrap}
+        .page-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:4px}
+        .page-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+        .page-actions .btn{min-height:38px;font-size:14px;font-weight:600}
+        .table-tools{display:flex;justify-content:space-between;align-items:flex-end;gap:10px;flex-wrap:wrap;margin:10px 0 12px}
+        .tool-grid{display:grid;grid-template-columns:repeat(4,minmax(140px,1fr));gap:8px;min-width:min(760px,100%)}
+        .tool-grid .field{gap:4px}
+        .tool-grid .field label{font-size:12px;color:var(--muted);font-weight:600}
+        .sort-btn{border:none;background:transparent;color:inherit;font:inherit;text-transform:uppercase;letter-spacing:.3px;font-size:12px;cursor:pointer;padding:0;display:inline-flex;align-items:center;gap:4px}
+        .sort-btn:hover{color:#334155}
+        .sort-btn .sort-arrow{font-size:11px;opacity:.75}
 
         table{width:100%;border-collapse:separate;border-spacing:0;font-size:14px}
-        th,td{padding:10px 8px;border-bottom:1px solid #edf2f7;text-align:left;vertical-align:top}
-        th{font-size:12px;text-transform:uppercase;letter-spacing:.3px;color:var(--muted)}
+        th,td{padding:14px 10px;border-bottom:1px solid #edf2f7;text-align:left;vertical-align:middle}
+        th{font-size:12px;text-transform:uppercase;letter-spacing:.3px;color:var(--muted);font-weight:700}
         .badge{display:inline-flex;align-items:center;padding:4px 10px;border-radius:999px;font-size:12px;color:#fff}
         .badge.needed{background:#f59e0b}
         .badge.done{background:#10b981}
         .badge.active{background:#10b981}
         .badge.inactive{background:#6b7280}
         .muted{color:var(--muted);font-size:13px}
+        .name-cell{display:flex;align-items:center;gap:12px}
+        .name-col-header{padding-left:110px}
+        .name-main{font-size:20px;font-weight:700;line-height:1.15}
+        .plate-sub{font-size:15px;color:var(--muted);margin-top:2px}
+        .vehicle-meta{font-size:15px;line-height:1.35}
+        .thumb-box{width:88px;height:60px;border-radius:10px;overflow:hidden;border:1px solid #e2e8f0;background:#f8fafc;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+        .thumb-box img{width:100%;height:100%;object-fit:cover;display:block}
+        .thumb-fallback{font-size:12px;color:#64748b;font-weight:600}
 
         .toast{position:fixed;right:20px;bottom:20px;background:#10b981;color:#fff;padding:12px 16px;border-radius:8px;box-shadow:0 10px 30px rgba(2,6,23,.2);z-index:200;display:none}
         .toast.show{display:block}
@@ -132,10 +150,17 @@
             table tbody td { display: block; padding: 6px 0; border: none; }
             table tbody td:first-child { font-weight:700; margin-bottom:6px }
             table tbody td:nth-child(2)::before { content: 'Type / Brand / Model / Year: '; font-weight:700; color:var(--muted); }
-            table tbody td:nth-child(3)::before { content: 'Class: '; font-weight:700; color:var(--muted); }
+            table tbody td:nth-child(3)::before { content: 'Status: '; font-weight:700; color:var(--muted); }
             table tbody td:nth-child(4)::before { content: 'Maintenance: '; font-weight:700; color:var(--muted); }
             table tbody td:nth-child(5)::before { content: ''; }
             table tbody td::before { display:inline-block; margin-right:6px }
+            .name-main{font-size:18px}
+            .plate-sub{font-size:14px}
+            .thumb-box{width:86px;height:56px}
+            .table-tools{align-items:stretch}
+            .tool-grid{grid-template-columns:1fr;min-width:100%}
+            .page-actions{width:100%}
+            .page-actions .btn{flex:1}
         }
     </style>
     @include('partials._bg-preload')
@@ -195,9 +220,9 @@
         <main class="main">
             <div class="panel">
                 <div class="top-section">
-                    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:4px">
-                        <h2 style="margin:0">Vehicle Monitoring</h2>
-                        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+                    <div class="page-head">
+                        <h2 style="margin:0">Vehicle Management</h2>
+                        <div class="page-actions">
                             <a href="/vehicle/maintenance" class="btn quick-maintenance" title="Go to maintenance page">Maintenance</a>
                             <a href="/vehicle/monitoring" class="btn quick-monitoring" title="Go to monitoring page">Monitoring</a>
                             <a href="/vehicle/add" class="btn add-vehicle"><span aria-hidden="true">+</span><span>Add Vehicle</span></a>
@@ -209,26 +234,97 @@
                     <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px">
                         <h3 style="margin:0">Available Vehicle List</h3>
                     </div>
+                        <div class="table-tools">
+                            <div class="tool-grid">
+                                <div class="field">
+                                    <label for="filter-name">Search Name</label>
+                                    <input id="filter-name" type="text" placeholder="Type vehicle name">
+                                </div>
+                                <div class="field">
+                                    <label for="filter-status">Status</label>
+                                    <select id="filter-status">
+                                        <option value="all">All</option>
+                                        <option value="serviceable">Serviceable</option>
+                                        <option value="for maintenance">For Maintenance</option>
+                                        <option value="not available">Not Available</option>
+                                    </select>
+                                </div>
+                                <div class="field">
+                                    <label for="filter-type">Vehicle Type</label>
+                                    <select id="filter-type">
+                                        <option value="all">All</option>
+                                        @php
+                                            $vehicleTypes = $vehicles->pluck('type')->filter()->unique()->sort()->values();
+                                        @endphp
+                                        @foreach($vehicleTypes as $type)
+                                            <option value="{{ strtolower($type) }}">{{ $type }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div class="field">
+                                    <label for="filter-photo">Photo</label>
+                                    <select id="filter-photo">
+                                        <option value="all">All</option>
+                                        <option value="has">Has photo</option>
+                                        <option value="none">No photo</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <button id="clear-vehicle-filters" type="button" class="btn">Clear Filters</button>
+                        </div>
                         <div style="overflow:auto">
                         <table>
                             <thead>
                                 <tr>
-                                    <th>Name</th>
+                                    <th class="name-col-header"><button type="button" class="sort-btn" data-sort="name">Name <span class="sort-arrow">↕</span></button></th>
                                     <th>Type / Brand / Model / Year</th>
-                                    <th>Class</th>
-                                    <th>Maintenance</th>
+                                    <th><button type="button" class="sort-btn" data-sort="status">Status <span class="sort-arrow">↕</span></button></th>
+                                    <th><button type="button" class="sort-btn" data-sort="maintenance">Maintenance <span class="sort-arrow">↕</span></button></th>
                                     <th></th>
                                 </tr>
                             </thead>
                             <tbody>
                                 @forelse($vehicles as $vehicle)
-                                    <tr class="vehicle-row" onclick="openVehicleQuickView(this)" data-vehicle='{{ json_encode(["id" => $vehicle->id, "name" => $vehicle->name, "plate_number" => $vehicle->plate_number, "image_path" => $vehicle->image_path, "orcr_image_path" => $vehicle->orcr_image_path, "type" => $vehicle->type, "brand" => $vehicle->brand, "model" => $vehicle->model, "year" => $vehicle->year, "is_firetruck" => $vehicle->is_firetruck, "status" => $vehicle->status, "maintenance_count" => $vehicle->maintenance_count ?? 0]) }}'>
+                                    @php
+                                        $maintenanceCount = (int) ($vehicle->maintenance_count ?? 0);
+                                        $statusRaw = strtolower((string) ($vehicle->status ?? 'active'));
+                                        $isNotAvailable = in_array($statusRaw, ['inactive', 'not_available', 'not available', 'unavailable'], true);
+                                        if ($maintenanceCount > 0) {
+                                            $displayStatus = 'For Maintenance';
+                                            $statusBadgeClass = 'needed';
+                                        } elseif ($isNotAvailable) {
+                                            $displayStatus = 'Not Available';
+                                            $statusBadgeClass = 'inactive';
+                                        } else {
+                                            $displayStatus = 'Serviceable';
+                                            $statusBadgeClass = 'active';
+                                        }
+                                    @endphp
+                                    <tr class="vehicle-row"
+                                        onclick="openVehicleQuickView(this)"
+                                        data-name="{{ strtolower((string) $vehicle->name) }}"
+                                        data-type="{{ strtolower((string) ($vehicle->type ?? '')) }}"
+                                        data-status-label="{{ strtolower($displayStatus) }}"
+                                        data-has-image="{{ $vehicle->image_path ? '1' : '0' }}"
+                                        data-maintenance="{{ (int) ($vehicle->maintenance_count ?? 0) }}"
+                                        data-vehicle='{{ json_encode(["id" => $vehicle->id, "name" => $vehicle->name, "plate_number" => $vehicle->plate_number, "image_path" => $vehicle->image_path, "orcr_image_path" => $vehicle->orcr_image_path, "type" => $vehicle->type, "brand" => $vehicle->brand, "model" => $vehicle->model, "year" => $vehicle->year, "is_firetruck" => $vehicle->is_firetruck, "status" => $vehicle->status, "maintenance_count" => $vehicle->maintenance_count ?? 0]) }}'>
                                         <td>
-                                            <div style="font-weight:700">{{ $vehicle->name }}</div>
-                                            <div class="muted">{{ $vehicle->plate_number ?: 'No plate' }}</div>
+                                            <div class="name-cell">
+                                                <div class="thumb-box">
+                                                    @if($vehicle->image_path)
+                                                        <img src="{{ asset('storage/' . $vehicle->image_path) }}" alt="{{ $vehicle->name }} image" loading="lazy">
+                                                    @else
+                                                        <span class="thumb-fallback">No image</span>
+                                                    @endif
+                                                </div>
+                                                <div>
+                                                    <div class="name-main">{{ $vehicle->name }}</div>
+                                                    <div class="plate-sub">{{ $vehicle->plate_number ?: 'No plate' }}</div>
+                                                </div>
+                                            </div>
                                         </td>
-                                        <td>{{ $vehicle->type ?: '—' }} / {{ $vehicle->brand ?: '—' }} / {{ $vehicle->model ?: '—' }} / {{ $vehicle->year ?: '—' }}</td>
-                                        <td><span class="badge {{ $vehicle->is_firetruck ? 'done' : 'active' }}">{{ $vehicle->is_firetruck ? 'Firetruck' : 'Standard' }}</span></td>
+                                        <td class="vehicle-meta">{{ $vehicle->type ?: '—' }} / {{ $vehicle->brand ?: '—' }} / {{ $vehicle->model ?: '—' }} / {{ $vehicle->year ?: '—' }}</td>
+                                        <td><span class="badge {{ $statusBadgeClass }}">{{ $displayStatus }}</span></td>
                                         <td>
                                             <span class="badge active">Total: {{ $vehicle->maintenance_count ?? 0 }}</span>
                                         </td>
@@ -267,7 +363,7 @@
                     <div class="quick-card"><div class="quick-label">Brand</div><div id="quick-brand" class="quick-value">—</div></div>
                     <div class="quick-card"><div class="quick-label">Model</div><div id="quick-model" class="quick-value">—</div></div>
                     <div class="quick-card"><div class="quick-label">Year</div><div id="quick-year" class="quick-value">—</div></div>
-                    <div class="quick-card"><div class="quick-label">Vehicle Class</div><div id="quick-class" class="quick-value">—</div></div>
+                    <div class="quick-card"><div class="quick-label">Status</div><div id="quick-status" class="quick-value">—</div></div>
                     <div class="quick-card"><div class="quick-label">Maintenance</div><div id="quick-maint" class="quick-value">—</div></div>
                 </div>
                 <div class="quick-actions">
@@ -364,6 +460,82 @@
             document.addEventListener('touchstart', closeOnOutside);
         })();
 
+        (function(){
+            const rows = Array.from(document.querySelectorAll('tbody tr.vehicle-row'));
+            const statusFilter = document.getElementById('filter-status');
+            const typeFilter = document.getElementById('filter-type');
+            const photoFilter = document.getElementById('filter-photo');
+            const nameFilter = document.getElementById('filter-name');
+            const clearBtn = document.getElementById('clear-vehicle-filters');
+            const sortButtons = document.querySelectorAll('.sort-btn[data-sort]');
+            let currentSort = { key: '', direction: 'asc' };
+            if(!rows.length || !statusFilter || !typeFilter || !photoFilter || !nameFilter) return;
+
+            function applyFilters(){
+                const statusValue = statusFilter.value;
+                const typeValue = typeFilter.value;
+                const photoValue = photoFilter.value;
+                const nameValue = nameFilter.value.trim().toLowerCase();
+                rows.forEach(function(row){
+                    const rowStatus = (row.dataset.statusLabel || '').toLowerCase();
+                    const rowType = (row.dataset.type || '').toLowerCase();
+                    const rowName = (row.dataset.name || '').toLowerCase();
+                    const hasImage = (row.dataset.hasImage || '0') === '1';
+                    const statusMatch = statusValue === 'all' || rowStatus === statusValue;
+                    const typeMatch = typeValue === 'all' || rowType === typeValue;
+                    const photoMatch = photoValue === 'all' || (photoValue === 'has' ? hasImage : !hasImage);
+                    const nameMatch = !nameValue || rowName.includes(nameValue);
+                    row.style.display = (statusMatch && typeMatch && photoMatch && nameMatch) ? '' : 'none';
+                });
+            }
+
+            function sortRows(key){
+                if(currentSort.key === key){
+                    currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
+                } else {
+                    currentSort.key = key;
+                    currentSort.direction = 'asc';
+                }
+                const multiplier = currentSort.direction === 'asc' ? 1 : -1;
+                rows.sort(function(a, b){
+                    let aVal = '';
+                    let bVal = '';
+                    if(key === 'maintenance'){
+                        aVal = Number(a.dataset.maintenance || 0);
+                        bVal = Number(b.dataset.maintenance || 0);
+                        return (aVal - bVal) * multiplier;
+                    }
+                    if(key === 'status'){
+                        aVal = (a.dataset.statusLabel || '').toLowerCase();
+                        bVal = (b.dataset.statusLabel || '').toLowerCase();
+                    } else {
+                        aVal = (a.dataset.name || '').toLowerCase();
+                        bVal = (b.dataset.name || '').toLowerCase();
+                    }
+                    if(aVal < bVal) return -1 * multiplier;
+                    if(aVal > bVal) return 1 * multiplier;
+                    return 0;
+                });
+                const tbody = rows[0].parentElement;
+                rows.forEach(function(row){ tbody.appendChild(row); });
+            }
+
+            statusFilter.addEventListener('change', applyFilters);
+            typeFilter.addEventListener('change', applyFilters);
+            photoFilter.addEventListener('change', applyFilters);
+            nameFilter.addEventListener('input', applyFilters);
+            clearBtn && clearBtn.addEventListener('click', function(){
+                statusFilter.value = 'all';
+                typeFilter.value = 'all';
+                photoFilter.value = 'all';
+                nameFilter.value = '';
+                applyFilters();
+            });
+            sortButtons.forEach(function(btn){
+                btn.addEventListener('click', function(){ sortRows(btn.dataset.sort); });
+            });
+        })();
+
         function openVehicleQuickView(row){
             let data = {};
             try{ data = JSON.parse(row.dataset.vehicle || '{}'); }catch(e){ data = {}; }
@@ -374,7 +546,13 @@
             document.getElementById('quick-brand').textContent = data.brand || '—';
             document.getElementById('quick-model').textContent = data.model || '—';
             document.getElementById('quick-year').textContent = data.year || '—';
-            document.getElementById('quick-class').textContent = data.is_firetruck ? 'Firetruck' : 'Standard';
+            const maintenanceCount = Number(data.maintenance_count || 0);
+            const rawStatus = String(data.status || 'active').toLowerCase();
+            const isNotAvailable = ['inactive','not_available','not available','unavailable'].includes(rawStatus);
+            const quickStatus = maintenanceCount > 0
+                ? 'For Maintenance'
+                : (isNotAvailable ? 'Not Available' : 'Serviceable');
+            document.getElementById('quick-status').textContent = quickStatus;
             document.getElementById('quick-maint').textContent = 'Total entries: ' + (data.maintenance_count || 0);
 
             const image = document.getElementById('quick-image');

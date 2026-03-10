@@ -253,6 +253,7 @@ Route::post('/vehicle', function (Request $request) {
         'brand' => 'nullable|string|max:255',
         'model' => 'nullable|string|max:255',
         'year' => 'nullable|integer|min:1900|max:2100',
+        'status' => 'nullable|in:active,inactive',
         'is_firetruck' => 'nullable|boolean',
         'notes' => 'nullable|string|max:500',
     ]);
@@ -272,7 +273,7 @@ Route::post('/vehicle', function (Request $request) {
         'model' => $data['model'] ?? null,
         'year' => $data['year'] ?? null,
         'is_firetruck' => $request->boolean('is_firetruck'),
-        'status' => 'active',
+        'status' => $data['status'] ?? 'active',
         'notes' => $data['notes'] ?? null,
     ]);
 
@@ -294,6 +295,7 @@ Route::post('/vehicle/{vehicle}/update', function (Request $request, Vehicle $ve
         'brand' => 'nullable|string|max:255',
         'model' => 'nullable|string|max:255',
         'year' => 'nullable|integer|min:1900|max:2100',
+        'status' => 'nullable|in:active,inactive',
         'is_firetruck' => 'nullable|boolean',
         'notes' => 'nullable|string|max:500',
     ]);
@@ -318,6 +320,7 @@ Route::post('/vehicle/{vehicle}/update', function (Request $request, Vehicle $ve
     $vehicle->brand = $data['brand'] ?? null;
     $vehicle->model = $data['model'] ?? null;
     $vehicle->year = $data['year'] ?? null;
+    $vehicle->status = $data['status'] ?? 'active';
     $vehicle->is_firetruck = $request->boolean('is_firetruck');
     $vehicle->notes = $data['notes'] ?? null;
     $vehicle->save();

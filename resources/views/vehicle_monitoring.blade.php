@@ -45,7 +45,7 @@
         .sidebar{transform:translateX(-110%);transition:transform .22s ease,width .22s ease}
         .sidebar.open{transform:translateX(0);z-index:90}
         .sidebar.collapsed{width:64px;transform:translateX(0)}
-        .panel{background:var(--panel);padding:14px;border-radius:12px;box-shadow:0 6px 20px rgba(15,23,42,0.04);width:calc(100% - 24px);margin:10px auto}
+        .panel{background:var(--panel);padding:14px;border-radius:12px;box-shadow:0 6px 20px rgba(15,23,42,0.04);width:min(1240px,calc(100% - 24px));margin:10px auto}
         .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
         .field{display:flex;flex-direction:column;gap:6px}
         .field.full{grid-column:1/-1}
@@ -57,14 +57,29 @@
         .btn.danger{background:#ef4444;border:none;color:#fff}
         table{width:100%;border-collapse:separate;border-spacing:0;font-size:14px}
         th,td{padding:10px 8px;border-bottom:1px solid #edf2f7;text-align:left;vertical-align:top}
-        th{font-size:12px;text-transform:uppercase;letter-spacing:.3px;color:var(--muted)}
+        th{font-size:12px;text-transform:uppercase;letter-spacing:.3px;color:var(--muted);font-weight:700}
         .muted{color:var(--muted);font-size:13px}
         .actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+        .page-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+        .page-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+        .page-actions .btn{min-height:38px;font-size:14px;font-weight:600}
+        .row-text{display:block;max-width:100%;word-break:break-word}
+        .row-text .row-full{display:none}
+        .row-text.expanded .row-short{display:none}
+        .row-text.expanded .row-full{display:inline}
+        .view-more-btn{border:none;background:transparent;color:var(--accent);cursor:pointer;font-size:12px;font-weight:600;padding:0;margin-left:6px;text-decoration:underline}
         .inline-edit{margin-top:8px;display:none}
         .inline-edit.show{display:block}
         .counter{font-size:12px;color:var(--muted);text-align:right;margin-top:6px}
-        .report-floating{position:fixed;right:20px;bottom:20px;z-index:190;display:inline-flex;align-items:center;padding:10px 18px;border-radius:999px;background:#eef2ff;color:#1e3a8a;font-size:20px;font-weight:700;box-shadow:0 8px 20px rgba(2,6,23,0.16)}
+        .report-floating{position:fixed;right:20px;bottom:20px;z-index:190;display:inline-flex;align-items:center;padding:10px 16px;border-radius:999px;background:#eef2ff;color:#1e3a8a;font-size:14px;font-weight:700;box-shadow:0 8px 20px rgba(2,6,23,0.16)}
         .edited{font-size:11px;color:#7c3aed;margin-top:4px}
+        .confirm-backdrop{position:fixed;inset:0;background:rgba(2,6,23,.45);display:none;z-index:230}
+        .confirm-backdrop.show{display:block}
+        .confirm-modal{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);width:min(420px,92vw);background:#fff;border-radius:12px;box-shadow:0 24px 60px rgba(2,6,23,.28);display:none;z-index:240;padding:16px}
+        .confirm-modal.show{display:block}
+        .confirm-title{font-weight:700;font-size:16px;margin:0 0 8px 0}
+        .confirm-text{color:var(--muted);font-size:14px;line-height:1.45;margin:0}
+        .confirm-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:14px}
         .process{margin:0;padding-left:18px;color:#334155}
         .process li{margin-bottom:4px}
         .toast{position:fixed;right:20px;bottom:90px;background:#10b981;color:#fff;padding:12px 16px;border-radius:8px;box-shadow:0 10px 30px rgba(2,6,23,.2);z-index:200;display:none}
@@ -93,6 +108,8 @@
             .sidebar{position:fixed;left:0;top:0;bottom:0;z-index:80;transform:translateX(-110%);height:100vh}
             .sidebar.open{transform:translateX(0)}
             .main{padding:16px}
+            .page-actions{width:100%}
+            .page-actions .btn{flex:1}
         }
         /* Mobile: stack monitoring table rows into cards */
         @media (max-width:900px) {
@@ -122,7 +139,7 @@
                 <div style="display:flex;flex-direction:column">
                     <a href="/dashboard" class="brand-title" style="text-decoration:none;color:inherit;display:flex;align-items:center;gap:6px">
                         <img src="/images/favi.png" alt="Logo" width="40" height="40" style="display:inline-block" />
-                        <span style="font-weight:700">San Juan CDRRMD Vehicle Monitoring</span>
+                        <span style="font-weight:700">San Juan CDRMMD Vehicle Monitoring</span>
                     </a>
                     <div class="brand-subtitle">Daily/Activity reports per vehicle</div>
                 </div>
@@ -162,10 +179,11 @@
 
         <main class="main">
             <div class="panel">
-                <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
+                <div class="page-head">
                     <h2 style="margin:0">Vehicle Monitoring</h2>
-                    <div class="actions">
+                    <div class="page-actions">
                         <a href="/vehicle/monitoring/add{{ $selectedVehicle ? '?vehicle=' . $selectedVehicle->id : '' }}" class="btn primary">Add Monitoring Report</a>
+                        <a href="/vehicle" class="btn">Back to Vehicles</a>
                     </div>
                 </div>
                 <div class="muted" style="margin-top:6px">Track all completed activities/reports for each specific vehicle with exact date and time.</div>
@@ -203,7 +221,17 @@
                                     <div class="muted">{{ $selectedVehicle->plate_number ?? 'No plate' }}</div>
                                 </td>
                                 <td>
-                                    <div id="report-text-{{ $report->id }}">{{ $report->report }}</div>
+                                    @php
+                                        $reportText = (string) ($report->report ?? '—');
+                                        $reportIsLong = \Illuminate\Support\Str::length($reportText) > 120;
+                                    @endphp
+                                    <div id="report-text-{{ $report->id }}" class="row-text">
+                                        <span class="row-short">{{ $reportIsLong ? \Illuminate\Support\Str::limit($reportText, 120) : $reportText }}</span>
+                                        @if($reportIsLong)
+                                            <span class="row-full">{{ $reportText }}</span>
+                                            <button type="button" class="view-more-btn" onclick="toggleReportText(this)">View more</button>
+                                        @endif
+                                    </div>
                                     @if($report->updated_at && $report->created_at && $report->updated_at->gt($report->created_at))
                                         <div class="edited">Edited: {{ $report->updated_at->format('Y-m-d H:i') }}</div>
                                     @endif
@@ -219,7 +247,7 @@
                                 <td>
                                     <div class="actions">
                                         <button class="btn warn" type="button" onclick="toggleEdit({{ $report->id }}, true)">Edit</button>
-                                        <form method="POST" action="/vehicle/monitoring/{{ $report->id }}/delete" onsubmit="return confirm('Delete this monitoring report?')">
+                                        <form class="js-delete-monitoring-form" method="POST" action="/vehicle/monitoring/{{ $report->id }}/delete">
                                             @csrf
                                             <button class="btn danger" type="submit">Delete</button>
                                         </form>
@@ -239,6 +267,16 @@
     @if(session('success'))
         <div id="success-toast" class="toast">{{ session('success') }}</div>
     @endif
+
+    <div id="delete-monitoring-confirm-backdrop" class="confirm-backdrop"></div>
+    <div id="delete-monitoring-confirm-modal" class="confirm-modal" role="dialog" aria-modal="true" aria-labelledby="delete-monitoring-confirm-title">
+        <h4 id="delete-monitoring-confirm-title" class="confirm-title">Confirm Deletion</h4>
+        <p class="confirm-text">Are you sure you want to delete this monitoring report? This action cannot be undone.</p>
+        <div class="confirm-actions">
+            <button id="delete-monitoring-confirm-no" type="button" class="btn">No</button>
+            <button id="delete-monitoring-confirm-yes" type="button" class="btn danger">Yes, Delete</button>
+        </div>
+    </div>
 
     <div class="report-floating">Reports: {{ $reports->count() }}</div>
 
@@ -318,6 +356,57 @@
             if(!form) return;
             form.classList.toggle('show', !!show);
         }
+
+        function toggleReportText(button){
+            const wrapper = button.closest('.row-text');
+            if(!wrapper) return;
+            const expanded = wrapper.classList.toggle('expanded');
+            button.textContent = expanded ? 'View less' : 'View more';
+        }
+
+        (function(){
+            const forms = document.querySelectorAll('.js-delete-monitoring-form');
+            const backdrop = document.getElementById('delete-monitoring-confirm-backdrop');
+            const modal = document.getElementById('delete-monitoring-confirm-modal');
+            const yesBtn = document.getElementById('delete-monitoring-confirm-yes');
+            const noBtn = document.getElementById('delete-monitoring-confirm-no');
+            let targetForm = null;
+            if(!forms.length || !backdrop || !modal || !yesBtn || !noBtn) return;
+
+            function openConfirm(form){
+                targetForm = form;
+                backdrop.classList.add('show');
+                modal.classList.add('show');
+                document.body.style.overflow = 'hidden';
+            }
+
+            function closeConfirm(){
+                backdrop.classList.remove('show');
+                modal.classList.remove('show');
+                document.body.style.overflow = '';
+                targetForm = null;
+            }
+
+            forms.forEach(function(form){
+                form.addEventListener('submit', function(e){
+                    if(form.dataset.confirmed === '1') return;
+                    e.preventDefault();
+                    openConfirm(form);
+                });
+            });
+
+            yesBtn.addEventListener('click', function(){
+                if(!targetForm) return closeConfirm();
+                targetForm.dataset.confirmed = '1';
+                targetForm.submit();
+            });
+
+            noBtn.addEventListener('click', closeConfirm);
+            backdrop.addEventListener('click', closeConfirm);
+            document.addEventListener('keydown', function(e){
+                if(e.key === 'Escape' && modal.classList.contains('show')) closeConfirm();
+            });
+        })();
     </script>
 
     <script>
