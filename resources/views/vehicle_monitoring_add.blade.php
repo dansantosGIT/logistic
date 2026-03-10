@@ -50,6 +50,9 @@
         textarea{min-height:140px;resize:vertical}
         .btn{padding:8px 12px;border-radius:8px;border:1px solid #e6e9ef;background:#fff;cursor:pointer;text-decoration:none;color:#0f172a}
         .btn.primary{background:#2563eb;border:none;color:#fff}
+        .page-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+        .page-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+        .page-actions .btn{min-height:38px;font-size:14px;font-weight:600}
         .muted{color:var(--muted);font-size:13px}
         .process{margin:0;padding-left:18px;color:#334155}
         .process li{margin-bottom:4px}
@@ -76,7 +79,7 @@
         .nav-overlay{position:fixed;left:0;right:0;top:var(--topbar-height);bottom:0;background:rgba(2,6,23,0.45);opacity:0;visibility:hidden;transition:opacity .18s ease;z-index:80}
         .nav-overlay.show{opacity:1;visibility:visible}
         @media(max-width:980px){.form-grid{grid-template-columns:1fr}}
-        @media(max-width:900px){.sidebar{position:fixed;left:0;top:0;bottom:0;z-index:80;transform:translateX(-110%);height:100vh}.sidebar.open{transform:translateX(0)}.main{padding:16px}}
+        @media(max-width:900px){.sidebar{position:fixed;left:0;top:0;bottom:0;z-index:80;transform:translateX(-110%);height:100vh}.sidebar.open{transform:translateX(0)}.main{padding:16px}.page-actions{width:100%}.page-actions .btn{flex:1}}
     </style>
     @include('partials._bg-preload')
     @include('partials._formatters')
@@ -132,9 +135,12 @@
 
         <main class="main">
             <div class="panel">
-                <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
+                <div class="page-head">
                     <h2 style="margin:0">Add Monitoring Report</h2>
-                    <a href="/vehicle/monitoring{{ $selectedVehicle ? '?vehicle=' . $selectedVehicle->id : '' }}" class="btn">View Monitoring History</a>
+                    <div class="page-actions">
+                        <a href="/vehicle/monitoring{{ $selectedVehicle ? '?vehicle=' . $selectedVehicle->id : '' }}" class="btn">View Monitoring History</a>
+                        <a href="/vehicle" class="btn">Back to Vehicles</a>
+                    </div>
                 </div>
                 <ol class="process" style="margin-top:10px">
                     <li>Select the target vehicle.</li>
@@ -163,7 +169,7 @@
                             <div id="report-counter" class="counter">0 / 2000</div>
                         </div>
                         <div class="field full">
-                            <button type="submit" class="btn primary" {{ empty($vehicles) ? 'disabled' : '' }}>Save Report</button>
+                            <button type="submit" class="btn primary" style="min-height:40px;font-weight:600" {{ empty($vehicles) ? 'disabled' : '' }}>Save Report</button>
                         </div>
                     </div>
                 </form>
