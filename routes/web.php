@@ -175,7 +175,9 @@ Route::get('/vehicle', function (Request $request) {
     $selectedVehicleId = (int) $request->query('vehicle', 0);
 
     $vehicles = Vehicle::where('status', 'active')
-        ->withCount('maintenances as maintenance_count')
+        ->withCount(['maintenances as maintenance_count' => function ($query) {
+            $query->where('status', 'needed');
+        }])
         ->orderBy('name')
         ->get();
 
@@ -202,16 +204,37 @@ Route::get('/vehicle/{vehicle}/edit', function (Vehicle $vehicle) {
     return view('vehicle_edit', compact('vehicle'));
 })->middleware('auth');
 
-Route::get('/vehicle/maintenance', function () {
+Route::get('/vehicle/maintenance', function (Request $request) {
+    $selectedVehicleId = (int) $request->query('vehicle', 0);
+    $highlightedMaintenanceId = (int) $request->query('maintenance', 0);
+
+    $vehicles = Vehicle::where('status', 'active')->orderBy('name')->get(['id', 'name', 'plate_number']);
+    $selectedVehicle = $selectedVehicleId > 0
+        ? $vehicles->firstWhere('id', $selectedVehicleId)
+        : null;
+
     $maintenances = VehicleMaintenance::with('vehicle')
         ->whereHas('vehicle', function ($q) {
             $q->where('status', 'active');
-        })
+        });
+
+    if ($selectedVehicleId > 0) {
+        $maintenances->where('vehicle_id', $selectedVehicleId);
+    }
+
+    $maintenances = $maintenances
         ->orderBy('due_date')
         ->orderByDesc('created_at')
         ->get();
 
-    return view('vehicle_maintenance', compact('maintenances'));
+    $user = auth()->user();
+    $isAdmin = $user && (
+        strtolower((string) ($user->role ?? '')) === 'admin'
+        || (($user->id ?? 0) === 1)
+        || strcasecmp((string) ($user->name ?? ''), 'admin') === 0
+    );
+
+    return view('vehicle_maintenance', compact('maintenances', 'selectedVehicle', 'highlightedMaintenanceId', 'isAdmin'));
 })->middleware('auth');
 
 Route::get('/vehicle/maintenance/add', function (Request $request) {
@@ -229,7 +252,7 @@ Route::get('/vehicle/monitoring', function (Request $request) {
     $vehicles = Vehicle::where('status', 'active')->orderBy('name')->get();
     $selectedVehicle = $selectedVehicleId > 0
         ? $vehicles->firstWhere('id', $selectedVehicleId)
-        : $vehicles->first();
+        : null;
 
     $reports = collect();
     if ($selectedVehicle) {
@@ -420,20 +443,9 @@ Route::post('/vehicle/{vehicle}/maintenance', function (Request $request, Vehicl
         'vehicle_id' => $vehicle->id,
         'task' => $data['task'],
         'due_date' => $data['due_date'] ?? null,
+        'status' => 'pending',
         'evidence_image_path' => $evidenceImagePath,
         'notes' => $data['notes'] ?? null,
-    ]);
-
-    $autoReportParts = [
-        'Maintenance reported: ' . $maintenance->task,
-        'Due: ' . ($maintenance->due_date ? $maintenance->due_date->format('Y-m-d') : 'No due date'),
-        'Notes: ' . ($maintenance->notes ?: 'None'),
-        'Photo: ' . ($maintenance->evidence_image_path ? 'Uploaded' : 'None'),
-    ];
-
-    VehicleMonitoringReport::create([
-        'vehicle_id' => $vehicle->id,
-        'report' => implode("\n", $autoReportParts),
     ]);
 
     return redirect('/vehicle/maintenance?vehicle=' . $vehicle->id)->with('success', 'Maintenance entry saved.');
@@ -461,27 +473,76 @@ Route::post('/vehicle/maintenance', function (Request $request) {
         'vehicle_id' => $vehicle->id,
         'task' => $data['task'],
         'due_date' => $data['due_date'] ?? null,
+        'status' => 'pending',
         'evidence_image_path' => $evidenceImagePath,
         'notes' => $data['notes'] ?? null,
-    ]);
-
-    $autoReportParts = [
-        'Maintenance reported: ' . $maintenance->task,
-        'Due: ' . ($maintenance->due_date ? $maintenance->due_date->format('Y-m-d') : 'No due date'),
-        'Notes: ' . ($maintenance->notes ?: 'None'),
-        'Photo: ' . ($maintenance->evidence_image_path ? 'Uploaded' : 'None'),
-    ];
-
-    VehicleMonitoringReport::create([
-        'vehicle_id' => $vehicle->id,
-        'report' => implode("\n", $autoReportParts),
     ]);
 
     return redirect('/vehicle/maintenance?vehicle=' . $vehicle->id)->with('success', 'Maintenance entry saved.');
 })->middleware('auth');
 
+Route::post('/vehicle/{vehicle}/maintenance/{maintenance}/approve', function (Vehicle $vehicle, VehicleMaintenance $maintenance) {
+    abort_if($maintenance->vehicle_id !== $vehicle->id, 404);
+
+    $user = auth()->user();
+    $isAdmin = $user && (
+        strtolower((string) ($user->role ?? '')) === 'admin'
+        || (($user->id ?? 0) === 1)
+        || strcasecmp((string) ($user->name ?? ''), 'admin') === 0
+    );
+    abort_unless($isAdmin, 403);
+
+    if ($maintenance->status === 'pending') {
+        $maintenance->status = 'needed';
+        $maintenance->reviewed_at = $maintenance->reviewed_at ?? now();
+        $maintenance->save();
+
+        $autoReportParts = [
+            'Maintenance approved: ' . $maintenance->task,
+            'Due: ' . ($maintenance->due_date ? $maintenance->due_date->format('Y-m-d') : 'No due date'),
+            'Notes: ' . ($maintenance->notes ?: 'None'),
+            'Photo: ' . ($maintenance->evidence_image_path ? 'Uploaded' : 'None'),
+        ];
+
+        VehicleMonitoringReport::create([
+            'vehicle_id' => $vehicle->id,
+            'report' => implode("\n", $autoReportParts),
+        ]);
+    }
+
+    return redirect('/vehicle/maintenance?vehicle=' . $vehicle->id . '&maintenance=' . $maintenance->id)->with('success', 'Maintenance request approved.');
+})->middleware('auth');
+
+Route::post('/vehicle/{vehicle}/maintenance/{maintenance}/deny', function (Vehicle $vehicle, VehicleMaintenance $maintenance) {
+    abort_if($maintenance->vehicle_id !== $vehicle->id, 404);
+
+    $user = auth()->user();
+    $isAdmin = $user && (
+        strtolower((string) ($user->role ?? '')) === 'admin'
+        || (($user->id ?? 0) === 1)
+        || strcasecmp((string) ($user->name ?? ''), 'admin') === 0
+    );
+    abort_unless($isAdmin, 403);
+
+    if ($maintenance->status === 'pending') {
+        $maintenance->status = 'denied';
+        $maintenance->reviewed_at = $maintenance->reviewed_at ?? now();
+        $maintenance->save();
+    }
+
+    return redirect('/vehicle/maintenance?vehicle=' . $vehicle->id . '&maintenance=' . $maintenance->id)->with('success', 'Maintenance request denied.');
+})->middleware('auth');
+
 Route::post('/vehicle/{vehicle}/maintenance/{maintenance}/delete', function (Vehicle $vehicle, VehicleMaintenance $maintenance) {
     abort_if($maintenance->vehicle_id !== $vehicle->id, 404);
+
+    $user = auth()->user();
+    $isAdmin = $user && (
+        strtolower((string) ($user->role ?? '')) === 'admin'
+        || (($user->id ?? 0) === 1)
+        || strcasecmp((string) ($user->name ?? ''), 'admin') === 0
+    );
+    abort_unless($isAdmin, 403);
 
     $maintenance->delete();
 
@@ -490,6 +551,14 @@ Route::post('/vehicle/{vehicle}/maintenance/{maintenance}/delete', function (Veh
 
 Route::post('/vehicle/{vehicle}/maintenance/{maintenance}/reviewed', function (Vehicle $vehicle, VehicleMaintenance $maintenance) {
     abort_if($maintenance->vehicle_id !== $vehicle->id, 404);
+
+    $user = auth()->user();
+    $isAdmin = $user && (
+        strtolower((string) ($user->role ?? '')) === 'admin'
+        || (($user->id ?? 0) === 1)
+        || strcasecmp((string) ($user->name ?? ''), 'admin') === 0
+    );
+    abort_unless($isAdmin, 403);
 
     if (!$maintenance->reviewed_at) {
         $maintenance->reviewed_at = now();
@@ -502,6 +571,14 @@ Route::post('/vehicle/{vehicle}/maintenance/{maintenance}/reviewed', function (V
 Route::post('/vehicle/{vehicle}/maintenance/{maintenance}/checked', function (Vehicle $vehicle, VehicleMaintenance $maintenance) {
     abort_if($maintenance->vehicle_id !== $vehicle->id, 404);
 
+    $user = auth()->user();
+    $isAdmin = $user && (
+        strtolower((string) ($user->role ?? '')) === 'admin'
+        || (($user->id ?? 0) === 1)
+        || strcasecmp((string) ($user->name ?? ''), 'admin') === 0
+    );
+    abort_unless($isAdmin, 403);
+
     if (!$maintenance->checked_at) {
         $maintenance->checked_at = now();
         $maintenance->save();
@@ -512,6 +589,14 @@ Route::post('/vehicle/{vehicle}/maintenance/{maintenance}/checked', function (Ve
 
 Route::post('/vehicle/{vehicle}/maintenance/{maintenance}/updated', function (Vehicle $vehicle, VehicleMaintenance $maintenance) {
     abort_if($maintenance->vehicle_id !== $vehicle->id, 404);
+
+    $user = auth()->user();
+    $isAdmin = $user && (
+        strtolower((string) ($user->role ?? '')) === 'admin'
+        || (($user->id ?? 0) === 1)
+        || strcasecmp((string) ($user->name ?? ''), 'admin') === 0
+    );
+    abort_unless($isAdmin, 403);
 
     if (!$maintenance->updated_marker_at) {
         $maintenance->updated_marker_at = now();
@@ -799,6 +884,7 @@ Route::get('/notifications/requests', function (Request $request) {
     $maintenanceItems = collect();
     if ($isAdmin) {
         $maintenanceItems = VehicleMaintenance::with('vehicle')
+            ->where('status', 'pending')
             ->orderBy('created_at', 'desc')
             ->limit(8)
             ->get()
@@ -807,14 +893,14 @@ Route::get('/notifications/requests', function (Request $request) {
                 $plate = $m->vehicle->plate_number ?? 'No plate';
                 return [
                     'id' => null,
-                    'item_name' => 'Maintenance: ' . $vehicleName,
+                    'item_name' => 'Maintenance Request: ' . $vehicleName,
                     'requester' => 'Vehicle Module',
-                    'subtitle' => 'New maintenance report · ' . $plate,
+                    'subtitle' => 'Pending review · ' . $plate,
                     'department' => null,
-                    'status' => 'posted',
+                    'status' => 'pending',
                     'created_at' => $m->created_at ? $m->created_at->toIso8601String() : now()->toIso8601String(),
                     'actionable' => false,
-                    'url' => '/vehicle/maintenance?vehicle=' . $m->vehicle_id,
+                    'url' => '/vehicle/maintenance?vehicle=' . $m->vehicle_id . '&maintenance=' . $m->id,
                 ];
             });
     }

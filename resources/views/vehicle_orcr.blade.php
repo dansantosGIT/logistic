@@ -9,51 +9,73 @@
     <meta name="theme-color" content="#0b1220">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <style>
-        :root{--bg:#f6f8fb;--panel:#ffffff;--accent:#2563eb;--accent-2:#7c3aed;--muted:#6b7280;--topbar-height:72px}
+        :root{--bg:#f6f8fb;--panel:#ffffff;--accent:#2563eb;--accent-2:#7c3aed;--muted:#6b7280;--muted-2:#94a3b8;--topbar-height:72px}
         *{box-sizing:border-box}
         body{margin:0;font-family:Inter,system-ui,Arial,Helvetica;background:var(--bg);color:#0f172a}
         .bg{position:fixed;inset:0;background-image:url('/images/welcome-bg.jpg');background-size:cover;background-position:center;filter:brightness(0.6) saturate(0.95);z-index:-3}
         .overlay{position:fixed;inset:0;background:linear-gradient(180deg,rgba(2,6,23,0.28),rgba(2,6,23,0.4));z-index:-2}
 
         .topbar{position:fixed;left:0;right:0;top:0;height:72px;background:rgba(255,255,255,0.95);backdrop-filter:saturate(1.05) blur(4px);box-shadow:0 6px 24px rgba(2,6,23,0.08);z-index:60}
-        .topbar-inner{max-width:none;width:100%;margin:0;padding:12px 12px 12px 0;display:flex;justify-content:space-between;align-items:center}
+        .topbar-inner{max-width:none;width:100%;margin:0;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;gap:16px}
         .topbar .brand-title{display:flex;align-items:center;gap:6px;font-weight:700}
         .topbar .brand-subtitle{font-size:12px;color:var(--muted)}
         .burger{display:inline-flex;width:44px;height:44px;border-radius:8px;align-items:center;justify-content:center;background:transparent;border:1px solid transparent;cursor:pointer}
         .burger:hover{background:#eef2ff}
 
         .app{display:flex;min-height:100vh}
-        .sidebar{position:fixed;left:0;top:var(--topbar-height);bottom:0;width:240px;background:var(--panel);border-right:1px solid #e6e9ef;padding:20px;transform:translateX(-110%);transition:transform .22s ease;z-index:90}
+        .sidebar{position:fixed;left:0;top:var(--topbar-height);bottom:0;width:240px;background:var(--panel);border-right:1px solid #e6e9ef;padding:20px;transform:translateX(-110%);transition:width .22s ease,transform .22s ease;z-index:50;height:calc(100vh - var(--topbar-height))}
         .sidebar.open{transform:translateX(0)}
         .brand{font-weight:800;color:var(--accent);margin-bottom:18px;display:flex;align-items:center;gap:10px}
         .nav{display:flex;flex-direction:column;gap:6px;margin-top:6px}
-        .nav a{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:8px;color:#0f172a;text-decoration:none;min-height:44px}
+        .nav a,.nav button.action{display:flex;align-items:center;gap:12px;padding:10px;border-radius:8px;color:#0f172a;text-decoration:none;background:transparent;border:none;cursor:pointer;font-size:14px;min-height:44px}
         .nav a:hover{background:#f1f5f9}
         .nav a.active{background:linear-gradient(90deg,var(--accent),var(--accent-2));color:#fff}
-        .nav a.sub-link{margin-left:26px;min-height:36px;padding:8px 12px;font-size:13px;justify-content:flex-start;text-align:left}
-        .nav .nav-with-toggle{display:flex;align-items:center;gap:6px;padding:10px 12px;border-radius:8px;min-height:44px}
+        .nav a.sub-link{margin-left:26px;min-height:36px;padding:8px 12px;font-size:13px;color:#64748b;justify-content:flex-start;text-align:left}
+        .nav svg{flex-shrink:0}
+        .nav .nav-with-toggle{position:relative;display:flex;align-items:center;border-radius:8px;min-height:44px}
         .nav .nav-with-toggle.active{background:linear-gradient(90deg,var(--accent),var(--accent-2));color:#fff}
         .nav .nav-with-toggle:not(.active):hover{background:#f1f5f9}
-        .nav .nav-with-toggle .vehicle-link{display:flex;align-items:center;gap:12px;flex:1;color:inherit;text-decoration:none}
-        .nav .nav-with-toggle .toggle-btn{width:28px;height:28px;border:1px solid #d1d5db;border-radius:6px;background:#fff;color:#475569;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;font-size:12px;line-height:1}
-        .nav .nav-with-toggle.active .toggle-btn{background:rgba(255,255,255,.18);border-color:rgba(255,255,255,.35);color:#fff}
+        .nav .nav-with-toggle .vehicle-link{display:flex;align-items:center;gap:12px;flex:1;color:inherit;text-decoration:none;padding:10px 36px 10px 12px;border-radius:8px}
+        .nav .nav-with-toggle .toggle-btn{position:absolute;right:8px;top:50%;transform:translateY(-50%);border:none;background:transparent;color:#475569;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;font-size:12px;line-height:1;padding:2px 4px;opacity:1}
+        .nav .nav-with-toggle:hover .toggle-btn{color:#334155}
+        .nav .nav-with-toggle.active .toggle-btn{color:#fff}
 
-        .main{flex:1;padding:16px;margin-top:var(--topbar-height)}
-        .panel{background:var(--panel);padding:18px;border-radius:12px;box-shadow:0 6px 20px rgba(15,23,42,0.04);max-width:980px;margin:10px auto}
+        .main{flex:1;padding:20px;margin-top:var(--topbar-height)}
+        .panel{background:var(--panel);padding:18px 20px;border-radius:12px;box-shadow:0 6px 20px rgba(15,23,42,0.04);width:min(1240px,calc(100% - 24px));max-width:980px;margin:12px auto}
         .muted{color:var(--muted);font-size:13px}
         .btn{padding:8px 12px;border-radius:8px;border:1px solid #e6e9ef;background:#fff;cursor:pointer;text-decoration:none;color:#0f172a;display:inline-flex;align-items:center}
         .btn.primary{background:#2563eb;border:none;color:#fff}
-        .btn.light{background:#f3f4f6;border-color:#d1d5db;color:#374151}
-        .actions{display:flex;gap:10px;flex-wrap:wrap}
-        .upload-form{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between}
+        .btn.light{background:#fff;border:1px solid #d1d5db;color:#334155}
+        .actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+        .page-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap;margin-bottom:10px}
+        .page-actions{display:flex;align-items:center;justify-content:flex-end;gap:10px;flex-wrap:wrap}
+        .page-actions .btn{min-height:40px;font-size:14px;font-weight:600;display:inline-flex;align-items:center;justify-content:center}
+        .section-title{margin:0;line-height:1.15}
+        .upload-form{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:flex-start}
         .upload-form .btn{margin-left:auto}
-        .replace-wrap{display:flex;justify-content:center;margin-top:12px}
-        .replace-form{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:center}
+        .replace-wrap{display:flex;justify-content:flex-start;margin-top:12px}
+        .replace-form{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:flex-start}
+        .replace-form input,.upload-form input{min-width:min(320px,100%)}
         .preview{margin-top:14px}
         .preview img{max-width:100%;width:auto;max-height:520px;border-radius:10px;border:1px solid #e2e8f0;background:#f8fafc;display:block}
         .empty{padding:16px;border:1px dashed #cbd5e1;border-radius:10px;background:#f8fafc;color:#64748b}
         .toast{position:fixed;right:20px;bottom:20px;background:#10b981;color:#fff;padding:12px 16px;border-radius:8px;box-shadow:0 10px 30px rgba(2,6,23,.2);z-index:200;display:none}
         .toast.show{display:block}
+        .notif-bell{position:relative;display:inline-flex;align-items:center;gap:8px;margin-right:12px}
+        .notif-bell button{background:transparent;border:none;cursor:pointer;padding:8px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center}
+        .notif-count{position:absolute;top:-6px;right:-6px;z-index:70;background:#ef4444;color:#fff;font-size:12px;padding:3px 6px;border-radius:999px;min-width:20px;text-align:center;box-shadow:0 6px 18px rgba(2,6,23,0.12)}
+        .notif-dropdown{position:absolute;right:0;top:44px;width:360px;max-height:420px;background:linear-gradient(180deg,#ffffff,#fbfdff);border-radius:12px;box-shadow:0 18px 50px rgba(2,6,23,0.16);overflow:auto;display:none;z-index:120;padding:8px}
+        .notif-dropdown.show{display:block}
+        .notif-dropdown .item{display:flex;align-items:center;gap:12px;padding:10px;border-radius:8px;transition:background .12s ease,transform .12s ease;cursor:pointer}
+        .notif-dropdown .item:hover{background:linear-gradient(90deg,rgba(37,99,235,0.04),rgba(124,58,237,0.02));transform:translateY(-2px)}
+        .notif-dropdown .left{flex:0 0 44px;display:flex;align-items:center;justify-content:center}
+        .notif-dropdown .avatar{width:44px;height:44px;border-radius:50%;display:inline-grid;place-items:center;background:linear-gradient(135deg,var(--accent),var(--accent-2));color:#fff;font-weight:700;box-shadow:0 8px 22px rgba(15,23,42,0.06)}
+        .notif-dropdown .meta{flex:1;min-width:0}
+        .notif-dropdown .meta .title{font-weight:700;color:#0f172a;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center;gap:8px}
+        .notif-dropdown .meta .sub{font-size:12px;color:#94a3b8;margin-top:4px}
+        .notif-dropdown .time{font-size:11px;color:#94a3b8;margin-left:6px}
+        .notif-dropdown .actions{display:flex;gap:6px;flex-shrink:0}
+        .notif-dropdown .empty{padding:12px;color:var(--muted);text-align:center}
     </style>
     @include('partials._bg-preload')
     @include('partials._formatters')
@@ -125,11 +147,15 @@
 
         <main class="main">
             <div class="panel">
-                <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
-                    <h2 style="margin:0">{{ $vehicle->name }} OR/CR</h2>
-                    <a href="/vehicle" class="btn light">Back to Vehicles</a>
+                <div class="page-head">
+                    <div>
+                        <h2 class="section-title">{{ $vehicle->name }} OR/CR</h2>
+                        <p class="muted" style="margin:6px 0 0 0">Plate: {{ $vehicle->plate_number ?: 'No plate' }}</p>
+                    </div>
+                    <div class="page-actions">
+                        <a href="/vehicle" class="btn light">Back to Vehicles</a>
+                    </div>
                 </div>
-                <p class="muted" style="margin:6px 0 14px 0">Plate: {{ $vehicle->plate_number ?: 'No plate' }}</p>
 
                 @if($vehicle->orcr_image_path)
                     <div class="actions" style="margin-bottom:10px">

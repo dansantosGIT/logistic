@@ -16,8 +16,8 @@
         .bg{position:fixed;inset:0;background-image:url('/images/welcome-bg.jpg');background-size:cover;background-position:center;filter:brightness(0.6) saturate(0.95);z-index:-3}
         .overlay{position:fixed;inset:0;background:linear-gradient(180deg,rgba(2,6,23,0.28),rgba(2,6,23,0.4));z-index:-2}
 
-        .topbar{position:fixed;left:0;right:0;top:0;height:72px;background:rgba(255,255,255,0.96);box-shadow:0 6px 24px rgba(2,6,23,0.06);z-index:60}
-        .topbar-inner{max-width:none;width:100%;margin:0;padding:12px 12px 12px 0;display:flex;justify-content:space-between;align-items:center}
+        .topbar{position:fixed;left:0;right:0;top:0;height:72px;background:rgba(255,255,255,0.95);backdrop-filter:saturate(1.05) blur(4px);box-shadow:0 6px 24px rgba(2,6,23,0.08);z-index:60}
+        .topbar-inner{max-width:none;width:100%;margin:0;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;gap:16px}
 
         .app{display:flex;min-height:100vh}
         .sidebar{position:fixed;left:0;top:var(--topbar-height);bottom:0;width:240px;background:var(--panel);border-right:1px solid #e6e9ef;padding:20px;transition:width .22s ease,transform .22s ease;z-index:50;height:calc(100vh - var(--topbar-height))}
@@ -28,31 +28,34 @@
         .nav a svg, .nav button.action svg{display:block;width:18px;height:18px}
         .nav a:hover, .nav button.action:hover{background:#f1f5f9}
         .nav a.active{background:linear-gradient(90deg,var(--accent),var(--accent-2));color:#fff}
-        .nav a.sub-link{margin-left:26px;min-height:36px;padding:8px 12px;font-size:13px;justify-content:flex-start;text-align:left}
+        .nav a.sub-link{margin-left:26px;min-height:36px;padding:8px 12px;font-size:13px;color:#64748b;justify-content:flex-start;text-align:left}
         .nav svg{flex-shrink:0}
-        .nav .nav-with-toggle{display:flex;align-items:center;gap:6px;padding:10px 12px;border-radius:8px;min-height:44px}
+        .nav .nav-with-toggle{position:relative;display:flex;align-items:center;border-radius:8px;min-height:44px}
         .nav .nav-with-toggle.active{background:linear-gradient(90deg,var(--accent),var(--accent-2));color:#fff}
         .nav .nav-with-toggle:not(.active):hover{background:#f1f5f9}
-        .nav .nav-with-toggle .vehicle-link{display:flex;align-items:center;gap:12px;flex:1;color:inherit;text-decoration:none}
-        .nav .nav-with-toggle .toggle-btn{width:28px;height:28px;border:1px solid #d1d5db;border-radius:6px;background:#fff;color:#475569;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;font-size:12px;line-height:1}
-        .nav .nav-with-toggle.active .toggle-btn{background:rgba(255,255,255,.18);border-color:rgba(255,255,255,.35);color:#fff}
+        .nav .nav-with-toggle .vehicle-link{display:flex;align-items:center;gap:12px;flex:1;color:inherit;text-decoration:none;padding:10px 36px 10px 12px;border-radius:8px}
+        .nav .nav-with-toggle .toggle-btn{position:absolute;right:8px;top:50%;transform:translateY(-50%);border:none;background:transparent;color:#475569;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;font-size:12px;line-height:1;padding:2px 4px;opacity:1}
+        .nav .nav-with-toggle:hover .toggle-btn{color:#334155}
+        .nav .nav-with-toggle.active .toggle-btn{color:#fff}
 
-        .main{flex:1;padding:16px;margin-top:var(--topbar-height)}
+        .main{flex:1;padding:20px;margin-top:var(--topbar-height)}
         .sidebar{transform:translateX(-110%);transition:transform .22s ease,width .22s ease}
         .sidebar.open{transform:translateX(0);z-index:90}
         .sidebar.collapsed{width:64px;transform:translateX(0)}
-        .panel{background:var(--panel);padding:14px;border-radius:12px;box-shadow:0 6px 20px rgba(15,23,42,0.04);width:calc(100% - 24px);margin:10px auto;max-width:920px}
-        .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+        .panel{background:var(--panel);padding:18px 20px;border-radius:12px;box-shadow:0 6px 20px rgba(15,23,42,0.04);width:min(1240px,calc(100% - 24px));margin:12px auto;max-width:920px}
+        .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px 16px;align-items:start}
         .field{display:flex;flex-direction:column;gap:6px}
         .field.full{grid-column:1/-1}
+        .field label{font-size:13px;font-weight:600;color:#334155}
         input,textarea{width:100%;padding:10px;border:1px solid #e6e9ef;border-radius:8px;font:inherit}
         textarea{min-height:90px;resize:vertical}
         .btn{padding:8px 12px;border-radius:8px;border:1px solid #e6e9ef;background:#fff;cursor:pointer;text-decoration:none;color:#0f172a}
         .btn.primary{background:#2563eb;border:none;color:#fff}
-        .actions{display:flex;justify-content:flex-end;gap:10px}
-        .page-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px}
-        .page-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
-        .page-actions .btn{min-height:38px;font-size:14px;font-weight:600}
+        .actions{display:flex;justify-content:flex-end;gap:10px;align-items:center;flex-wrap:wrap}
+        .page-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap;margin-bottom:12px}
+        .page-actions{display:flex;align-items:center;justify-content:flex-end;gap:10px;flex-wrap:wrap}
+        .page-actions .btn{min-height:40px;font-size:14px;font-weight:600;display:inline-flex;align-items:center;justify-content:center}
+        .section-title{margin:0;line-height:1.15}
         .sidebar.collapsed .brand .text,
         .sidebar.collapsed .nav a span.label,
         .sidebar.collapsed .nav button.action span.label{display:none}
@@ -141,7 +144,7 @@
         <main class="main">
             <div class="panel">
                 <div class="page-head">
-                    <h2 style="margin:0">{{ $isEdit ? 'Edit Vehicle' : 'Add Vehicle' }}</h2>
+                    <h2 class="section-title">{{ $isEdit ? 'Edit Vehicle' : 'Add Vehicle' }}</h2>
                     <div class="page-actions">
                         <a href="/vehicle" class="btn">Back to Vehicle List</a>
                     </div>

@@ -15,7 +15,7 @@
         .bg{position:fixed;inset:0;background-image:url('/images/welcome-bg.jpg');background-size:cover;background-position:center;filter:brightness(0.6) saturate(0.95);z-index:-3}
         .overlay{position:fixed;inset:0;background:linear-gradient(180deg,rgba(2,6,23,0.28),rgba(2,6,23,0.4));z-index:-2}
         .topbar{position:fixed;left:0;right:0;top:0;height:72px;background:rgba(255,255,255,0.95);backdrop-filter:saturate(1.05) blur(4px);box-shadow:0 6px 24px rgba(2,6,23,0.08);z-index:60}
-        .topbar-inner{max-width:none;width:100%;margin:0;padding:12px 12px 12px 0;display:flex;justify-content:space-between;align-items:center}
+        .topbar-inner{max-width:none;width:100%;margin:0;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;gap:16px}
         .topbar .left-area{display:flex;align-items:center;gap:12px}
         .topbar .branding{display:flex;flex-direction:column}
         .topbar .brand-title{display:flex;align-items:center;gap:6px;font-weight:700}
@@ -24,22 +24,24 @@
         .burger:hover{background:#eef2ff}
         .app{display:flex;min-height:100vh}
         .sidebar{position:fixed;left:0;top:var(--topbar-height);bottom:0;width:240px;background:var(--panel);border-right:1px solid #e6e9ef;padding:20px;transition:width .22s ease,transform .22s ease;z-index:50;height:calc(100vh - var(--topbar-height))}
-        .main{flex:1;padding:16px;margin-top:var(--topbar-height)}
+        .main{flex:1;padding:20px;margin-top:var(--topbar-height)}
         .sidebar{transform:translateX(-110%);transition:transform .22s ease,width .22s ease}
         .sidebar.open{transform:translateX(0);z-index:90}
-        .panel{background:var(--panel);padding:14px;border-radius:12px;box-shadow:0 6px 20px rgba(15,23,42,0.04);width:calc(100% - 24px);margin:10px auto}
-        .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+        .panel{background:var(--panel);padding:18px 20px;border-radius:12px;box-shadow:0 6px 20px rgba(15,23,42,0.04);width:min(1240px,calc(100% - 24px));margin:12px auto}
+        .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px 16px;align-items:start}
         .field{display:flex;flex-direction:column;gap:6px}
         .field.full{grid-column:1/-1}
+        .field label{font-size:13px;font-weight:600;color:#334155}
         input,select,textarea{width:100%;padding:10px;border:1px solid #e6e9ef;border-radius:8px;font:inherit}
         textarea{min-height:90px;resize:vertical}
         .btn{padding:8px 12px;border-radius:8px;border:1px solid #e6e9ef;background:#fff;cursor:pointer;text-decoration:none;color:#0f172a}
         .btn.primary{background:#2563eb;border:none;color:#fff}
         .btn.ghost{background:#fff;border:1px solid #d1d5db;color:#334155}
         .actions{display:flex;gap:8px;flex-wrap:wrap}
-        .page-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
-        .page-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-        .page-actions .btn{min-height:38px;font-size:14px;font-weight:600}
+        .page-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap;margin-bottom:12px}
+        .page-actions{display:flex;align-items:center;justify-content:flex-end;gap:8px;flex-wrap:wrap}
+        .page-actions .btn{min-height:40px;font-size:14px;font-weight:600;display:inline-flex;align-items:center;justify-content:center}
+        .section-title{margin:0;line-height:1.15}
         .muted{color:var(--muted);font-size:13px}
         .photo-upload{border:1px dashed #cbd5e1;border-radius:10px;padding:10px;background:#f8fafc}
         .photo-upload.disabled{opacity:.65}
@@ -71,8 +73,12 @@
         .nav a.sub-link{margin-left:26px;min-height:36px;padding:8px 12px;font-size:13px;justify-content:flex-start;text-align:left}
         .nav .nav-with-toggle{position:relative;display:flex;align-items:center;border-radius:8px;min-height:44px}
         .nav .nav-with-toggle.active{background:linear-gradient(90deg,var(--accent),var(--accent-2));color:#fff}
+        .nav .nav-with-toggle:not(.active):hover{background:#f1f5f9}
         .nav .nav-with-toggle .vehicle-link{display:flex;align-items:center;gap:12px;flex:1;color:inherit;text-decoration:none;padding:10px 36px 10px 12px;border-radius:8px}
         .nav .nav-with-toggle .toggle-btn{position:absolute;right:8px;top:50%;transform:translateY(-50%);border:none;background:transparent;color:#475569;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;font-size:12px;line-height:1;padding:2px 4px;opacity:1}
+        .nav .nav-with-toggle:hover .toggle-btn{color:#334155}
+        .nav .nav-with-toggle.active .toggle-btn{color:#fff}
+        .nav .nav-with-toggle.open .toggle-btn{transform:translateY(-50%) rotate(180deg)}
         .nav-overlay{position:fixed;left:0;right:0;top:var(--topbar-height);bottom:0;background:rgba(2,6,23,0.45);opacity:0;visibility:hidden;transition:opacity .18s ease;z-index:80}
         .nav-overlay.show{opacity:1;visibility:visible}
         @media(max-width:980px){.form-grid{grid-template-columns:1fr}}
@@ -141,7 +147,7 @@
         <main class="main">
             <div class="panel">
                 <div class="page-head">
-                    <h2 style="margin:0">Add Maintenance</h2>
+                    <h2 class="section-title">Add Maintenance</h2>
                     <div class="page-actions">
                         <a href="/vehicle/maintenance" class="btn">View Maintenance List</a>
                         <a href="/vehicle" class="btn">Back to Vehicles</a>
@@ -249,8 +255,12 @@
                 if(e.target.closest('.actions')) return;
                 const item = e.target.closest('.item');
                 if(!item) return;
-                const id = item.dataset.uuid || item.getAttribute('data-uuid') || item.getAttribute('data-id');
-                if(id) window.location.href = '/requests/' + id;
+                const url = item.dataset.url || item.getAttribute('data-url');
+                if(url) window.location.href = url;
+                else {
+                    const id = item.dataset.uuid || item.getAttribute('data-uuid') || item.getAttribute('data-id');
+                    if(id) window.location.href = '/requests/' + id;
+                }
             });
         })();
     </script>

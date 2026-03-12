@@ -7,18 +7,27 @@
         body{margin:0;font-family:Inter,system-ui,Arial,Helvetica;background:var(--bg);color:#0f172a}
         .bg{position:fixed;inset:0;background-image:url('/images/welcome-bg.jpg');background-size:cover;background-position:center;filter:brightness(0.6) saturate(0.95);z-index:-3}
         .overlay{position:fixed;inset:0;background:linear-gradient(180deg,rgba(2,6,23,0.28),rgba(2,6,23,0.4));z-index:-2}
-        .panel{background:var(--panel);padding:14px;border-radius:12px;box-shadow:0 6px 20px rgba(15,23,42,0.04);width:min(1240px,calc(100% - 24px));margin:10px auto}
+        .panel{background:var(--panel);padding:18px 20px;border-radius:12px;box-shadow:0 6px 20px rgba(15,23,42,0.04);width:min(1240px,calc(100% - 24px));margin:12px auto}
         .btn{padding:8px 12px;border-radius:8px;border:1px solid #e6e9ef;background:#fff;cursor:pointer;text-decoration:none;color:#0f172a}
         .btn.primary{background:#2563eb;border:none;color:#fff}
         .btn.success{background:#10b981;border:none;color:#fff}
         .btn.warn{background:#f59e0b;border:none;color:#fff}
         .btn.danger{background:#ef4444;border:none;color:#fff}
         .actions{display:flex;gap:8px;flex-wrap:wrap}
-        .page-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
-        .page-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-        .page-actions .btn{min-height:38px;font-size:14px;font-weight:600}
+        .page-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap;margin-bottom:8px}
+        .page-actions{display:flex;align-items:center;justify-content:flex-end;gap:8px;flex-wrap:wrap}
+        .page-actions .btn{min-height:40px;font-size:14px;font-weight:600;display:inline-flex;align-items:center;justify-content:center}
+        .section-title{margin:0;line-height:1.15}
+        .section-subtitle{margin:0;color:var(--muted);font-size:13px;line-height:1.5}
+        .table-wrap{overflow:auto;margin-top:8px}
         .delete-header{text-align:right}
         .delete-cell{text-align:right;white-space:nowrap}
+        .status-badge{display:inline-flex;align-items:center;padding:4px 10px;border-radius:999px;font-size:12px;font-weight:700}
+        .status-badge.pending{background:#fef3c7;color:#92400e}
+        .status-badge.needed{background:#dbeafe;color:#1d4ed8}
+        .status-badge.denied{background:#fee2e2;color:#b91c1c}
+        .review-cell{white-space:nowrap}
+        .maintenance-row.is-highlighted{outline:2px solid #93c5fd;outline-offset:-2px;background:#f8fbff}
         .timeline-meta{font-size:12px;line-height:1.45}
         .row-text{display:block;max-width:100%;word-break:break-word}
         .row-text .row-full{display:none}
@@ -59,9 +68,11 @@
             table tbody td:first-child { font-weight:700; margin-bottom:6px }
             table tbody td:nth-child(2)::before { content: 'Task: '; font-weight:700; color:var(--muted); }
             table tbody td:nth-child(3)::before { content: 'Due: '; font-weight:700; color:var(--muted); }
-            table tbody td:nth-child(4)::before { content: 'Notes: '; font-weight:700; color:var(--muted); }
-            table tbody td:nth-child(5)::before { content: 'Timeline: '; font-weight:700; color:var(--muted); }
-            table tbody td:nth-child(6)::before { content: 'Delete: '; font-weight:700; color:var(--muted); }
+            table tbody td:nth-child(4)::before { content: 'Status: '; font-weight:700; color:var(--muted); }
+            table tbody td:nth-child(5)::before { content: 'Notes: '; font-weight:700; color:var(--muted); }
+            table tbody td:nth-child(6)::before { content: 'Timeline: '; font-weight:700; color:var(--muted); }
+            table tbody td:nth-child(7)::before { content: 'Review: '; font-weight:700; color:var(--muted); }
+            table tbody td:nth-child(8)::before { content: 'Delete: '; font-weight:700; color:var(--muted); }
             table tbody td::before { display:inline-block; margin-right:6px }
             .delete-header{text-align:left}
             .delete-cell{text-align:left}
@@ -72,32 +83,36 @@
 @section('content')
     <div class="panel">
         <div class="page-head">
-            <h2 style="margin:0">Vehicle Maintenance</h2>
+            <div>
+                <h2 class="section-title">Vehicle Maintenance</h2>
+                <p class="section-subtitle">{{ $selectedVehicle ? 'Showing maintenance requests for ' . $selectedVehicle->name . '.' : 'All maintenance records are shown below.' }}</p>
+            </div>
             <div class="page-actions">
                 <a href="/vehicle/maintenance/add" class="btn primary">Add Maintenance</a>
                 <a href="/vehicle" class="btn">Back to Vehicles</a>
             </div>
         </div>
-        <div class="muted" style="margin-top:6px">All maintenance records are shown below.</div>
     </div>
 
     <div class="panel">
-        <h3 style="margin-top:0">All Maintenance List</h3>
-        <div style="overflow:auto">
+        <h3 class="section-title">All Maintenance List</h3>
+        <div class="table-wrap">
         <table>
             <thead>
                 <tr>
                     <th>Vehicle</th>
                     <th>Maintenance Task</th>
                     <th>Due</th>
+                    <th>Status</th>
                     <th>Notes</th>
                     <th>Timeline</th>
+                    <th>Review</th>
                     <th class="delete-header">Delete</th>
                 </tr>
             </thead>
             <tbody>
                 @forelse($maintenances as $maintenance)
-                    <tr class="maintenance-row" onclick="openUploadedPhoto(this)" data-photo-url="{{ $maintenance->evidence_image_path ? asset('storage/' . $maintenance->evidence_image_path) : '' }}">
+                    <tr class="maintenance-row {{ (($highlightedMaintenanceId ?? 0) === $maintenance->id) ? 'is-highlighted' : '' }}" onclick="openUploadedPhoto(this)" data-photo-url="{{ $maintenance->evidence_image_path ? asset('storage/' . $maintenance->evidence_image_path) : '' }}">
                         <td>
                             <div style="font-weight:700">{{ $maintenance->vehicle->name ?? '—' }}</div>
                             <div class="muted">{{ $maintenance->vehicle->plate_number ?? 'No plate' }}</div>
@@ -116,6 +131,9 @@
                             </span>
                         </td>
                         <td>{{ $maintenance->due_date ? $maintenance->due_date->format('Y-m-d') : '—' }}</td>
+                        <td onclick="event.stopPropagation()">
+                            <span class="status-badge {{ $maintenance->status ?? 'needed' }}">{{ ucfirst($maintenance->status ?? 'needed') }}</span>
+                        </td>
                         <td>
                             @php
                                 $notesText = (string) ($maintenance->notes ?: '—');
@@ -132,12 +150,26 @@
                         <td onclick="event.stopPropagation()">
                             <div class="muted timeline-meta">Reviewed: {{ $maintenance->reviewed_at ? $maintenance->reviewed_at->format('Y-m-d H:i') : '—' }}<br>Checked: {{ $maintenance->checked_at ? $maintenance->checked_at->format('Y-m-d H:i') : '—' }}<br>Updated: {{ $maintenance->updated_marker_at ? $maintenance->updated_marker_at->format('Y-m-d H:i') : '—' }}</div>
                         </td>
+                        <td class="review-cell" onclick="event.stopPropagation()">
+                            @if(($isAdmin ?? false) && ($maintenance->status ?? 'needed') === 'pending')
+                                <div class="actions">
+                                    <form method="POST" action="/vehicle/{{ $maintenance->vehicle_id }}/maintenance/{{ $maintenance->id }}/approve">@csrf<button class="btn primary" type="submit">Approve</button></form>
+                                    <form method="POST" action="/vehicle/{{ $maintenance->vehicle_id }}/maintenance/{{ $maintenance->id }}/deny">@csrf<button class="btn warn" type="submit">Deny</button></form>
+                                </div>
+                            @elseif(($maintenance->status ?? 'needed') === 'needed')
+                                <span class="muted">Approved</span>
+                            @elseif(($maintenance->status ?? 'needed') === 'denied')
+                                <span class="muted">Denied</span>
+                            @else
+                                <span class="muted">—</span>
+                            @endif
+                        </td>
                         <td class="delete-cell" onclick="event.stopPropagation()">
                             <form class="js-delete-maintenance-form" method="POST" action="/vehicle/{{ $maintenance->vehicle_id }}/maintenance/{{ $maintenance->id }}/delete">@csrf<button class="btn danger" type="submit">Delete</button></form>
                         </td>
                     </tr>
                 @empty
-                    <tr><td colspan="6" class="muted">No maintenance entries yet.</td></tr>
+                    <tr><td colspan="8" class="muted">No maintenance entries yet.</td></tr>
                 @endforelse
             </tbody>
         </table>

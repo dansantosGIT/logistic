@@ -5,10 +5,11 @@
         :root{--bg:#f6f8fb;--panel:#ffffff;--accent:#2563eb;--accent-2:#7c3aed;--muted:#6b7280;--muted-2:#94a3b8;--topbar-height:72px}
         *{box-sizing:border-box}
         body{margin:0;font-family:Inter,system-ui,Arial,Helvetica;background:var(--bg);color:#0f172a}
-        .panel{background:var(--panel);padding:14px;border-radius:12px;box-shadow:0 6px 20px rgba(15,23,42,0.04);width:min(1240px,calc(100% - 24px));margin:10px auto}
+        .panel{background:var(--panel);padding:18px 20px;border-radius:12px;box-shadow:0 6px 20px rgba(15,23,42,0.04);width:min(1240px,calc(100% - 24px));margin:12px auto}
         .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
         .field{display:flex;flex-direction:column;gap:6px}
         .field.full{grid-column:1/-1}
+        .field label{font-size:13px;font-weight:600;color:#334155}
         input,select,textarea{width:100%;padding:10px;border:1px solid #e6e9ef;border-radius:8px;font:inherit}
         textarea{min-height:120px;resize:vertical}
         .btn{padding:8px 12px;border-radius:8px;border:1px solid #e6e9ef;background:#fff;cursor:pointer;text-decoration:none;color:#0f172a}
@@ -20,9 +21,13 @@
         th{font-size:12px;text-transform:uppercase;letter-spacing:.3px;color:var(--muted);font-weight:700}
         .muted{color:var(--muted);font-size:13px}
         .actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-        .page-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
-        .page-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-        .page-actions .btn{min-height:38px;font-size:14px;font-weight:600}
+        .page-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap;margin-bottom:8px}
+        .page-actions{display:flex;align-items:center;justify-content:flex-end;gap:8px;flex-wrap:wrap}
+        .page-actions .btn{min-height:40px;font-size:14px;font-weight:600;display:inline-flex;align-items:center;justify-content:center}
+        .section-title{margin:0;line-height:1.15}
+        .section-subtitle{margin:0;color:var(--muted);font-size:13px;line-height:1.5}
+        .toolbar-field{margin-top:14px;max-width:420px}
+        .table-wrap{overflow:auto;margin-top:8px}
         .row-text{display:block;max-width:100%;word-break:break-word}
         .row-text .row-full{display:none}
         .row-text.expanded .row-short{display:none}
@@ -46,6 +51,10 @@
         .toast.show{display:block}
         .nav-overlay{position:fixed;left:0;right:0;top:var(--topbar-height);bottom:0;background:rgba(2,6,23,0.45);opacity:0;visibility:hidden;transition:opacity .18s ease;z-index:80}
         .nav-overlay.show{opacity:1;visibility:visible}
+        #vehicle-filter{color:#0f172a}
+        #vehicle-filter.is-placeholder{color:#9ca3af;font-weight:400}
+        #vehicle-filter option{color:#0f172a}
+        #vehicle-filter option[value=""]{color:var(--muted-2)}
         @media(max-width:980px){.form-grid{grid-template-columns:1fr}}
         @media(max-width:900px){
             .sidebar{position:fixed;left:0;top:0;bottom:0;z-index:80;transform:translateX(-110%);height:100vh}
@@ -70,16 +79,19 @@
 @section('content')
     <div class="panel">
         <div class="page-head">
-            <h2 style="margin:0">Vehicle Monitoring</h2>
+            <div>
+                <h2 class="section-title">Vehicle Monitoring</h2>
+                <p class="section-subtitle">Track all completed activities/reports for each specific vehicle with exact date and time.</p>
+            </div>
             <div class="page-actions">
                 <a href="/vehicle/monitoring/add{{ $selectedVehicle ? '?vehicle=' . $selectedVehicle->id : '' }}" class="btn primary">Add Monitoring Report</a>
                 <a href="/vehicle" class="btn">Back to Vehicles</a>
             </div>
         </div>
-        <div class="muted" style="margin-top:6px">Track all completed activities/reports for each specific vehicle with exact date and time.</div>
-        <div class="field" style="margin-top:10px;max-width:420px">
+        <div class="field toolbar-field">
             <label for="vehicle-filter">Vehicle</label>
             <select id="vehicle-filter">
+                <option value="" disabled {{ $selectedVehicle ? '' : 'selected' }}>- - Select Vehicle - -</option>
                 @forelse($vehicles as $v)
                     <option value="{{ $v->id }}" {{ ($selectedVehicle && $selectedVehicle->id === $v->id) ? 'selected' : '' }}>{{ $v->name }} ({{ $v->plate_number ?: 'No plate' }})</option>
                 @empty
@@ -91,8 +103,8 @@
     </div>
 
     <div class="panel">
-        <h3 style="margin-top:0">Monitoring History {{ $selectedVehicle ? '— ' . $selectedVehicle->name : '' }}</h3>
-        <div style="overflow:auto">
+        <h3 class="section-title">Monitoring History {{ $selectedVehicle ? '— ' . $selectedVehicle->name : '' }}</h3>
+        <div class="table-wrap">
         <table>
             <thead>
                 <tr>
@@ -176,7 +188,13 @@
         (function(){
             const select = document.getElementById('vehicle-filter');
             if(!select) return;
+            function setPlaceholderState(){
+                select.classList.toggle('is-placeholder', !select.value);
+            }
+
+            setPlaceholderState();
             select.addEventListener('change', function(){
+                setPlaceholderState();
                 if(!this.value) return;
                 window.location.href = '/vehicle/monitoring?vehicle=' + encodeURIComponent(this.value);
             });
@@ -246,8 +264,12 @@
                 if(e.target.closest('.actions')) return;
                 const item = e.target.closest('.item');
                 if(!item) return;
-                const id = item.dataset.uuid || item.getAttribute('data-uuid') || item.getAttribute('data-id');
-                if(id) window.location.href = '/requests/' + id;
+                const url = item.dataset.url || item.getAttribute('data-url');
+                if(url) window.location.href = url;
+                else {
+                    const id = item.dataset.uuid || item.getAttribute('data-uuid') || item.getAttribute('data-id');
+                    if(id) window.location.href = '/requests/' + id;
+                }
             });
         })();
     </script>

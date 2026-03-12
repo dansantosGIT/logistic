@@ -760,8 +760,12 @@
                 if(e.target.closest('.actions')) return;
                 const item = e.target.closest('.item');
                 if(!item) return;
-                const id = item.dataset.uuid || item.getAttribute('data-uuid') || item.getAttribute('data-id');
-                if(id) window.location.href = '/requests/' + id;
+                const url = item.dataset.url || item.getAttribute('data-url');
+                if(url) window.location.href = url;
+                else {
+                    const id = item.dataset.uuid || item.getAttribute('data-uuid') || item.getAttribute('data-id');
+                    if(id) window.location.href = '/requests/' + id;
+                }
             });
         })();
     </script>
