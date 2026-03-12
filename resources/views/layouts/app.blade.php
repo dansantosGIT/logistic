@@ -106,7 +106,7 @@
                 <div style="display:flex;flex-direction:column">
                     <a href="/dashboard" style="display:flex;align-items:center;gap:6px;font-weight:700;text-decoration:none;color:inherit">
                         <img src="/images/favi.png" alt="Logo" width="40" height="40" style="display:inline-block" />
-                        <span>San Juan CDRMMD Inventory</span>
+                        <span>San Juan CDRMMD Accounts</span>
                     </a>
                     <div style="font-size:12px;color:var(--muted)">All Categories</div>
                 </div>
