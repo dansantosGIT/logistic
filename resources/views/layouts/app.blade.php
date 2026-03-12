@@ -8,6 +8,7 @@
     <link rel="apple-touch-icon" href="/images/favi.png">
     <meta name="theme-color" content="#0b1220">
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    <link rel="stylesheet" href="/build/assets/app-DSRh6CJe.css">
     <style>
         :root{--bg:#f6f8fb;--panel:#ffffff;--accent:#2563eb;--accent-2:#7c3aed;--muted:#6b7280;--muted-2:#94a3b8;--topbar-height:72px}
         *{box-sizing:border-box}
@@ -294,6 +295,19 @@
                     }
                 }
             });
+
+            // Close sidebar when clicking outside on desktop when it's visible (not collapsed/closed)
+            document.addEventListener('click', function(e){
+                try{
+                    const clickedOutside = !sidebar.contains(e.target) && !burger.contains(e.target) && !topbar.contains(e.target);
+                    const isVisible = !sidebar.classList.contains('closed') && !sidebar.classList.contains('collapsed') && !sidebar.classList.contains('open');
+                    if(clickedOutside && isVisible){
+                        sidebar.classList.add('closed');
+                        setOverlay(false);
+                        try{ localStorage.setItem('sidebar.closed','1'); }catch(err){}
+                    }
+                }catch(err){}
+            }, true); // use capture so this runs early
 
             navOverlay.addEventListener('click', function(){
                 sidebar.classList.remove('open');

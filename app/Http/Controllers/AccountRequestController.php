@@ -26,13 +26,23 @@ class AccountRequestController extends Controller
     {
         $this->ensureAdmin();
         $requests = AccountRequest::orderByDesc('created_at')->paginate(25);
-        return view('accounts.index', compact('requests'));
+        return view('accounts.account_page', compact('requests'));
     }
 
     public function show(AccountRequest $accountRequest)
     {
         $this->ensureAdmin();
-        return view('accounts.show', ['request' => $accountRequest]);
+        // show route now uses modal/detail UI; preserve fallback to account_page with anchor
+        return view('accounts.account_page', ['requests' => AccountRequest::where('id', $accountRequest->id)->paginate(25)]);
+    }
+
+    /**
+     * Return JSON details for an account request (used by AJAX modal).
+     */
+    public function details(AccountRequest $accountRequest)
+    {
+        $this->ensureAdmin();
+        return response()->json($accountRequest);
     }
 
     public function approve(AccountRequest $accountRequest)

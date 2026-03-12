@@ -161,6 +161,7 @@ Route::get('/dashboard', function () {
 // Account requests (admin)
 Route::get('/accounts', [\App\Http\Controllers\AccountRequestController::class, 'index'])->middleware('auth');
 Route::get('/accounts/{accountRequest}', [\App\Http\Controllers\AccountRequestController::class, 'show'])->middleware('auth');
+Route::get('/accounts/{accountRequest}/json', [\App\Http\Controllers\AccountRequestController::class, 'details'])->middleware('auth');
 Route::post('/accounts/{accountRequest}/approve', [\App\Http\Controllers\AccountRequestController::class, 'approve'])->middleware('auth');
 Route::post('/accounts/{accountRequest}/deny', [\App\Http\Controllers\AccountRequestController::class, 'deny'])->middleware('auth');
 
