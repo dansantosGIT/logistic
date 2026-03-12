@@ -136,6 +136,8 @@
                     <div id="am-department" style="margin-bottom:6px"></div>
                     <div id="am-role" style="margin-bottom:6px"></div>
                     <div id="am-message" style="margin-top:8px;white-space:pre-wrap;color:#111"></div>
+                    <div id="am-admin-note" style="margin-top:8px;white-space:pre-wrap;color:#374151;font-style:italic;display:none"></div>
+                    <div id="am-admin-note-controls" style="margin-top:6px;display:none"></div>
                     <div id="am-meta" style="margin-top:12px;color:var(--muted);font-size:13px"></div>
                 </div>
                 <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:14px">
@@ -247,6 +249,26 @@
                             amDept.textContent = json.department ? ('Department: ' + json.department) : '';
                             amRole.textContent = json.requested_role ? ('Role: ' + json.requested_role) : '';
                             amMessage.textContent = json.message || json.justification || '';
+                            // show admin note if present and add edit control for admins
+                            const amAdminNote = qs('#am-admin-note');
+                            const amAdminControls = qs('#am-admin-note-controls');
+                            if(amAdminNote){
+                                if(json.admin_note){ amAdminNote.style.display = 'block'; amAdminNote.textContent = 'Admin note: ' + json.admin_note; }
+                                else { amAdminNote.style.display = 'none'; amAdminNote.textContent = ''; }
+                            }
+                            if(amAdminControls){
+                                // show edit/add control when request is not pending (or always for admins)
+                                const canEdit = (json.status || '').toLowerCase() !== 'pending';
+                                if(canEdit){
+                                    amAdminControls.style.display = 'block';
+                                    amAdminControls.innerHTML = `<button id="am-edit-note" class="btn" style="padding:6px 10px;border-radius:8px;border:1px solid #e6e9ef;background:#f8fafc">${json.admin_note ? 'Edit note' : 'Add note'}</button>`;
+                                    const editBtn = qs('#am-edit-note');
+                                    if(editBtn) editBtn.onclick = function(){ openNoteEditor(id); };
+                                } else {
+                                    amAdminControls.style.display = 'none';
+                                    amAdminControls.innerHTML = '';
+                                }
+                            }
                             // use server-provided ISO in app timezone when available
                             amMeta.textContent = 'Requested: ' + (json.created_at_display ?? (json.created_at_iso ? new Date(json.created_at_iso).toLocaleString() : ''));
 
@@ -267,6 +289,50 @@
                             if(!subtitle){
                                 const s = document.createElement('div'); s.className = 'subtitle'; s.textContent = json.email || ''; title.insertAdjacentElement('afterend', s);
                             }
+                                // update title and subtitle (cleanup any stray subtitle nodes first)
+                                qsa('#account-modal .subtitle').forEach(n => n.remove());
+                                if(title){
+                                    const s = document.createElement('div');
+                                    s.className = 'subtitle';
+                                    s.textContent = json.email || '';
+                                    title.insertAdjacentElement('afterend', s);
+                                }
+                                // show/hide action buttons depending on status
+                                try{
+                                    const status = (json.status || '').toLowerCase();
+                                    if(status !== 'pending'){
+                                        if(approveForm) approveForm.style.display = 'none';
+                                        if(denyForm) denyForm.style.display = 'none';
+                                        // show a small status label inside modal body
+                                        let statusEl = qs('#am-status');
+                                        if(!statusEl){ statusEl = document.createElement('div'); statusEl.id = 'am-status'; statusEl.style.marginTop = '10px'; statusEl.style.fontWeight = '700'; statusEl.style.color = '#6b7280'; qs('#account-modal-body').appendChild(statusEl); }
+                                        const map = { 'rejected': 'Denied', 'denied': 'Denied', 'approved': 'Approved', 'pending': 'Pending' };
+                                        statusEl.textContent = 'Status: ' + (map[status] || status || 'Unknown');
+                                    } else {
+                                        if(approveForm) approveForm.style.display = '';
+                                        if(denyForm) denyForm.style.display = '';
+                                        const existingStatus = qs('#am-status'); if(existingStatus) existingStatus.remove();
+                                    }
+                                }catch(e){/* ignore */}
+                                // update title and subtitle (remove duplicates then insert)
+                                qsa('#account-modal .subtitle').forEach(n => n.remove());
+                                if(title){ const s = document.createElement('div'); s.className = 'subtitle'; s.textContent = json.email || ''; title.insertAdjacentElement('afterend', s); }
+                                // show/hide actions based on status
+                                try{
+                                    const status = (json.status || '').toLowerCase();
+                                    if(status !== 'pending'){
+                                        if(approveForm) approveForm.style.display = 'none';
+                                        if(denyForm) denyForm.style.display = 'none';
+                                        let statusEl = qs('#am-status');
+                                        if(!statusEl){ statusEl = document.createElement('div'); statusEl.id = 'am-status'; statusEl.style.marginTop = '10px'; statusEl.style.fontWeight = '700'; statusEl.style.color = '#6b7280'; qs('#account-modal-body').appendChild(statusEl); }
+                                        const map = { 'rejected': 'Denied', 'denied': 'Denied', 'approved': 'Approved', 'pending': 'Pending' };
+                                        statusEl.textContent = 'Status: ' + (map[status] || status || 'Unknown');
+                                    } else {
+                                        if(approveForm) approveForm.style.display = '';
+                                        if(denyForm) denyForm.style.display = '';
+                                        const existingStatus = qs('#am-status'); if(existingStatus) existingStatus.remove();
+                                    }
+                                }catch(e){/* ignore */}
                         })
                         .catch(() => alert('Failed to load details'));
                 }));
@@ -286,6 +352,12 @@
                                 amDept.textContent = json.department ? ('Department: ' + json.department) : '';
                                 amRole.textContent = json.requested_role ? ('Role: ' + json.requested_role) : '';
                                 amMessage.textContent = json.message || json.justification || '';
+                                // show admin note if present
+                                const amAdminNote = qs('#am-admin-note');
+                                if(amAdminNote){
+                                    if(json.admin_note){ amAdminNote.style.display = 'block'; amAdminNote.textContent = 'Admin note: ' + json.admin_note; }
+                                    else { amAdminNote.style.display = 'none'; amAdminNote.textContent = ''; }
+                                }
                                 amMeta.textContent = 'Requested: ' + (json.created_at_display ?? (json.created_at_iso ? new Date(json.created_at_iso).toLocaleString() : ''));
                                 if(approveForm) approveForm.setAttribute('action', '/accounts/' + id + '/approve');
                                 if(denyForm) denyForm.setAttribute('action', '/accounts/' + id + '/deny');
@@ -413,6 +485,67 @@
                     });
                 });
             }
+        })();
+    </script>
+    <script>
+        // Admin note editor + AJAX save
+        (function(){
+            function qs(sel, ctx){ return (ctx||document).querySelector(sel); }
+            function qsa(sel, ctx){ return Array.from((ctx||document).querySelectorAll(sel)); }
+
+            function getCsrf(){
+                const meta = document.querySelector('meta[name="csrf-token"]');
+                if(meta) return meta.getAttribute('content');
+                const input = document.querySelector('input[name="_token"]');
+                if(input) return input.value;
+                return '';
+            }
+
+            function renderEditButton(id, note){
+                const controls = qs('#am-admin-note-controls');
+                if(!controls) return;
+                controls.innerHTML = `<button id="am-edit-note" class="btn" style="padding:6px 10px;border-radius:8px;border:1px solid #e6e9ef;background:#f8fafc">${note ? 'Edit note' : 'Add note'}</button>`;
+                const btn = qs('#am-edit-note');
+                if(btn) btn.onclick = function(){ openNoteEditor(id); };
+            }
+
+            function openNoteEditor(id){
+                const controls = qs('#am-admin-note-controls');
+                const display = qs('#am-admin-note');
+                const current = display ? display.textContent.replace(/^Admin note:\s*/,'') : '';
+                if(!controls) return;
+                controls.innerHTML = `
+                    <textarea id="am-note-edit" rows="4" style="width:100%;padding:8px;border:1px solid #e6e9ef;border-radius:8px">${current}</textarea>
+                    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:8px">
+                        <button id="am-note-cancel" class="btn">Cancel</button>
+                        <button id="am-note-save" class="btn primary">Save</button>
+                    </div>
+                `;
+                qs('#am-note-cancel').onclick = function(){ renderEditButton(id, current); };
+                qs('#am-note-save').onclick = function(){
+                    const val = qs('#am-note-edit').value || '';
+                    const token = getCsrf();
+                    fetch('/accounts/' + id + '/note', {
+                        method: 'POST',
+                        credentials: 'same-origin',
+                        headers: {'Content-Type':'application/x-www-form-urlencoded','X-CSRF-TOKEN': token},
+                        body: new URLSearchParams({ admin_note: val }).toString()
+                    }).then(r => r.ok ? r.json() : Promise.reject(r))
+                    .then(json => {
+                        if(json && json.admin_note !== undefined){
+                            const display = qs('#am-admin-note');
+                            if(display){ display.style.display = 'block'; display.textContent = 'Admin note: ' + (json.admin_note || ''); }
+                            renderEditButton(id, json.admin_note);
+                            // show toast
+                            const toastMsg = qs('#sj-toast-msg'); if(toastMsg) toastMsg.textContent = 'Admin note saved'; const t = qs('#sj-toast'); if(t) t.classList.add('show'); setTimeout(()=>{ if(t) t.classList.remove('show'); },3000);
+                        }
+                    }).catch(()=>{ alert('Failed to save note'); renderEditButton(id, current); });
+                };
+            }
+
+            // expose small helpers globally so modal openers can call them as needed
+            window.openNoteEditor = openNoteEditor;
+            window.renderEditButton = renderEditButton;
         })();
     </script>
 @endpush

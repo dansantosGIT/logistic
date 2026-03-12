@@ -195,6 +195,7 @@ Route::get('/accounts/{accountRequest}', [\App\Http\Controllers\AccountRequestCo
 Route::get('/accounts/{accountRequest}/json', [\App\Http\Controllers\AccountRequestController::class, 'details'])->middleware('auth');
 Route::post('/accounts/{accountRequest}/approve', [\App\Http\Controllers\AccountRequestController::class, 'approve'])->middleware('auth');
 Route::post('/accounts/{accountRequest}/deny', [\App\Http\Controllers\AccountRequestController::class, 'deny'])->middleware('auth');
+Route::post('/accounts/{accountRequest}/note', [\App\Http\Controllers\AccountRequestController::class, 'updateNote'])->middleware('auth');
 
 // Inventory (protected)
 Route::get('/inventory', function () {

@@ -51,6 +51,7 @@ class AccountRequestController extends Controller
             $data['created_at_iso'] = $accountRequest->created_at->toIso8601String();
             // keep a server-side display string (optional) for debugging/backup
             $data['created_at_display_server'] = $accountRequest->created_at->setTimezone(config('app.timezone') ?: 'UTC')->format('F j, Y g:i A');
+            $data['admin_note'] = $accountRequest->admin_note ?? null;
         }
         return response()->json($data);
     }
@@ -76,7 +77,9 @@ class AccountRequestController extends Controller
             'password' => Hash::make($randomPassword),
         ]);
 
+        $admin_note = $request->input('admin_note') ?? null;
         $accountRequest->status = 'approved';
+        $accountRequest->admin_note = $admin_note;
         $accountRequest->save();
 
         try {
@@ -103,11 +106,32 @@ class AccountRequestController extends Controller
 
         try {
             $admin_note = $request->input('admin_note') ?? $request->input('reason') ?? null;
+            $accountRequest->admin_note = $admin_note;
+            $accountRequest->status = 'rejected';
+            $accountRequest->save();
             Mail::to($accountRequest->email)->queue(new AccountRequestDecision($accountRequest, 'denied', $admin_note));
         } catch (\Exception $e) {
             // ignore
         }
 
         return redirect('/accounts')->with('success', 'Account request denied.');
+    }
+
+    /**
+     * Update the admin note for an account request (AJAX friendly).
+     */
+    public function updateNote(AccountRequest $accountRequest, Request $request)
+    {
+        $this->ensureAdmin();
+
+        $note = $request->input('admin_note') ?? null;
+        $accountRequest->admin_note = $note;
+        $accountRequest->save();
+
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json(['ok' => true, 'admin_note' => $accountRequest->admin_note]);
+        }
+
+        return back()->with('success', 'Admin note updated.');
     }
 }
