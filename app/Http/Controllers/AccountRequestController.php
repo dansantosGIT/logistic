@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use App\Models\AccountRequest;
 use App\Models\User;
+use App\Mail\AccountRequestDecision;
 
 class AccountRequestController extends Controller
 {
@@ -42,10 +43,19 @@ class AccountRequestController extends Controller
     public function details(AccountRequest $accountRequest)
     {
         $this->ensureAdmin();
-        return response()->json($accountRequest);
+        $data = $accountRequest->toArray();
+        if ($accountRequest->created_at) {
+            // provide a machine-readable ISO timestamp in UTC so the browser
+            // can convert it to the viewer's local timezone for correct display
+            $data['created_at_utc'] = $accountRequest->created_at->toIso8601String();
+            $data['created_at_iso'] = $accountRequest->created_at->toIso8601String();
+            // keep a server-side display string (optional) for debugging/backup
+            $data['created_at_display_server'] = $accountRequest->created_at->setTimezone(config('app.timezone') ?: 'UTC')->format('F j, Y g:i A');
+        }
+        return response()->json($data);
     }
 
-    public function approve(AccountRequest $accountRequest)
+    public function approve(AccountRequest $accountRequest, Request $request)
     {
         $this->ensureAdmin();
 
@@ -70,9 +80,8 @@ class AccountRequestController extends Controller
         $accountRequest->save();
 
         try {
-            Mail::raw("Your account request has been approved. You may now login with email: {$user->email} and password: {$randomPassword}", function ($m) use ($user) {
-                $m->to($user->email)->subject('Account request approved');
-            });
+            $admin_note = $request->input('admin_note') ?? null;
+            Mail::to($user->email)->queue(new AccountRequestDecision($accountRequest, 'approved', $admin_note, $randomPassword));
         } catch (\Exception $e) {
             // ignore
         }
@@ -88,14 +97,13 @@ class AccountRequestController extends Controller
             return back()->with('error', 'Account request is not pending.');
         }
 
-        $accountRequest->status = 'denied';
+        // use the DB enum-friendly value 'rejected' (schema uses: pending, approved, rejected, cancelled)
+        $accountRequest->status = 'rejected';
         $accountRequest->save();
 
         try {
-            $reason = $request->input('reason') ?? 'Your account request was denied.';
-            Mail::raw($reason, function ($m) use ($accountRequest) {
-                $m->to($accountRequest->email)->subject('Account request denied');
-            });
+            $admin_note = $request->input('admin_note') ?? $request->input('reason') ?? null;
+            Mail::to($accountRequest->email)->queue(new AccountRequestDecision($accountRequest, 'denied', $admin_note));
         } catch (\Exception $e) {
             // ignore
         }

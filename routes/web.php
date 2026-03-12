@@ -5,6 +5,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
+use App\Mail\AccountRequestReceived;
 use App\Http\Controllers\EquipmentController;
 use App\Http\Controllers\AnalyticsController;
 use App\Models\Equipment;
@@ -102,29 +103,59 @@ Route::post('/register', function (Request $request) {
         return back()->withErrors(['email' => 'An account with this email already exists.'])->withInput();
     }
 
-    // create an AccountRequest record (tests and legacy code expect this table)
-    $ar = \App\Models\AccountRequest::create([
-        'name' => $data['name'],
-        'email' => $data['email'],
-        'password_hash' => Hash::make($data['password']),
-        'department' => $data['department'],
-        'position' => $request->input('position') ?? null,
-        'phone' => $data['phone'],
-        'message' => $request->input('message') ?? null,
-        'proof_path' => $proofPath,
-        'status' => 'pending',
-        'requested_role' => $data['role'],
-        'justification' => $request->input('justification') ?? null,
-    ]);
+    // create or reuse an AccountRequest record. If a previous request was rejected,
+    // update it with the new submission and mark it pending instead of inserting
+    // a duplicate (preserves unique index and keeps history compact).
+    $existing = \App\Models\AccountRequest::where('email', $data['email'])->first();
+    // If there's an existing pending or approved request, do not allow duplicate submissions.
+    if ($existing && in_array($existing->status, ['pending', 'approved'])) {
+        return back()->withErrors(['email' => 'A request for this email is already pending review.'])->withInput();
+    }
+
+    if ($existing && $existing->status === 'rejected') {
+        $existing->name = $data['name'];
+        $existing->password_hash = Hash::make($data['password']);
+        $existing->department = $data['department'];
+        $existing->position = $request->input('position') ?? null;
+        $existing->phone = $data['phone'];
+        $existing->message = $request->input('message') ?? null;
+        $existing->proof_path = $proofPath;
+        $existing->status = 'pending';
+        $existing->requested_role = $data['role'];
+        $existing->justification = $request->input('justification') ?? null;
+        $existing->save();
+        $ar = $existing;
+    } else {
+        // create an AccountRequest record (tests and legacy code expect this table)
+        $ar = \App\Models\AccountRequest::create([
+            'name' => $data['name'],
+            'email' => $data['email'],
+            'password_hash' => Hash::make($data['password']),
+            'department' => $data['department'],
+            'position' => $request->input('position') ?? null,
+            'phone' => $data['phone'],
+            'message' => $request->input('message') ?? null,
+            'proof_path' => $proofPath,
+            'status' => 'pending',
+            'requested_role' => $data['role'],
+            'justification' => $request->input('justification') ?? null,
+        ]);
+    }
+
+    // notify main admin (configurable via MAIL_ADMIN, default to provided admin email)
+    $mainAdmin = env('MAIL_ADMIN', 'sjcdrrmdlogistics@gmail.com');
+    try {
+        Mail::to($mainAdmin)->queue(new AccountRequestReceived($ar));
+    } catch (\Exception $e) {
+        // non-fatal
+    }
 
     // notify existing approved admins by email (if any)
     $adminEmails = User::where('role', 'admin')->where('is_approved', true)->pluck('email')->toArray();
     if (!empty($adminEmails)) {
         foreach ($adminEmails as $addr) {
             try {
-                Mail::raw("New account request from {$ar->name} ({$ar->email}). Please review and approve.", function ($m) use ($addr) {
-                    $m->to($addr)->subject('New account request');
-                });
+                Mail::to($addr)->queue(new AccountRequestReceived($ar));
             } catch (\Exception $e) {
                 // non-fatal: don't block registration if mail fails
             }

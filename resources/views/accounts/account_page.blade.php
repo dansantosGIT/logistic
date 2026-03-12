@@ -87,8 +87,8 @@
                 <tbody>
                 @foreach($requests as $r)
                     <tr>
-                        <td>
-                            <div style="font-size:14px">{{ $r->created_at->format('F j, Y') }}<div style="color:var(--muted);font-size:13px">{{ $r->created_at->format('g:i A') }}</div></div>
+                        <td data-created-at="{{ $r->created_at->toIso8601String() }}">
+                            <div style="font-size:14px"><span class="created-at-date">{{ $r->created_at->setTimezone(config('app.timezone'))->format('F j, Y') }}</span><div style="color:var(--muted);font-size:13px"><span class="created-at-time">{{ $r->created_at->setTimezone(config('app.timezone'))->format('g:i A') }}</span></div></div>
                         </td>
                         <td>
                             <div style="font-weight:700">{{ $r->name }}</div>
@@ -247,7 +247,8 @@
                             amDept.textContent = json.department ? ('Department: ' + json.department) : '';
                             amRole.textContent = json.requested_role ? ('Role: ' + json.requested_role) : '';
                             amMessage.textContent = json.message || json.justification || '';
-                            amMeta.textContent = 'Requested: ' + (json.created_at ? new Date(json.created_at).toLocaleString() : '');
+                            // use server-provided ISO in app timezone when available
+                            amMeta.textContent = 'Requested: ' + (json.created_at_display ?? (json.created_at_iso ? new Date(json.created_at_iso).toLocaleString() : ''));
 
                             // Set form actions
                             if(approveForm) approveForm.setAttribute('action', '/accounts/' + id + '/approve');
@@ -285,7 +286,7 @@
                                 amDept.textContent = json.department ? ('Department: ' + json.department) : '';
                                 amRole.textContent = json.requested_role ? ('Role: ' + json.requested_role) : '';
                                 amMessage.textContent = json.message || json.justification || '';
-                                amMeta.textContent = 'Requested: ' + (json.created_at ? new Date(json.created_at).toLocaleString() : '');
+                                amMeta.textContent = 'Requested: ' + (json.created_at_display ?? (json.created_at_iso ? new Date(json.created_at_iso).toLocaleString() : ''));
                                 if(approveForm) approveForm.setAttribute('action', '/accounts/' + id + '/approve');
                                 if(denyForm) denyForm.setAttribute('action', '/accounts/' + id + '/deny');
                                 modal.style.display = 'flex'; modal.classList.add('show');
@@ -302,6 +303,27 @@
             window.addEventListener('keyup', function(e){ if(e.key === 'Escape') hideModal(); });
             // click outside to close
             modal.addEventListener('click', function(e){ if(e.target === modal) hideModal(); });
+        })();
+    </script>
+    <script>
+        // Convert server ISO timestamps to viewer's local timezone for display
+        (function(){
+            document.addEventListener('DOMContentLoaded', function(){
+                document.querySelectorAll('[data-created-at]').forEach(td => {
+                    try{
+                        const iso = td.getAttribute('data-created-at');
+                        if(!iso) return;
+                        const dt = new Date(iso);
+                        if(isNaN(dt.getTime())) return;
+                        const dateStr = dt.toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
+                        const timeStr = dt.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+                        const dateEl = td.querySelector('.created-at-date');
+                        const timeEl = td.querySelector('.created-at-time');
+                        if(dateEl) dateEl.textContent = dateStr;
+                        if(timeEl) timeEl.textContent = timeStr;
+                    }catch(e){/* ignore */}
+                });
+            });
         })();
     </script>
     <script>
@@ -324,7 +346,7 @@
                         <textarea id="am-confirm-note" rows="3" style="width:100%;padding:8px;border:1px solid #e6e9ef;border-radius:8px"></textarea>
                         <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:8px">
                             <button id="am-cancel-btn" class="btn">Cancel</button>
-                            <button id="am-confirm-btn" class="btn primary">Confirm ${action}</button>
+                            <button id="am-confirm-btn" class="btn">Confirm ${action}</button>
                         </div>
                     `;
                     const body = document.getElementById('account-modal-body');
@@ -335,12 +357,39 @@
                 const confirm = document.getElementById('am-confirm-btn');
                 const note = document.getElementById('am-confirm-note');
 
-                cancel.addEventListener('click', function(){ prompt.remove(); });
-                confirm.addEventListener('click', function(){
-                    const val = note.value || '';
-                    callback(val);
-                    prompt.remove();
-                });
+                // hide original action buttons while confirming
+                if(approveBtn) approveBtn.style.display = 'none';
+                if(denyBtn) denyBtn.style.display = 'none';
+
+                // style confirm button according to action
+                if(confirm){
+                    confirm.classList.remove('primary', 'delete');
+                    if(String(action).toLowerCase() === 'deny' || String(action).toLowerCase() === 'confirm deny'){
+                        confirm.classList.add('delete');
+                    } else {
+                        confirm.classList.add('primary');
+                    }
+                    confirm.textContent = 'Confirm ' + action;
+                }
+
+                // attach single-use handlers
+                if(cancel){
+                    cancel.onclick = function(){
+                        prompt.remove();
+                        if(approveBtn) approveBtn.style.display = '';
+                        if(denyBtn) denyBtn.style.display = '';
+                    };
+                }
+
+                if(confirm){
+                    confirm.onclick = function(){
+                        const val = note.value || '';
+                        callback(val);
+                        prompt.remove();
+                        if(approveBtn) approveBtn.style.display = '';
+                        if(denyBtn) denyBtn.style.display = '';
+                    };
+                }
             }
 
             if(approveBtn && approveForm){
