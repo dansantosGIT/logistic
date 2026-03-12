@@ -95,6 +95,15 @@
     @yield('head')
 </head>
 <body>
+    @php
+        $topbarTitle = 'San Juan CDRRMD Accounts';
+        if (request()->is('vehicle/maintenance*')) {
+            $topbarTitle = 'San Juan CDRRMD Vehicle Maintenance';
+        } elseif (request()->is('vehicle/monitoring*')) {
+            $topbarTitle = 'San Juan CDRRMD Vehicle Monitoring';
+        }
+    @endphp
+
     <div class="bg" aria-hidden="true"></div>
     <div class="overlay" aria-hidden="true"></div>
 
@@ -107,7 +116,7 @@
                 <div style="display:flex;flex-direction:column">
                     <a href="/dashboard" style="display:flex;align-items:center;gap:6px;font-weight:700;text-decoration:none;color:inherit">
                         <img src="/images/favi.png" alt="Logo" width="40" height="40" style="display:inline-block" />
-                        <span>San Juan CDRMMD Accounts</span>
+                        <span>{{ $topbarTitle }}</span>
                     </a>
                     <div style="font-size:12px;color:var(--muted)">All Categories</div>
                 </div>
