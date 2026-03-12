@@ -458,7 +458,7 @@ Route::post('/vehicle/{vehicle}/orcr', function (Request $request, Vehicle $vehi
 
 Route::post('/vehicle/{vehicle}/maintenance', function (Request $request, Vehicle $vehicle) {
     $data = $request->validate([
-        'task' => 'required|string|max:255',
+        'task' => 'required|string|max:2000',
         'due_date' => 'nullable|date',
         'supervisor_photo' => 'nullable|file|image|max:5120',
         'notes' => 'nullable|string|max:500',
@@ -485,7 +485,7 @@ Route::post('/vehicle/{vehicle}/maintenance', function (Request $request, Vehicl
 Route::post('/vehicle/maintenance', function (Request $request) {
     $data = $request->validate([
         'vehicle_id' => 'required|integer|exists:vehicles,id',
-        'task' => 'required|string|max:255',
+        'task' => 'required|string|max:2000',
         'due_date' => 'nullable|date',
         'supervisor_photo' => 'nullable|file|image|max:5120',
         'notes' => 'nullable|string|max:500',

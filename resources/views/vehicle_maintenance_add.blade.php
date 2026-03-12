@@ -157,6 +157,16 @@
             </div>
 
             <div class="panel">
+                @if($errors->any())
+                    <div style="margin-bottom:12px;padding:12px;border:1px solid #fecaca;background:#fef2f2;border-radius:10px;color:#991b1b">
+                        <div style="font-weight:700;margin-bottom:6px">Please fix the following:</div>
+                        <ul style="margin:0;padding-left:18px">
+                            @foreach($errors->all() as $error)
+                                <li>{{ $error }}</li>
+                            @endforeach
+                        </ul>
+                    </div>
+                @endif
                 <form method="POST" action="/vehicle/maintenance" enctype="multipart/form-data">
                     @csrf
                     <div class="form-grid">
@@ -164,7 +174,7 @@
                             <label for="vehicle_id">Vehicle</label>
                             <select id="vehicle_id" name="vehicle_id" required>
                                 @forelse($vehicles as $v)
-                                    <option value="{{ $v->id }}" {{ ($selectedVehicle && $selectedVehicle->id === $v->id) ? 'selected' : '' }}>{{ $v->name }} ({{ $v->plate_number ?: 'No plate' }})</option>
+                                    <option value="{{ $v->id }}" {{ (old('vehicle_id') ? ((int) old('vehicle_id') === (int) $v->id) : ($selectedVehicle && $selectedVehicle->id === $v->id)) ? 'selected' : '' }}>{{ $v->name }} ({{ $v->plate_number ?: 'No plate' }})</option>
                                 @empty
                                     <option value="">No available vehicle</option>
                                 @endforelse
@@ -172,11 +182,13 @@
                         </div>
                         <div class="field full">
                             <label for="task">Maintenance Task</label>
-                            <textarea id="task" name="task" required placeholder="Type full maintenance task details" {{ empty($vehicles) ? 'disabled' : '' }}></textarea>
+                            <textarea id="task" name="task" maxlength="2000" required placeholder="Type full maintenance task details" {{ empty($vehicles) ? 'disabled' : '' }}>{{ old('task') }}</textarea>
+                            <div class="muted">Maximum 2000 characters.</div>
+                            <div id="task-counter" class="muted" style="text-align:right">0 / 2000</div>
                         </div>
                         <div class="field">
                             <label for="due_date">Due Date</label>
-                            <input id="due_date" name="due_date" type="date" {{ empty($vehicles) ? 'disabled' : '' }}>
+                            <input id="due_date" name="due_date" type="date" value="{{ old('due_date') }}" {{ empty($vehicles) ? 'disabled' : '' }}>
                         </div>
                         <div class="field">
                             <label for="maintenance-supervisor-photo">Upload Photo (optional)</label>
@@ -190,7 +202,9 @@
                         </div>
                         <div class="field full">
                             <label for="maintenance-notes">Notes</label>
-                            <textarea id="maintenance-notes" name="notes" placeholder="Optional notes for this maintenance task" {{ empty($vehicles) ? 'disabled' : '' }}></textarea>
+                            <textarea id="maintenance-notes" name="notes" maxlength="500" placeholder="Optional notes for this maintenance task" {{ empty($vehicles) ? 'disabled' : '' }}>{{ old('notes') }}</textarea>
+                            <div class="muted">Maximum 500 characters.</div>
+                            <div id="notes-counter" class="muted" style="text-align:right">0 / 500</div>
                         </div>
                         <div class="field full"><button type="submit" class="btn primary" style="min-height:40px;font-weight:600" {{ empty($vehicles) ? 'disabled' : '' }}>Save Maintenance</button></div>
                     </div>
@@ -227,6 +241,22 @@
         })();
 
         (function(){ const toast = document.getElementById('success-toast'); if(!toast) return; toast.classList.add('show'); setTimeout(()=> toast.classList.remove('show'), 3500); })();
+
+        (function(){
+            const task = document.getElementById('task');
+            const notes = document.getElementById('maintenance-notes');
+            const taskCounter = document.getElementById('task-counter');
+            const notesCounter = document.getElementById('notes-counter');
+
+            function sync(){
+                if(task && taskCounter){ taskCounter.textContent = task.value.length + ' / 2000'; }
+                if(notes && notesCounter){ notesCounter.textContent = notes.value.length + ' / 500'; }
+            }
+
+            if(task){ task.addEventListener('input', sync); }
+            if(notes){ notes.addEventListener('input', sync); }
+            sync();
+        })();
 
         (function(){
             const input = document.getElementById('maintenance-supervisor-photo');
