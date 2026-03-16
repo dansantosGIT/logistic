@@ -706,6 +706,7 @@ Route::post('/inventory/{id}/update', function (Request $request, $id) {
     $item = App\Models\Equipment::findOrFail($id);
     $data = $request->validate([
         'name' => 'required|string|max:255',
+        'date_added' => 'nullable|date',
         'category' => 'nullable|string|max:255',
         'type' => 'nullable|string|max:255',
         'status' => 'nullable|in:available,not_working,missing',
@@ -1187,6 +1188,7 @@ Route::post('/requests/{id}/return', function (Request $request, $id) {
     $user = auth()->user();
     $isAdmin = $user && ( ($user->id ?? 0) === 1 || strcasecmp($user->name ?? '', 'admin') === 0 );
     if (!$isAdmin) {
+        if ($request->wantsJson() || $request->ajax()) return response()->json(['error' => 'Forbidden'], 403);
         return back()->withErrors(['permission' => 'Forbidden']);
     }
 
@@ -1202,7 +1204,57 @@ Route::post('/requests/{id}/return', function (Request $request, $id) {
         return back()->withErrors(['status' => 'Consumable requests do not require return.']);
     }
 
-    // mark returned
+    // Support single-item return when `request_item_id` provided (AJAX-friendly)
+    if ($request->exists('request_item_id')) {
+        $data = $request->validate([
+            'request_item_id' => 'required|integer',
+            'equipment_id' => 'nullable|integer'
+        ]);
+
+        $item = \App\Models\InventoryRequestItem::find($data['request_item_id']);
+        if (!$item || $item->inventory_request_id != $r->id) {
+            if ($request->wantsJson() || $request->ajax()) return response()->json(['error' => 'Request item not found'], 404);
+            return back()->withErrors(['item' => 'Request item not found']);
+        }
+
+        try {
+            $equip = $data['equipment_id'] ? Equipment::find($data['equipment_id']) : ($item->equipment_id ? Equipment::find($item->equipment_id) : null);
+            $type = $equip ? strtolower(trim($equip->type ?? '')) : '';
+            if ($item->status !== 'approved') {
+                if ($request->wantsJson() || $request->ajax()) return response()->json(['error' => 'Item not approved or already processed'], 400);
+                return back()->withErrors(['status' => 'Item not approved or already processed']);
+            }
+
+            if ($type !== 'consumable') {
+                $restoreQty = intval($item->issued_quantity ?? $item->quantity ?? 0);
+                if ($equip && $restoreQty > 0) {
+                    $equip->quantity = intval($equip->quantity ?? 0) + $restoreQty;
+                    $equip->save();
+                }
+            }
+
+            $item->status = 'returned';
+            $item->handled_by = $user->id ?? null;
+            $item->handled_at = now();
+            $item->return_date = now();
+            $item->save();
+
+            // recompute parent request status
+            $remainingApproved = $r->items()->where('status', 'approved')->count();
+            $r->status = ($remainingApproved === 0) ? 'returned' : 'waiting';
+            $r->handled_by = $user->id ?? null;
+            $r->updated_at = now();
+            $r->save();
+
+            if ($request->wantsJson() || $request->ajax()) return response()->json(['ok' => true]);
+            return back()->with('success', 'Item marked returned');
+        } catch (Throwable $e) {
+            if ($request->wantsJson() || $request->ajax()) return response()->json(['error' => 'Failed to process return'], 500);
+            return back()->withErrors(['server' => 'Failed to process return']);
+        }
+    }
+
+    // mark returned for whole request (existing batch behavior)
     $r->status = 'returned';
     $r->handled_by = $user->id ?? null;
     $r->updated_at = now();
@@ -1226,6 +1278,7 @@ Route::post('/requests/{id}/return', function (Request $request, $id) {
                         $it->status = 'returned';
                         $it->handled_by = $user->id ?? null;
                         $it->handled_at = now();
+                        $it->return_date = now();
                         $it->save();
                     }
                 } catch (Throwable $_) {
@@ -1253,6 +1306,7 @@ Route::post('/requests/{id}/return', function (Request $request, $id) {
         // ignore stock restore failures but keep request marked returned
     }
 
+    if ($request->wantsJson() || $request->ajax()) return response()->json(['ok' => true]);
     return back()->with('success', 'Request marked returned');
 })->middleware('auth');
 

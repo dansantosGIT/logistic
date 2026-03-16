@@ -18,41 +18,7 @@
 
         /* Sidebar styles are moved to the shared partial to ensure consistent styling */
 
-        /* Topbar */
-        .topbar{position:fixed;left:0;right:0;top:0;height:72px;background:rgba(255,255,255,0.95);backdrop-filter:saturate(1.05) blur(4px);box-shadow:0 6px 24px rgba(2,6,23,0.08);z-index:60}
-          /* make the topbar full-width so the burger can sit flush left
-              and the welcome/admin stays right, maximizing header space */
-          .topbar-inner{max-width:none;width:100%;margin:0;padding:12px 12px 12px 0;display:flex;justify-content:space-between;align-items:center}
-        .notif-bell{position:relative;display:inline-flex;align-items:center;gap:8px;margin-right:12px}
-        .notif-bell button{background:transparent;border:none;cursor:pointer;padding:8px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center}
-        .notif-count{position:absolute;top:-6px;right:-6px;z-index:70;background:#ef4444;color:#fff;font-size:12px;padding:3px 6px;border-radius:999px;min-width:20px;text-align:center;box-shadow:0 6px 18px rgba(2,6,23,0.12)}
-        .notif-dropdown{position:absolute;right:0;top:44px;width:360px;max-height:420px;background:linear-gradient(180deg,#ffffff,#fbfdff);border-radius:12px;box-shadow:0 18px 50px rgba(2,6,23,0.16);overflow:auto;display:none;z-index:120;padding:8px}
-        .notif-dropdown.show{display:block}
-        .notif-dropdown .item{display:flex;align-items:center;gap:12px;padding:10px;border-radius:8px;transition:background .12s ease,transform .12s ease;cursor:pointer}
-        .notif-dropdown .item:hover{background:linear-gradient(90deg,rgba(37,99,235,0.04),rgba(124,58,237,0.02));transform:translateY(-2px)}
-        .notif-dropdown .left{flex:0 0 44px;display:flex;align-items:center;justify-content:center}
-        .notif-dropdown .avatar{width:44px;height:44px;border-radius:50%;display:inline-grid;place-items:center;background:linear-gradient(135deg,var(--accent),var(--accent-2));color:#fff;font-weight:700;box-shadow:0 8px 22px rgba(15,23,42,0.06)}
-        .notif-dropdown .meta{flex:1;min-width:0}
-        .notif-dropdown .meta .title{font-weight:700;color:#0f172a;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center;gap:8px}
-        .notif-dropdown .meta .sub{font-size:12px;color:var(--muted-2);margin-top:4px}
-        .notif-dropdown .time{font-size:11px;color:var(--muted-2);margin-left:6px}
-        .notif-dropdown .actions{display:flex;gap:6px;flex-shrink:0}
-        .notif-dropdown .empty{padding:12px;color:var(--muted);text-align:center}
-
-        /* Sidebar behavior and layout moved to the shared partial for consistency */
-        /* Header becomes a white panel inside the main area to visually join with the sidebar */
-        header{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;gap:12px;background:var(--panel);padding:12px 16px;border-radius:10px;box-shadow:0 6px 20px rgba(2,6,23,0.08)}
-        header h1{color:#0f172a;margin:0}
-        header .subtitle{color:var(--muted)}
-        .header-left{display:flex;align-items:center;gap:16px}
-        .burger{display:inline-flex;width:44px;height:44px;border-radius:8px;align-items:center;justify-content:center;background:transparent;border:1px solid transparent;cursor:pointer}
-        .burger:hover{background:#eef2ff}
-        .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-top:6px;margin-bottom:18px}
-        .card{background:var(--panel);padding:18px;border-radius:12px;box-shadow:0 8px 30px rgba(15,23,42,0.06)}
-        .card .title{font-size:13px;color:var(--muted)}
-        .card .value{font-size:22px;font-weight:700;margin-top:6px}
-
-        /* Request detail / form styles (restored) */
+                    
         .panel{max-width:1100px;margin:20px auto;padding:26px 28px;background:var(--panel);border-radius:14px;box-shadow:0 14px 40px rgba(15,23,42,0.08)}
         .panel .panel-header{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:18px}
         .panel .panel-title{margin:0;font-size:20px;color:#0f172a}
@@ -67,9 +33,9 @@
         .request-title{font-size:32px;font-weight:800;color:#0f172a;margin:8px 0}
         .request-card{max-width:980px;margin:6px auto 0;padding:18px;background:var(--panel);border-radius:12px;box-shadow:0 18px 40px rgba(2,6,23,0.06)}
         .meta-table{width:100%;border-radius:10px;overflow:hidden;border:1px solid rgba(14,21,40,0.04);background:linear-gradient(180deg,#fff,#fbfdff)}
-        .meta-row{display:flex;justify-content:space-between;padding:14px 18px;border-bottom:1px solid rgba(14,21,40,0.04);align-items:center}
-        .meta-row .k{color:#0f172a;font-weight:900}
-        .meta-row .v{color:#0f172a}
+        .meta-row{display:flex;padding:14px 18px;border-bottom:1px solid rgba(14,21,40,0.04);align-items:center;gap:12px}
+        .meta-row .k{color:#0f172a;font-weight:900;flex:0 0 160px}
+        .meta-row .v{color:#0f172a;flex:1;text-align:right}
         .request-card .card-header{background:#263544;color:#fff;padding:14px;border-radius:10px 10px 0 0;display:flex;justify-content:space-between;align-items:center}
         .request-card .card-header .request-title{font-size:20px;color:#fff;margin:0;font-weight:800}
         .request-card .card-header .back-btn{background:#6b7280;border:none;color:#fff;padding:8px 12px;border-radius:8px}
@@ -179,7 +145,7 @@
     <div class="topbar" role="banner">
         <div class="topbar-inner">
             <div style="display:flex;align-items:center;gap:12px">
-                <button id="burger-top" class="burger" aria-label="Toggle menu" title="Toggle menu">
+                <button id="burger-top" class="burger" aria-label="Toggle menu" title="Toggle menu" style="display:inline-flex;width:44px;height:44px;border-radius:8px;align-items:center;justify-content:center;background:transparent;border:1px solid transparent;cursor:pointer">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 12h18M3 6h18M3 18h18" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
                 </button>
                 <div style="display:flex;flex-direction:column">
@@ -207,18 +173,28 @@
     </div>
 
     <div class="app">
-        @include('partials.sidebar')
+        @include('partials.sidebar', ['startHidden' => true])
 
-        <main class="main">
+        <main class="main sidebar-hidden">
             <div>
                 <div class="request-card">
                     <div class="card-header">
                         <div class="request-title">Request #{{ $r->id ?? $r->uuid }}</div>
                         <div><a href="/requests?tab=pending" class="back-btn" style="text-decoration:none">Back</a></div>
                     </div>
+                    @php
+                        // Extract any "Role detail: ..." appended into the reason (routes may append this).
+                        $roleDetail = null;
+                        if (!empty($r->reason) && preg_match('/Role detail:\s*(.+)/i', $r->reason, $m)) {
+                            $roleDetail = trim($m[1]);
+                            // remove the role detail piece from the reason so it doesn't appear in the Reason column
+                            $r->reason = trim(preg_replace('/Role detail:\s*.*/i', '', $r->reason));
+                            if ($r->reason === '') $r->reason = null;
+                        }
+                    @endphp
                     <div class="meta-table">
                         <div class="meta-row"><div class="k">Requested by</div><div class="v">{{ $r->requester }}</div></div>
-                        <div class="meta-row"><div class="k">Role</div><div class="v">{{ $r->role ?? '—' }}</div></div>
+                        <div class="meta-row"><div class="k">Role</div><div class="v">{{ $r->role ?? '—' }}@if(strtolower(trim($r->role ?? '')) === 'others' && !empty($roleDetail)) <div class="small" style="margin-top:6px;color:var(--muted)">Role detail: {{ $roleDetail }}</div>@endif</div></div>
                         <div class="meta-row"><div class="k">Department</div><div class="v">{{ $r->department ?? '—' }}</div></div>
                         <div class="meta-row"><div class="k">Status</div><div class="v"><span class="badge {{ strtolower($r->status) }}">{{ ucfirst(strtolower($r->status)) }}</span></div></div>
                         <div class="meta-row"><div class="k">Submitted</div><div class="v"><span class="local-datetime" data-datetime="{{ $r->created_at->toIso8601String() }}">{{ $r->created_at->format('F j, Y, g:i A') }}</span></div></div>
@@ -314,7 +290,32 @@
                                         </td>
                                         <td>{{ $requestedQty }}</td>
                                         <td>{{ $issued }}</td>
-                                        <td>{{ !empty($returnDate) ? ((($returnDate instanceof \DateTimeInterface) ? $returnDate->format('F j, Y') : \Carbon\Carbon::parse($returnDate)->format('F j, Y'))) : 'Consumable — N/A' }}</td>
+                                        <td>
+                                            @php $isConsumable = strtolower(trim($equipModel?->type ?? '')) === 'consumable'; @endphp
+                                            @if($isConsumable)
+                                                Consumable — N/A
+                                            @else
+                                                @php $itemStatus = strtolower($it->status ?? $r->status); @endphp
+                                                @if($itemStatus === 'returned')
+                                                    {{ ($returnDate instanceof \DateTimeInterface) ? $returnDate->format('F j, Y') : (empty($returnDate) ? 'Returned' : \Carbon\Carbon::parse($returnDate)->format('F j, Y')) }}
+                                                @else
+                                                    @if(in_array($itemStatus, ['approved','waiting']))
+                                                        <div style="display:flex;flex-direction:column;align-items:flex-start;gap:6px">
+                                                            <button type="button" class="btn return-row" data-request-item-id="{{ $it->id ?? '' }}" data-equipment-id="{{ $equipData['id'] ?? '' }}" style="padding:6px 10px;font-size:13px;border-radius:8px;background:#6b7280;color:#fff;border:none">Return</button>
+                                                            @if(!empty($returnDate))
+                                                                <div class="small-muted" style="font-size:12px;color:var(--muted);margin-top:4px">Expected: {{ ($returnDate instanceof \DateTimeInterface) ? $returnDate->format('F j, Y') : \Carbon\Carbon::parse($returnDate)->format('F j, Y') }}</div>
+                                                            @endif
+                                                        </div>
+                                                    @else
+                                                        @if(!empty($returnDate))
+                                                            <div class="small-muted" style="font-size:12px;color:var(--muted)">{{ ($returnDate instanceof \DateTimeInterface) ? $returnDate->format('F j, Y') : \Carbon\Carbon::parse($returnDate)->format('F j, Y') }}</div>
+                                                        @else
+                                                            Pending
+                                                        @endif
+                                                    @endif
+                                                @endif
+                                            @endif
+                                        </td>
                                         <td>{{ $reasonText }}</td>
                                         <td>
                                             <span class="badge {{ strtolower($it->status ?? $r->status) }}">{{ ucfirst(strtolower($it->status ?? $r->status)) }}</span>
@@ -337,13 +338,21 @@
                     @php
                         $hasNonConsumable = false;
                         $returnableItems = [];
+
+                        // Only include non-consumable items that were approved or actually issued
                         if(!empty($equipment) && strtolower(trim($equipment->type ?? '')) !== 'consumable') {
-                            $hasNonConsumable = true;
-                            $returnableItems[] = [
-                                'name' => $equipment->name ?? ($r->item_name ?? 'Item'),
-                                'request_item_id' => $r->id ?? null,
-                                'equipment_id' => $equipment->id ?? null,
-                            ];
+                            $status = strtolower($r->status ?? '');
+                            $issuedQty = isset($r->issued_quantity) ? (int)$r->issued_quantity : (isset($r->issued) ? (int)$r->issued : 0);
+                            if ($status === 'approved' || $issuedQty > 0) {
+                                $hasNonConsumable = true;
+                                $returnableItems[] = [
+                                    'name' => $equipment->name ?? ($r->item_name ?? 'Item'),
+                                    'request_item_id' => $r->id ?? null,
+                                    'equipment_id' => $equipment->id ?? null,
+                                    'status' => $r->status ?? null,
+                                    'issued_quantity' => $issuedQty,
+                                ];
+                            }
                         } elseif(isset($r->items) && is_countable($r->items) && $r->items->count() > 0) {
                             foreach($r->items as $it) {
                                 try {
@@ -358,12 +367,18 @@
                                         $type = $it['type'] ?? null;
                                     }
                                     if (!empty($type) && strtolower(trim($type)) !== 'consumable') {
-                                        $hasNonConsumable = true;
-                                        $returnableItems[] = [
-                                            'name' => $it->item_name ?? ($it->equipment->name ?? 'Item'),
-                                            'request_item_id' => $it->id ?? null,
-                                            'equipment_id' => is_object($it) ? ($it->equipment_id ?? null) : ($it['equipment_id'] ?? null),
-                                        ];
+                                        $status = strtolower($it->status ?? ($it['status'] ?? ''));
+                                        $issuedQty = isset($it->issued_quantity) ? (int)$it->issued_quantity : (isset($it->issued) ? (int)$it->issued : 0);
+                                        if ($status === 'approved' || $issuedQty > 0) {
+                                            $hasNonConsumable = true;
+                                            $returnableItems[] = [
+                                                'name' => is_object($it) ? ($it->item_name ?? ($it->equipment->name ?? 'Item')) : ($it['name'] ?? 'Item'),
+                                                'request_item_id' => $it->id ?? ($it['request_item_id'] ?? null),
+                                                'equipment_id' => is_object($it) ? ($it->equipment->id ?? null) : ($it['equipment_id'] ?? null),
+                                                'status' => $it->status ?? ($it['status'] ?? null),
+                                                'issued_quantity' => $issuedQty,
+                                            ];
+                                        }
                                     }
                                 } catch (\Throwable $_) {
                                     // ignore
@@ -372,7 +387,7 @@
                         }
                     @endphp
 
-                    @if($isAdmin && in_array($r->status, ['approved','waiting']) && $hasNonConsumable)
+                    @if(in_array($r->status, ['approved','waiting']) && $hasNonConsumable)
                         <div class="request-actions">
                             <button type="button" class="btn" id="btn-mark-returned" style="background:#6b7280;color:#fff;border:none">Mark returned</button>
                         </div>
@@ -473,6 +488,22 @@
         </div>
     </div>
 
+    <!-- Small confirmation modal (used for single-item confirm) -->
+    <div class="approval-backdrop" id="confirmBackdrop" style="display:none"></div>
+    <div class="approval-modal" id="confirmModal" style="display:none;max-width:420px">
+        <div class="approval-header">
+            <h2 id="confirmTitle">Confirm</h2>
+            <button class="approval-close" id="confirmClose">&times;</button>
+        </div>
+        <div class="approval-body">
+            <p id="confirmMessage" style="margin:0 0 12px">Are you sure?</p>
+            <div style="display:flex;gap:8px;justify-content:flex-end">
+                <button id="confirmNo" class="btn" style="background:#f3f4f6;color:#111">Cancel</button>
+                <button id="confirmYes" class="btn ok" style="background:#6b7280;border:none">Confirm</button>
+            </div>
+        </div>
+    </div>
+
     <form id="logout-form" method="POST" action="/logout" style="display:none">@csrf</form>
 
     <script>
@@ -508,7 +539,10 @@
                 }
                 dropdown.innerHTML = items.map(it=>{
                     const avatar = (it.item_name||'R').trim().charAt(0).toUpperCase();
-                    const meta = `<div class=\"meta\"><div class=\"title\">${it.item_name} <span class=\"time\">${it.created_at}</span></div><div class=\"sub\">Requested by ${it.requester}</div></div>`;
+                    const createdRaw = it.created_at_iso || it.created_at || '';
+                    let created = createdRaw;
+                    try { if (typeof formatLocalISO === 'function' && createdRaw) created = formatLocalISO(createdRaw); } catch(e) { /* fallback to raw */ }
+                    const meta = `<div class=\"meta\"><div class=\"title\">${it.item_name} <span class=\"time\">${created}</span></div><div class=\"sub\">Requested by ${it.requester}</div></div>`;
                     const actions = isAdmin ? `<div class=\"actions\"><button data-id=\"${it.id}\" data-action=\"approve\" class=\"btn\" title=\"Approve\">✓</button><button data-id=\"${it.id}\" data-action=\"reject\" class=\"btn delete\" title=\"Reject\">✕</button></div>` : '';
                     return `<div class=\"item\" data-id=\"${it.id}\"><div class=\"left\"><div class=\"avatar\">${avatar}</div></div>${meta}${actions}</div>`;
                 }).join('');
@@ -1061,10 +1095,18 @@
 
             function openReturnModal(items){
                 listEl.innerHTML = '';
-                if(!items || !items.length){
+                // Defensive filter: only list items that were approved or actually issued
+                const filtered = (items || []).filter(it => {
+                    try {
+                        const status = (it && (it.status || it['status'])) ? String(it.status || it['status']).toLowerCase() : '';
+                        const issued = parseInt(it && (it.issued_quantity || it.issued || it['issued_quantity'] || it['issued']) || 0) || 0;
+                        return status === 'approved' || issued > 0;
+                    } catch(e) { return false; }
+                });
+                if(!filtered || !filtered.length){
                     listEl.innerHTML = '<li>No non-consumable items found.</li>';
                 } else {
-                    items.forEach(it=>{
+                    filtered.forEach(it=>{
                         const li = document.createElement('li');
                         li.textContent = it.name || 'Unnamed item';
                         listEl.appendChild(li);
@@ -1112,6 +1154,63 @@
                     }catch(err){ showToast('Error marking returned','error'); confirmBtn.disabled = false }
                 });
             }
+        })();
+
+        // Per-row return button handler (single-item return) using styled confirm modal
+        (function(){
+            let confirmCallback = null;
+            const confirmBackdrop = document.getElementById('confirmBackdrop');
+            const confirmModal = document.getElementById('confirmModal');
+            const confirmMessageEl = document.getElementById('confirmMessage');
+            const confirmYes = document.getElementById('confirmYes');
+            const confirmNo = document.getElementById('confirmNo');
+            const confirmClose = document.getElementById('confirmClose');
+
+            function openConfirm(message, cb){
+                confirmMessageEl.textContent = message || 'Are you sure?';
+                confirmBackdrop.style.display = 'block'; confirmModal.style.display = 'block';
+                setTimeout(()=>{ confirmBackdrop.classList.add('show'); confirmModal.classList.add('show'); }, 10);
+                document.body.style.overflow = 'hidden';
+                confirmCallback = cb;
+            }
+
+            function closeConfirm(){
+                confirmModal.classList.remove('show'); confirmBackdrop.classList.remove('show');
+                setTimeout(()=>{ confirmBackdrop.style.display='none'; confirmModal.style.display='none'; },220);
+                document.body.style.overflow = ''; confirmCallback = null;
+            }
+
+            confirmYes.addEventListener('click', function(e){
+                if(typeof confirmCallback === 'function') confirmCallback();
+                closeConfirm();
+            });
+            [confirmNo, confirmClose, confirmBackdrop].forEach(el=>{ if(el) el.addEventListener('click', closeConfirm); });
+            document.addEventListener('keydown', function(e){ if(e.key === 'Escape' && confirmModal.classList.contains('show')) closeConfirm(); });
+
+            document.addEventListener('click', function(e){
+                const btn = e.target.closest('.return-row');
+                if(!btn) return;
+                e.preventDefault();
+                openConfirm('Confirm return of this item?', async function(){
+                    btn.disabled = true;
+                    const payload = {
+                        request_item_id: btn.getAttribute('data-request-item-id') || null,
+                        equipment_id: btn.getAttribute('data-equipment-id') || null
+                    };
+                    try{
+                        const res = await fetch('/requests/{{ $r->uuid }}/return', {
+                            method: 'POST',
+                            headers: { 'Content-Type':'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content },
+                            credentials: 'same-origin',
+                            body: JSON.stringify(payload)
+                        });
+                        if(!res.ok) throw new Error('Request failed');
+                        const j = await res.json().catch(()=>({ok:true}));
+                        if(j && j.ok){ showToast('Item marked returned', 'success'); setTimeout(()=> location.reload(), 600); }
+                        else { showToast('Failed to mark returned', 'error'); btn.disabled = false; }
+                    }catch(err){ console.error(err); showToast('Error marking returned','error'); btn.disabled = false; }
+                });
+            });
         })();
     </script>
 
@@ -1217,5 +1316,6 @@
     <script>
         /* Vehicle submenu toggle is handled in the shared sidebar partial to avoid duplicate handlers. */
     </script>
+    
 </body>
 </html>

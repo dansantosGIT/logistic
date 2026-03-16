@@ -3,7 +3,7 @@
     .app{display:flex;min-height:100vh}
 
     /* Sidebar - fixed below the topbar to avoid overlap */
-    #sidebar{position:fixed;left:0;top:var(--topbar-height);bottom:0;width:240px;background:var(--panel);border-right:1px solid #e6e9ef;padding:20px;transition:width .22s ease,transform .22s ease;z-index:50;height:calc(100vh - var(--topbar-height));overflow:hidden}
+    #sidebar{position:fixed;left:0;top:var(--topbar-height);bottom:0;width:240px;background:var(--panel);border-right:1px solid #e6e9ef;padding:20px;transition:none;z-index:50;height:calc(100vh - var(--topbar-height));overflow:hidden}
     #sidebar.collapsed{width:64px}
     #sidebar .brand{font-weight:800;color:var(--accent);margin-bottom:18px;display:flex;align-items:center;gap:10px}
     #sidebar .brand .logo{width:36px;height:36px;border-radius:8px;background:linear-gradient(135deg,var(--accent),var(--accent-2));display:inline-flex;align-items:center;justify-content:center;color:white;font-weight:800}
@@ -107,20 +107,22 @@
     #sidebar .nav a .label { color: inherit !important; }
     /* Let active links inherit color (we show a left indicator instead of full-width fill) */
     #sidebar .nav a.active, #sidebar .nav a.active .label, #sidebar .nav a.active svg { color: inherit !important; }
-    /* Avoid conflicts with page-level `.label` rules (form labels) */
-    #sidebar .label { font-weight: 500 !important; }
+    /* Avoid conflicts with page-level `.label` rules (form labels) - use normal weight for sidebar labels */
+    #sidebar .label { font-weight: normal !important; }
 
-    /* Main area (push down for topbar). Sidebar is overlay by default - match dashboard behaviour */
-    .main{flex:1;padding:24px;margin-top:var(--topbar-height);margin-left:0;transition:margin .22s ease;position:relative;z-index:75}
+    /* Main area: inventory-style (sidebar acts as an overlay, not pushing content) */
+    .main{flex:1;padding:24px;margin-top:var(--topbar-height);margin-left:0;transition:none;position:relative}
+
+    /* Sidebar hidden by default as an overlay; opens by adding `.open` */
     #sidebar{transform:translateX(-110%);transition:transform .22s ease,width .22s ease}
     #sidebar.open{transform:translateX(0);z-index:90}
+    /* Collapsed still supported (icon-only) */
     #sidebar.collapsed{width:64px;transform:translateX(0)}
-    /* Allow hiding the sidebar on desktop by toggling `.hidden` */
-    #sidebar.hidden{transform:translateX(-110%)}
+    /* Keep helper class for compatibility (no push behavior) */
     .main.sidebar-hidden{margin-left:0}
 
-    /* Sidebar inline badge to avoid conflict with global notif-count */
-    .sidebar-badge{display:inline-block;background:#ef4444;color:#fff;font-size:12px;padding:3px 6px;border-radius:999px;margin-left:8px;vertical-align:middle}
+    /* Sidebar inline badge: subtle, match dashboard appearance (not red) */
+    .sidebar-badge{display:inline-block;background:rgba(2,6,23,0.06);color:var(--muted);font-size:12px;padding:3px 6px;border-radius:999px;margin-left:8px;vertical-align:middle;border:1px solid rgba(2,6,23,0.04)}
 
     /* Collapsed state adjustments (copy from dashboard) */
     #sidebar.collapsed .brand .text,
@@ -135,14 +137,21 @@
 
     /* Responsive */
     @media(max-width:900px){
-        #sidebar{position:fixed;left:0;top:0;bottom:0;z-index:80;transform:translateX(-110%);height:100vh}
+        /* Mobile: sidebar behaves as overlay and is hidden by default */
+        #sidebar{position:fixed;left:0;top:0;bottom:0;z-index:90;transform:translateX(-110%);height:100vh}
         #sidebar.open{transform:translateX(0)}
+        /* Ensure page content isn't pushed under the sidebar on mobile */
         #sidebar + .main{margin-left:0}
-        .main{padding:16px}
+        .main{padding:16px;margin-left:0}
     }
 </style>
 
-<aside id="sidebar" class="sidebar">
+@php
+    $startHidden = $startHidden ?? false;
+    // Ensure `pendingAccounts` is available for the accounts badge when views don't set it.
+    $pendingAccounts = $pendingAccounts ?? (\App\Models\AccountRequest::where('status', 'pending')->count() ?? 0);
+@endphp
+<aside id="sidebar" class="sidebar {{ $startHidden ? 'hidden' : '' }}">
     <a href="/dashboard" class="brand" style="text-decoration:none;color:inherit">
         <img src="/images/favi.png" alt="San Juan" class="logo-img" style="width:36px;height:36px;border-radius:8px;object-fit:cover">
         <div class="text" style="font-size:14px">San Juan CDRMMD</div>
@@ -159,7 +168,7 @@
             <a href="/vehicle/maintenance" class="sub-link {{ request()->is('vehicle/maintenance*') ? 'active' : '' }}"><span class="label">Maintenance</span></a>
         </div>
         <a href="/requests" class="{{ request()->is('requests*') ? 'active' : '' }}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M19 3H5a2 2 0 00-2 2v14l4-2 4 2 4-2 4 2V5a2 2 0 00-2-2z" fill="currentColor"/></svg><span class="label">Request</span></a>
-        <a href="/accounts" class="{{ request()->is('accounts*') ? 'active' : '' }}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 12a5 5 0 100-10 5 5 0 000 10zM4 20a8 8 0 0116 0v1H4v-1z" fill="currentColor"/></svg><span class="label">Accounts</span></a>
+        <a href="/accounts" class="{{ request()->is('accounts*') ? 'active' : '' }}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 12a5 5 0 100-10 5 5 0 000 10zM4 20a8 8 0 0116 0v1H4v-1z" fill="currentColor"/></svg><span class="label">Accounts</span>@if(!empty($pendingAccounts) && (int)$pendingAccounts > 0)<span class="sidebar-badge" style="margin-left:8px">{{ (int)$pendingAccounts }}</span>@endif</a>
         <a href="#" class="{{ request()->is('settings*') ? 'active' : '' }}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 8a4 4 0 100 8 4 4 0 000-8zM3 13h3l1-3 2 2 3-4 2 4 3-2 1 3h3" stroke="currentColor" stroke-width="1" fill="none"/></svg><span class="label">Settings</span></a>
         <a href="#" class="nav-logout" onclick="event.preventDefault();document.getElementById('logout-form').submit();">
             <svg width="18" height="18" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M10 17l5-5-5-5v3H3v4h7v3zM19 3h-8v2h8v14h-8v2h8a2 2 0 002-2V5a2 2 0 00-2-2z" fill="currentColor"/></svg>
@@ -228,17 +237,11 @@
 
         burger.addEventListener('click', function(e){
             e.stopPropagation();
-            const isMobile = window.matchMedia('(max-width:900px)').matches;
-            if (isMobile) {
-                const willOpen = !sidebar.classList.contains('open');
-                sidebar.classList.toggle('open');
-                sidebar.classList.remove('collapsed');
-                setOverlay(willOpen);
-            } else {
-                // on desktop, allow hiding the sidebar by toggling `hidden`
-                const hidden = sidebar.classList.toggle('hidden');
-                document.querySelector('.main')?.classList.toggle('sidebar-hidden', hidden);
-            }
+            const willOpen = !sidebar.classList.contains('open');
+            sidebar.classList.toggle('open');
+            // ensure not collapsed when opening overlay
+            if (willOpen) sidebar.classList.remove('collapsed');
+            setOverlay(willOpen);
         });
 
         document.addEventListener('click', function(e){
@@ -255,10 +258,8 @@
             setOverlay(false);
         });
     })();
-    // Fallback callable from inline onclick if main initializer not attached (pages without layouts.app)
+    // Simple fallback to toggle overlay when pages call `__sidebarFallback`
     window.__sidebarFallback = function(e){
-        if (window.__sidebarInitialized) { try{ console.log('__sidebarFallback suppressed (main listener active)'); }catch(e){}; return; }
-        try{ console.log('__sidebarFallback invoked'); }catch(e){}
         e && e.stopPropagation();
         const sidebar = document.getElementById('sidebar');
         if(!sidebar) return;
@@ -270,16 +271,10 @@
             document.body.appendChild(navOverlay);
             navOverlay.addEventListener('click', function(){ sidebar.classList.remove('open'); navOverlay.classList.remove('show'); document.body.style.overflow = ''; });
         }
-        const isMobile = window.matchMedia('(max-width:900px)').matches;
-        if(isMobile){
-            const willOpen = !sidebar.classList.contains('open');
-            sidebar.classList.toggle('open');
-            sidebar.classList.remove('collapsed');
-            navOverlay.classList.toggle('show', willOpen);
-            document.body.style.overflow = willOpen ? 'hidden' : '';
-        } else {
-            const collapsed = sidebar.classList.toggle('collapsed');
-            document.querySelector('.main')?.classList.toggle('sidebar-hidden', collapsed);
-        }
+        const willOpen = !sidebar.classList.contains('open');
+        sidebar.classList.toggle('open');
+        if (willOpen) sidebar.classList.remove('collapsed');
+        navOverlay.classList.toggle('show', willOpen);
+        document.body.style.overflow = willOpen ? 'hidden' : '';
     };
 </script>

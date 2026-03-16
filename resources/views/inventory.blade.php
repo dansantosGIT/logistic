@@ -449,7 +449,7 @@
                                         $rowStatus = 'instock';
                                     }
                                 @endphp
-                                <tr data-location="{{ strtolower($item->location ?? '') }}" data-category="{{ $categorySlug }}" class="equipment-row {{ $rowStatus }}" onclick="openEquipmentModal(this)" data-equipment='{{json_encode(["id" => $item->id, "name" => $item->name, "category" => $item->category ?? "—", "location" => $item->location ?? "—", "serial" => $item->serial ?? "—", "quantity" => $item->quantity, "type" => $item->type ?? "—", "status" => $item->status ?? null, "tag" => $item->tag ?? "—", "notes" => $item->notes ?? "No description provided", "image_path" => $item->image_path, "date_added" => $item->date_added ? $item->date_added->format('M d, Y') : $item->created_at->format('M d, Y'), "date_added_iso" => $item->date_added ? $item->date_added->toIso8601String() : $item->created_at->toIso8601String(), "created_at" => $item->created_at->format('M d, Y H:i'), "created_at_iso" => $item->created_at->toIso8601String(), "updated_at" => $item->updated_at->format('M d, Y H:i'), "updated_at_iso" => $item->updated_at->toIso8601String()])}}'>
+                                <tr data-location="{{ strtolower($item->location ?? '') }}" data-category="{{ $categorySlug }}" class="equipment-row {{ $rowStatus }}" onclick="openEquipmentModal(this)" data-equipment='{{json_encode(["id" => $item->id, "name" => $item->name, "category" => $item->category ?? "—", "location" => $item->location ?? "—", "serial" => $item->serial ?? "—", "quantity" => $item->quantity, "type" => $item->type ?? "—", "status" => $item->status ?? null, "tag" => $item->tag ?? "—", "notes" => $item->notes ?? "No description provided", "image_path" => $item->image_path, "date_added" => $item->date_added ? $item->date_added->format('M d, Y') : $item->created_at->format('M d, Y'), "date_added_iso" => $item->date_added ? $item->date_added->toJSON() : $item->created_at->toJSON(), "created_at" => $item->created_at->format('M d, Y H:i'), "created_at_iso" => $item->created_at->toJSON(), "updated_at" => $item->updated_at->format('M d, Y H:i'), "updated_at_iso" => $item->updated_at->toJSON()])}}'>
                                     <td>{{ $item->name }}</td>
                                     <td>{{ $item->category }}</td>
                                     <td>{{ $item->location }}</td>
@@ -1104,7 +1104,8 @@
                 document.getElementById('modalSerial').textContent = data.serial;
                 document.getElementById('modalTag').textContent = data.tag;
                 document.getElementById('modalNotes').textContent = data.notes;
-                document.getElementById('modalDateAdded').textContent = formatLocalISO(data.date_added_iso, data.date_added);
+                // Show only the acquisition date (no time) to avoid timezone shifts
+                document.getElementById('modalDateAdded').textContent = data.date_added || (data.date_added_iso ? new Date(data.date_added_iso).toLocaleDateString() : '—');
                 document.getElementById('modalCreated').textContent = formatLocalISO(data.created_at_iso, data.created_at);
                 document.getElementById('modalUpdated').textContent = formatLocalISO(data.updated_at_iso, data.updated_at);
 

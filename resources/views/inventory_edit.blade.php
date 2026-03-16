@@ -287,7 +287,7 @@
 
                         <div class="field">
                             <label for="date_added">Date Added</label>
-                            <input id="date_added" name="date_added" type="date" value="{{ $item->date_added ? $item->date_added->format('Y-m-d') : $item->created_at->format('Y-m-d') }}" disabled>
+                            <input id="date_added" name="date_added" type="date" value="{{ $item->date_added ? $item->date_added->format('Y-m-d') : $item->created_at->format('Y-m-d') }}">
                         </div>
 
                         <div class="field">
