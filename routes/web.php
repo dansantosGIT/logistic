@@ -1544,6 +1544,40 @@ Route::get('/requests/{id}/print', function (Request $request, $id) {
     return view('requests_print', ['r' => $r, 'equipment' => $equipment, 'isAdmin' => $isAdmin]);
 })->middleware('auth');
 
+// Delete a request (used from History tab)
+Route::delete('/requests/{id}', function (Request $request, $id) {
+    $user = auth()->user();
+    $isAdmin = $user && ( ($user->id ?? 0) === 1 || strcasecmp($user->name ?? '', 'admin') === 0 || strtolower((string)($user->role ?? '')) === 'admin' );
+
+    $r = InventoryRequest::where('uuid', $id)->first();
+    if (!$r) {
+        return response()->json(['message' => 'Not found'], 404);
+    }
+
+    // only allow deletion for history statuses
+    if (!in_array($r->status, ['done','approved','rejected','returned'])) {
+        return response()->json(['message' => 'Cannot delete request in current status'], 400);
+    }
+
+    // allow admin or the original requester to delete
+    if (!$isAdmin && ($r->requester_user_id ?? null) !== ($user->id ?? null)) {
+        return response()->json(['message' => 'Forbidden'], 403);
+    }
+
+    try {
+        \DB::beginTransaction();
+        // delete child items first
+        try { $r->items()->delete(); } catch (Throwable $_) {}
+        $r->delete();
+        \DB::commit();
+        return response()->json(['ok' => true]);
+    } catch (Throwable $e) {
+        try { \DB::rollBack(); } catch (Throwable $_) {}
+        try { \Log::error('Failed to delete request', ['id' => $id, 'error' => $e->getMessage()]); } catch (Throwable $_) {}
+        return response()->json(['message' => 'Delete failed'], 500);
+    }
+})->middleware('auth');
+
 // (server-side PDF export removed — print view served by browser)
 
 // Logout
