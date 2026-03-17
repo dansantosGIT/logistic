@@ -25,15 +25,20 @@
             dropdown.innerHTML = '<div class="item"><div style="padding:12px;color:var(--muted)">No notifications</div></div>';
             return;
         }
+        // small helper to escape HTML for titles/tooltips
+        function escapeHtml(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+
         dropdown.innerHTML = items.map(it=>{
             const avatar = (it.item_name||'R').trim().charAt(0).toUpperCase();
             const subtitle = it.subtitle || `Requested by ${it.requester || 'System'}`;
             const targetUrl = it.url || (it.id ? `/requests/${encodeURIComponent(it.id)}` : '');
-            const meta = `<div class="meta"><div class="title">${it.item_name} <span class="time">${formatLocalISO(it.created_at)}</span></div><div class="sub">${subtitle}</div></div>`;
-            const actions = (isAdmin && it.actionable !== false && it.id)
-                ? `<div class="actions"><button data-id="${it.id}" data-action="approve" class="btn" title="Approve">✓</button><button data-id="${it.id}" data-action="reject" class="btn delete" title="Reject">✕</button></div>`
-                : '';
-            return `<div class="item" data-id="${it.id || ''}" data-url="${targetUrl}"><div class="left"><div class="avatar">${avatar}</div></div>${meta}${actions}</div>`;
+            const rawTitle = it.item_name || '';
+            const displayTitle = rawTitle.length > 48 ? rawTitle.slice(0,45) + '…' : rawTitle;
+            const meta = `<div class="meta"><div class="title" title="${escapeHtml(rawTitle)}">${escapeHtml(displayTitle)} <span class="time">${formatLocalISO(it.created_at)}</span></div><div class="sub">${escapeHtml(subtitle)}</div></div>`;
+            // remove action buttons from the notification bell UI to keep it clean
+            const actions = '';
+            const overduePill = (it.status === 'overdue') ? '<span style="display:inline-block;margin-left:8px;padding:4px 8px;border-radius:999px;background:#ef4444;color:#fff;font-size:11px;font-weight:700">Overdue</span>' : '';
+            return `<div class="item" data-id="${it.id || ''}" data-url="${targetUrl}"><div class="left"><div class="avatar">${avatar}</div></div>${meta}${overduePill}${actions}</div>`;
         }).join('');
     }
 
@@ -44,7 +49,7 @@
             const data = await res.json();
             const cnt = data.count || (data.items ? data.items.length : 0);
             if(cnt){ countEl.style.display = ''; countEl.textContent = cnt; } else { countEl.style.display = 'none'; }
-            const isAdmin = ({{ auth()->user() ? 'true' : 'false' }} && '{{ auth()->user()->name }}'.toLowerCase() === 'admin');
+            const isAdmin = @json(auth()->check() && (((auth()->user()->id ?? 0) === 1) || strcasecmp(auth()->user()->name ?? '', 'admin') === 0 || strtolower((string) (auth()->user()->role ?? '')) === 'admin'));
             renderItems(data.items || [], isAdmin);
         }catch(e){ console.error('fetchNotifs', e); }
     }

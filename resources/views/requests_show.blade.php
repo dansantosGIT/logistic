@@ -543,7 +543,7 @@
                     let created = createdRaw;
                     try { if (typeof formatLocalISO === 'function' && createdRaw) created = formatLocalISO(createdRaw); } catch(e) { /* fallback to raw */ }
                     const meta = `<div class=\"meta\"><div class=\"title\">${it.item_name} <span class=\"time\">${created}</span></div><div class=\"sub\">Requested by ${it.requester}</div></div>`;
-                    const actions = isAdmin ? `<div class=\"actions\"><button data-id=\"${it.id}\" data-action=\"approve\" class=\"btn\" title=\"Approve\">✓</button><button data-id=\"${it.id}\" data-action=\"reject\" class=\"btn delete\" title=\"Reject\">✕</button></div>` : '';
+                    const actions = (isAdmin && it.actionable !== false) ? `<div class=\"actions\"><button data-id=\"${it.id}\" data-action=\"approve\" class=\"btn\" title=\"Approve\">✓</button><button data-id=\"${it.id}\" data-action=\"reject\" class=\"btn delete\" title=\"Reject\">✕</button></div>` : '';
                     return `<div class=\"item\" data-id=\"${it.id}\"><div class=\"left\"><div class=\"avatar\">${avatar}</div></div>${meta}${actions}</div>`;
                 }).join('');
             }
@@ -566,7 +566,7 @@
                         countEl.style.display = 'none';
                     }
 
-                    const isAdmin = ({{ auth()->user() ? 'true' : 'false' }} && '{{ auth()->user()->name }}'.toLowerCase() === 'admin');
+                    const isAdmin = @json(auth()->check() && (((auth()->user()->id ?? 0) === 1) || strcasecmp(auth()->user()->name ?? '', 'admin') === 0 || strtolower((string) (auth()->user()->role ?? '')) === 'admin'));
                     renderItems(items, isAdmin);
                 }catch(e){console.error(e)}
             }

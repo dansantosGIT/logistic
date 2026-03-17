@@ -17,11 +17,16 @@
             dropdown.innerHTML = '<div class="item"><div style="padding:12px;color:var(--muted)">No notifications</div></div>';
             return;
         }
+        function escapeHtml(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
         dropdown.innerHTML = items.map(it=>{
             const avatar = (it.item_name||'R').trim().charAt(0).toUpperCase();
-            const meta = `<div class="meta"><div class="title">${it.item_name} <span class="time">${formatLocalISO(it.created_at)}</span></div><div class="sub">Requested by ${it.requester}</div></div>`;
-            const actions = isAdmin ? `<div class="actions"><button data-id="${it.id}" data-action="approve" class="btn" title="Approve">✓</button><button data-id="${it.id}" data-action="reject" class="btn delete" title="Reject">✕</button></div>` : '';
-            return `<div class="item" data-id="${it.id}"><div class="left"><div class="avatar">${avatar}</div></div>${meta}${actions}</div>`;
+            const rawTitle = it.item_name || '';
+            const displayTitle = rawTitle.length > 48 ? rawTitle.slice(0,45) + '…' : rawTitle;
+            const subtitle = it.subtitle || `Requested by ${it.requester || 'System'}`;
+            const targetUrl = it.url || (it.id ? `/requests/${encodeURIComponent(it.id)}` : '');
+            const meta = `<div class="meta"><div class="title" title="${escapeHtml(rawTitle)}">${escapeHtml(displayTitle)} <span class="time">${formatLocalISO(it.created_at)}</span></div><div class="sub">${escapeHtml(subtitle)}</div></div>`;
+            const overduePill = (it.status === 'overdue') ? '<span style="display:inline-block;margin-left:8px;padding:4px 8px;border-radius:999px;background:#ef4444;color:#fff;font-size:11px;font-weight:700">Overdue</span>' : '';
+            return `<div class="item" data-id="${it.id || ''}" data-url="${targetUrl}"><div class="left"><div class="avatar">${avatar}</div></div>${meta}${overduePill}</div>`;
         }).join('');
     }
 

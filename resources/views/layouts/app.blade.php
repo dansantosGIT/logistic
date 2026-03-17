@@ -384,6 +384,6 @@
         }
     </style>
     @stack('scripts')
-    @include('partials.notifs')
+    @include('partials._notifications')
 </body>
 </html>

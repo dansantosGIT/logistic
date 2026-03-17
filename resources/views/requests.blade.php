@@ -412,7 +412,26 @@
                                     </td>
                                     <td class="actions">
                                         <div class="actions">
+                                            @php
+                                                $hasOverdueItem = false;
+                                                try {
+                                                    if (isset($r->items) && is_countable($r->items)) {
+                                                        $today = \Carbon\Carbon::now()->startOfDay();
+                                                        foreach ($r->items as $it) {
+                                                            if (!empty($it->return_date)) {
+                                                                $ret = \Carbon\Carbon::parse($it->return_date)->startOfDay();
+                                                                if ($ret->lt($today) && (in_array($it->status, ['approved','waiting']) || intval($it->issued_quantity) > 0)) {
+                                                                    $hasOverdueItem = true; break;
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                } catch (\Throwable $_) { $hasOverdueItem = false; }
+                                            @endphp
                                             <span class="badge {{ strtolower($r->status) }}">{{ ucfirst($r->status) }}</span>
+                                            @if($hasOverdueItem)
+                                                <span class="badge" style="background:#ef4444;color:#fff;margin-left:8px">Overdue</span>
+                                            @endif
                                             <button class="icon-btn view" title="View request" aria-label="View request" onclick="viewRequest('{{ $r->uuid }}')">
                                                 <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.6"/></svg>
                                             </button>
@@ -487,7 +506,7 @@
                 dropdown.innerHTML = items.map(it=>{
                     const avatar = (it.item_name||'R').trim().charAt(0).toUpperCase();
                     const meta = `<div class=\"meta\"><div class=\"title\">${it.item_name} <span class=\"time\">${formatLocalISO(it.created_at)}</span></div><div class=\"sub\">Requested by ${it.requester}</div></div>`;
-                    const actions = isAdmin ? `<div class=\"actions\"><button data-id=\"${it.id}\" data-action=\"approve\" class=\"btn\" title=\"Approve\">✓</button><button data-id=\"${it.id}\" data-action=\"reject\" class=\"btn delete\" title=\"Reject\">✕</button></div>` : '';
+                    const actions = (isAdmin && it.actionable !== false) ? `<div class=\"actions\"><button data-id=\"${it.id}\" data-action=\"approve\" class=\"btn\" title=\"Approve\">✓</button><button data-id=\"${it.id}\" data-action=\"reject\" class=\"btn delete\" title=\"Reject\">✕</button></div>` : '';
                     return `<div class=\"item\" data-id=\"${it.id}\"><div class=\"left\"><div class=\"avatar\">${avatar}</div></div>${meta}${actions}</div>`;
                 }).join('');
             }
@@ -511,7 +530,7 @@
                         countEl.style.display = 'none';
                     }
 
-                    const isAdmin = ({{ auth()->user() ? 'true' : 'false' }} && '{{ auth()->user()->name }}'.toLowerCase() === 'admin');
+                    const isAdmin = @json(auth()->check() && (((auth()->user()->id ?? 0) === 1) || strcasecmp(auth()->user()->name ?? '', 'admin') === 0 || strtolower((string) (auth()->user()->role ?? '')) === 'admin'));
                     renderItems(items, isAdmin);
                 }catch(e){console.error(e)}
             }

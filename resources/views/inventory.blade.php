@@ -702,8 +702,8 @@
                 }
                 dropdown.innerHTML = items.map(it=>{
                     const avatar = (it.item_name||'R').trim().charAt(0).toUpperCase();
-                    const meta = `<div class="meta"><div class="title">${it.item_name} <span class="time">${formatLocalISO(it.created_at)}</span></div><div class="sub">Requested by ${it.requester}</div></div>`;
-                    const actions = isAdmin ? `<div class="actions"><button data-id="${it.id}" data-action="approve" class="btn" title="Approve">✓</button><button data-id="${it.id}" data-action="reject" class="btn delete" title="Reject">✕</button></div>` : '';
+                    const meta = `<div class="meta"><div class="title">${it.item_name} <span class="time">${typeof formatLocalISO === 'function' ? formatLocalISO(it.created_at) : (it.created_at || '')}</span></div><div class="sub">Requested by ${it.requester}</div></div>`;
+                    const actions = '';
                     return `<div class="item" data-id="${it.id}"><div class="left"><div class="avatar">${avatar}</div></div>${meta}${actions}</div>`;
                 }).join('');
             }
@@ -721,7 +721,7 @@
                         countEl.style.display = 'none';
                     }
                     // detect admin by presence of approve buttons server-side? we'll assume responses for admin contain pending items
-                    const isAdmin = ({{ auth()->user() ? 'true' : 'false' }} && '{{ auth()->user()->name }}'.toLowerCase() === 'admin');
+                    const isAdmin = @json(auth()->check() && (((auth()->user()->id ?? 0) === 1) || strcasecmp(auth()->user()->name ?? '', 'admin') === 0 || strtolower((string) (auth()->user()->role ?? '')) === 'admin'));
                     renderItems(data.items || [], isAdmin);
                 }catch(e){console.error(e)}
             }

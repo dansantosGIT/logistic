@@ -914,6 +914,73 @@ Route::get('/notifications/requests', function (Request $request) {
         ];
     });
 
+    // include overdue items (recent window) so they appear in the notifications bell
+    $overdueItems = collect();
+    try {
+        $today = \Carbon\Carbon::now()->toDateString();
+        $overdueWindowDays = 30;
+        $minDate = \Carbon\Carbon::now()->subDays($overdueWindowDays)->toDateString();
+
+        $oq = \App\Models\InventoryRequestItem::with('request', 'equipment')
+            ->whereNotNull('return_date')
+            ->whereDate('return_date', '<', $today)
+            ->whereDate('return_date', '>=', $minDate)
+                        ->where(function($q){
+                                // include items that are approved or waiting, or items that have been issued
+                                // but explicitly exclude items already marked 'returned' so completed
+                                // returns don't show up as overdue.
+                                $q->whereIn('status', ['approved','waiting'])
+                                    ->orWhere(function($q2){
+                                            $q2->where('issued_quantity', '>', 0)
+                                                 ->where('status', '!=', 'returned');
+                                    });
+                        })
+            ->orderByDesc('return_date')
+            ->limit(8);
+
+        if (!$isAdmin) {
+            $oq->whereHas('request', function($q) use ($user) {
+                $q->where('requester_user_id', $user ? $user->id : 0);
+            });
+        }
+
+        $overdueItems = $oq->get()->map(function($it) {
+            $r = $it->request;
+            $equipName = $it->equipment->name ?? ($r->item_name ?? 'Item');
+            return [
+                'id' => $r->uuid ?? null,
+                'item_name' => $equipName . ' — Overdue',
+                'requester' => $r->requester ?? 'Unknown',
+                'subtitle' => 'Overdue since ' . ($it->return_date ? \Carbon\Carbon::parse($it->return_date)->toDateString() : ''),
+                'department' => $r->department ?? null,
+                'status' => 'overdue',
+                // use a recent timestamp so overdue items surface near the top of notifications
+                'created_at' => now()->toIso8601String(),
+                // overdue entries should not present approve/reject actions
+                'actionable' => false,
+                'url' => '/requests/' . ($r->uuid ?? ''),
+            ];
+        })->values();
+
+        // deduplicate overdue items by request id so multiple overdue child items
+        // for the same request don't produce duplicate notification entries
+        $overdueItems = $overdueItems->unique('id')->values();
+    } catch (\Throwable $_ex) {
+        // don't break notifications if overdue lookup fails
+        $overdueItems = collect();
+    }
+
+    // filter out overdue items that reference requests already present in the main mapped list
+    try {
+        $existingIds = $mappedRequestItems->pluck('id')->filter()->values()->toArray();
+        if (!empty($existingIds) && $overdueItems->count() > 0) {
+            $overdueItems = $overdueItems->filter(function($it) use ($existingIds) {
+                return empty($it['id']) || !in_array($it['id'], $existingIds);
+            })->values();
+        }
+    } catch (\Throwable $_) {
+        // ignore filtering errors
+    }
     $maintenanceItems = collect();
     if ($isAdmin) {
         $maintenanceItems = VehicleMaintenance::with('vehicle')
@@ -939,6 +1006,7 @@ Route::get('/notifications/requests', function (Request $request) {
     }
 
     $items = $mappedRequestItems
+        ->concat($overdueItems)
         ->concat($maintenanceItems)
         ->sortByDesc('created_at')
         ->take(8)
