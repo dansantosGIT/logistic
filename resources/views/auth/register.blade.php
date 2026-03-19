@@ -95,6 +95,24 @@
                     </div>
                 </div>
 
+                <div id="ops-role-section" class="field" style="margin-top:12px; display: none;">
+                    <label>Operations sub-role <span class="req">*</span></label>
+                    <div class="radio-center" role="radiogroup" aria-required="false" style="justify-content:center;">
+                        <label class="role-option" style="flex-direction:row;gap:12px">
+                            <input type="radio" name="ops_role" value="Alpha" {{ old('ops_role')=='Alpha' ? 'checked' : '' }} {{ old('department')!='Operations' ? 'disabled' : '' }}>
+                            <div class="role-text">Alpha</div>
+                        </label>
+                        <label class="role-option" style="flex-direction:row;gap:12px">
+                            <input type="radio" name="ops_role" value="Bravo" {{ old('ops_role')=='Bravo' ? 'checked' : '' }} {{ old('department')!='Operations' ? 'disabled' : '' }}>
+                            <div class="role-text">Bravo</div>
+                        </label>
+                        <label class="role-option" style="flex-direction:row;gap:12px">
+                            <input type="radio" name="ops_role" value="Charlie" {{ old('ops_role')=='Charlie' ? 'checked' : '' }} {{ old('department')!='Operations' ? 'disabled' : '' }}>
+                            <div class="role-text">Charlie</div>
+                        </label>
+                    </div>
+                </div>
+
                 <div class="field">
                     <label for="avatar">Profile photo <small style="color:#6b7280">(optional, JPG/PNG, max 2MB)</small></label>
                     <input id="avatar" name="avatar" type="file" accept="image/png,image/jpeg" class="file-input">
@@ -145,6 +163,12 @@
         var pwd = document.getElementById('password');
         var pwdConfirm = document.getElementById('password_confirmation');
         var requiredSelectors = 'input[required], select[required], input[name="role"]';
+        var dept = document.getElementById('department');
+        var opsSection = document.getElementById('ops-role-section');
+
+        function isOpsRoleSelected(){
+            return !!form.querySelector('input[name="ops_role"]:checked');
+        }
 
         function passwordsMatch(){
             return pwd.value === pwdConfirm.value && pwd.value.length > 0;
@@ -164,12 +188,36 @@
             if (!passwordsMatch()) valid = false;
             // require role selected
             if (!isRoleSelected()) valid = false;
+            // if department is Operations, require ops sub-role
+            try {
+                if (dept && dept.value === 'Operations') {
+                    if (!isOpsRoleSelected()) valid = false;
+                }
+            } catch(e){}
             signupBtn.disabled = !valid;
         }
 
         // attach listeners
         form.addEventListener('input', validateForm);
         form.addEventListener('change', validateForm);
+        // show/hide ops-role when department changes
+        if (dept){
+            dept.addEventListener('change', function(){
+                if (dept.value === 'Operations'){
+                    if (opsSection) opsSection.style.display = '';
+                    // enable inputs
+                    (document.querySelectorAll('input[name="ops_role"]')||[]).forEach(i => i.disabled = false);
+                } else {
+                    if (opsSection) opsSection.style.display = 'none';
+                    (document.querySelectorAll('input[name="ops_role"]')||[]).forEach(i => { i.checked = false; i.disabled = true; });
+                }
+                validateForm();
+            });
+            // initialize disabled state for ops_role inputs when page loads
+            (document.querySelectorAll('input[name="ops_role"]')||[]).forEach(i => {
+                if (dept.value !== 'Operations') i.disabled = true;
+            });
+        }
         // initial run
         validateForm();
 

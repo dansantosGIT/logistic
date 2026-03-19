@@ -139,7 +139,7 @@
                     <a href="/vehicle/monitoring" class="sub-link"><span class="label">Monitoring</span></a>
                 </div>
                 <a href="/requests"><span class="label">Request</span></a>
-                <a href="/accounts" class="{{ request()->is('accounts*') ? 'active' : '' }}"><svg width="18" height="18" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 12a5 5 0 100-10 5 5 0 000 10zM4 20a8 8 0 0116 0v1H4v-1z" fill="currentColor"/></svg><span class="label">Accounts</span>@if($pendingAccounts > 0)<span class="sidebar-badge" style="margin-left:8px">{{ $pendingAccounts }}</span>@endif</a>
+                <a href="/accounts?tab=accounts" class="{{ request()->is('accounts*') ? 'active' : '' }}"><svg width="18" height="18" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 12a5 5 0 100-10 5 5 0 000 10zM4 20a8 8 0 0116 0v1H4v-1z" fill="currentColor"/></svg><span class="label">Accounts</span>@if($pendingAccounts > 0)<span class="sidebar-badge" style="margin-left:8px">{{ $pendingAccounts }}</span>@endif</a>
                 <a href="#" class="nav-logout" onclick="event.preventDefault();document.getElementById('logout-form').submit();"><span class="label">Logout</span></a>
             </nav>
         </aside>

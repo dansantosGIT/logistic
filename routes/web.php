@@ -75,6 +75,7 @@ Route::post('/register', function (Request $request) {
         'phone' => ['required', 'string', 'max:30'],
         'department' => ['required', 'string', 'max:191'],
         'role' => ['required', 'in:admin,requestor'],
+        'ops_role' => ['nullable', 'in:Alpha,Bravo,Charlie', 'required_if:department,Operations'],
         'password' => ['required', 'string', 'min:4', 'max:8', 'confirmed'],
         'avatar' => ['nullable', 'image', 'mimes:jpg,jpeg,png', 'max:2048'],
         'website' => ['nullable', 'max:0'], // honeypot must be empty
@@ -122,6 +123,7 @@ Route::post('/register', function (Request $request) {
         $existing->proof_path = $proofPath;
         $existing->status = 'pending';
         $existing->requested_role = $data['role'];
+        $existing->ops_role = $request->input('ops_role') ?? null;
         $existing->justification = $request->input('justification') ?? null;
         $existing->save();
         $ar = $existing;
@@ -138,6 +140,7 @@ Route::post('/register', function (Request $request) {
             'proof_path' => $proofPath,
             'status' => 'pending',
             'requested_role' => $data['role'],
+            'ops_role' => $request->input('ops_role') ?? null,
             'justification' => $request->input('justification') ?? null,
         ]);
     }
@@ -196,6 +199,15 @@ Route::get('/accounts/{accountRequest}/json', [\App\Http\Controllers\AccountRequ
 Route::post('/accounts/{accountRequest}/approve', [\App\Http\Controllers\AccountRequestController::class, 'approve'])->middleware('auth');
 Route::post('/accounts/{accountRequest}/deny', [\App\Http\Controllers\AccountRequestController::class, 'deny'])->middleware('auth');
 Route::post('/accounts/{accountRequest}/note', [\App\Http\Controllers\AccountRequestController::class, 'updateNote'])->middleware('auth');
+
+// User account JSON, edit page and update (for admin user management)
+// User-specific admin account management (avoid route conflict with AccountRequest routes)
+Route::get('/accounts/user/{id}/json', [\App\Http\Controllers\AccountController::class, 'showJson'])->middleware('auth');
+Route::get('/accounts/user/{id}/edit', [\App\Http\Controllers\AccountController::class, 'edit'])->middleware('auth');
+Route::patch('/accounts/user/{id}', [\App\Http\Controllers\AccountController::class, 'update'])->middleware('auth');
+Route::delete('/accounts/user/{id}', [\App\Http\Controllers\AccountController::class, 'destroy'])->middleware('auth');
+// Toggle user active/inactive state
+Route::post('/accounts/{id}/toggle', [\App\Http\Controllers\AccountController::class, 'toggle'])->middleware('auth');
 
 // Inventory (protected)
 Route::get('/inventory', function () {

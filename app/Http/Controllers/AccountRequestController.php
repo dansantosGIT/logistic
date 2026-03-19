@@ -27,7 +27,9 @@ class AccountRequestController extends Controller
     {
         $this->ensureAdmin();
         $requests = AccountRequest::orderByDesc('created_at')->paginate(25);
-        return view('accounts.account_page', compact('requests'));
+        $users = User::orderByDesc('created_at')->paginate(25);
+        $activeTab = request()->query('tab', 'pending');
+        return view('accounts.account_page', compact('requests', 'users'))->with('activeTab', $activeTab);
     }
 
     public function show(AccountRequest $accountRequest)
@@ -72,6 +74,7 @@ class AccountRequestController extends Controller
             'phone' => $accountRequest->phone,
             'department' => $accountRequest->department,
             'role' => $accountRequest->requested_role ?? 'requestor',
+            'ops_role' => $accountRequest->ops_role ?? null,
             'avatar' => $accountRequest->proof_path ?? null,
             'is_approved' => true,
             'password' => Hash::make($randomPassword),
@@ -89,7 +92,8 @@ class AccountRequestController extends Controller
             // ignore
         }
 
-        return redirect('/accounts')->with('success', 'Account approved and user created.');
+        // After approving, show the Accounts tab so the newly created user is visible
+        return redirect('/accounts?tab=accounts')->with('success', 'Account approved and user created.');
     }
 
     public function deny(AccountRequest $accountRequest, Request $request)

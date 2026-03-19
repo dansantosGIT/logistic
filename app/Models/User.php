@@ -24,6 +24,7 @@ class User extends Authenticatable
         'phone',
         'department',
         'role',
+        'ops_role',
         'avatar',
         'is_approved',
     ];

@@ -19,6 +19,7 @@ class AccountRequest extends Model
         'proof_path',
         'status',
         'requested_role',
+        'ops_role',
         'justification',
         'admin_note',
         'invite_token',
